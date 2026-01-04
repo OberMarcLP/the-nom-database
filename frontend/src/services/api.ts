@@ -100,11 +100,22 @@ export interface GooglePlaceResult {
 }
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  // Get auth token from localStorage
+  const token = localStorage.getItem('access_token');
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(options?.headers || {}),
+  };
+
+  // Add Authorization header if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_URL}/api${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
     ...options,
+    headers,
   });
 
   if (!response.ok) {
@@ -345,3 +356,77 @@ export const updatePhotoCaption = (id: number, caption: string) =>
 
 export const deleteMenuPhoto = (id: number) =>
   fetchApi<void>(`/photos/${id}`, { method: 'DELETE' });
+
+// Authentication
+export interface User {
+  id: number;
+  email: string;
+  username: string;
+  provider: string;
+  provider_id?: string;
+  full_name?: string;
+  avatar_url?: string;
+  is_active: boolean;
+  is_admin: boolean;
+  email_verified: boolean;
+  password_must_change: boolean;
+  last_login_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user: User;
+}
+
+export interface RegisterRequest {
+  email: string;
+  username: string;
+  password: string;
+  full_name?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
+}
+
+// Auth API functions
+export const login = (credentials: LoginRequest) =>
+  fetchApi<LoginResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  });
+
+export const register = (data: RegisterRequest) =>
+  fetchApi<LoginResponse>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const logout = () =>
+  fetchApi<void>('/auth/logout', { method: 'POST' });
+
+export const getCurrentUser = () =>
+  fetchApi<User>('/auth/me');
+
+export const changePassword = (data: ChangePasswordRequest) =>
+  fetchApi<{ message: string }>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const refreshToken = (refreshToken: string) =>
+  fetchApi<LoginResponse>('/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });

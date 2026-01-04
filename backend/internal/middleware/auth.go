@@ -113,12 +113,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		ctx := r.Context()
 		var user models.User
 		err = database.GetPool().QueryRow(ctx,
-			`SELECT id, email, username, provider, provider_id, full_name, avatar_url,
-			is_active, is_admin, email_verified, last_login_at, created_at, updated_at
+			`SELECT id, email, username, password_hash, provider, provider_id, full_name, avatar_url,
+			is_active, is_admin, email_verified, password_must_change, last_login_at, created_at, updated_at
 			FROM users WHERE id = $1`, claims.UserID).Scan(
-			&user.ID, &user.Email, &user.Username, &user.Provider, &user.ProviderID,
+			&user.ID, &user.Email, &user.Username, &user.PasswordHash, &user.Provider, &user.ProviderID,
 			&user.FullName, &user.AvatarURL, &user.IsActive, &user.IsAdmin,
-			&user.EmailVerified, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
+			&user.EmailVerified, &user.PasswordMustChange, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
 
 		if err != nil {
 			logger.Warn("User not found for token: %d", claims.UserID)
@@ -183,12 +183,12 @@ func OptionalAuthMiddleware(next http.Handler) http.Handler {
 		ctx := r.Context()
 		var user models.User
 		err = database.GetPool().QueryRow(ctx,
-			`SELECT id, email, username, provider, provider_id, full_name, avatar_url,
-			is_active, is_admin, email_verified, last_login_at, created_at, updated_at
+			`SELECT id, email, username, password_hash, provider, provider_id, full_name, avatar_url,
+			is_active, is_admin, email_verified, password_must_change, last_login_at, created_at, updated_at
 			FROM users WHERE id = $1`, claims.UserID).Scan(
-			&user.ID, &user.Email, &user.Username, &user.Provider, &user.ProviderID,
+			&user.ID, &user.Email, &user.Username, &user.PasswordHash, &user.Provider, &user.ProviderID,
 			&user.FullName, &user.AvatarURL, &user.IsActive, &user.IsAdmin,
-			&user.EmailVerified, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
+			&user.EmailVerified, &user.PasswordMustChange, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
 
 		if err != nil || !user.IsActive {
 			// User not found or inactive, continue as anonymous
