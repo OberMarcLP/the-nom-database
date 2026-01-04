@@ -98,6 +98,11 @@ func main() {
 		logger.Fatal("Failed to run migrations: %v", err)
 	}
 
+	// Initialize default admin user
+	if err := database.InitDefaultAdmin(); err != nil {
+		logger.Fatal("Failed to initialize default admin: %v", err)
+	}
+
 	// Initialize Google Maps service
 	_ = services.NewGoogleMapsService()
 
@@ -145,6 +150,7 @@ func main() {
 	authRoutes := api.PathPrefix("/auth").Subrouter()
 	authRoutes.Use(middleware.AuthMiddleware)
 	authRoutes.HandleFunc("/me", handlers.GetMe).Methods("GET")
+	authRoutes.HandleFunc("/change-password", handlers.ChangePassword).Methods("POST")
 
 	// Public read routes (no auth required for browsing)
 	publicRoutes := api.PathPrefix("").Subrouter()

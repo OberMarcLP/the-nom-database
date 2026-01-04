@@ -2,11 +2,13 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nomdb/backend/internal/auth"
 	"github.com/nomdb/backend/internal/logger"
 )
 
@@ -98,4 +100,51 @@ func Close() {
 		pool.Close()
 		logger.Info("✅ Database connection closed")
 	}
+}
+
+// InitDefaultAdmin ensures the default admin user exists with password set
+func InitDefaultAdmin() error {
+	ctx := context.Background()
+
+	// Check if admin user exists and has password set
+	var hasPassword bool
+	err := pool.QueryRow(ctx,
+		`SELECT password_hash IS NOT NULL FROM users WHERE email = 'admin@nomdb.local' AND username = 'admin'`).
+		Scan(&hasPassword)
+
+	if err == sql.ErrNoRows {
+		// Admin user doesn't exist yet - will be created by migration
+		logger.Debug("Admin user not found - will be created by migration")
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to check admin user: %w", err)
+	}
+
+	// If admin already has password, skip
+	if hasPassword {
+		logger.Debug("Default admin user already has password set")
+		return nil
+	}
+
+	// Hash default password "admin"
+	passwordHash, err := auth.HashPassword("admin", nil)
+	if err != nil {
+		return fmt.Errorf("failed to hash default password: %w", err)
+	}
+
+	// Update admin user with password
+	_, err = pool.Exec(ctx,
+		`UPDATE users SET password_hash = $1, password_must_change = true WHERE email = 'admin@nomdb.local' AND username = 'admin'`,
+		passwordHash)
+
+	if err != nil {
+		return fmt.Errorf("failed to set default admin password: %w", err)
+	}
+
+	logger.Info("🔑 Default admin user initialized (username: admin, password: admin)")
+	logger.Warn("⚠️  IMPORTANT: Change the default admin password on first login!")
+
+	return nil
 }

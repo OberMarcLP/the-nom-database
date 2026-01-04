@@ -4,20 +4,21 @@ import "time"
 
 // User represents a user in the system
 type User struct {
-	ID            int        `json:"id"`
-	Email         string     `json:"email"`
-	Username      string     `json:"username"`
-	PasswordHash  *string    `json:"-"` // Never send to client
-	Provider      string     `json:"provider"`
-	ProviderID    *string    `json:"provider_id,omitempty"`
-	FullName      *string    `json:"full_name"`
-	AvatarURL     *string    `json:"avatar_url"`
-	IsActive      bool       `json:"is_active"`
-	IsAdmin       bool       `json:"is_admin"`
-	EmailVerified bool       `json:"email_verified"`
-	LastLoginAt   *time.Time `json:"last_login_at"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	ID                 int        `json:"id"`
+	Email              string     `json:"email"`
+	Username           string     `json:"username"`
+	PasswordHash       *string    `json:"-"` // Never send to client
+	Provider           string     `json:"provider"`
+	ProviderID         *string    `json:"provider_id,omitempty"`
+	FullName           *string    `json:"full_name"`
+	AvatarURL          *string    `json:"avatar_url"`
+	IsActive           bool       `json:"is_active"`
+	IsAdmin            bool       `json:"is_admin"`
+	EmailVerified      bool       `json:"email_verified"`
+	PasswordMustChange bool       `json:"password_must_change"`
+	LastLoginAt        *time.Time `json:"last_login_at"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 // Session represents a user session with refresh token
@@ -73,6 +74,11 @@ type RefreshTokenRequest struct {
 type OAuthCallbackRequest struct {
 	Code  string `json:"code"`
 	State string `json:"state"`
+}
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
 }
 
 // Context key for user in request context

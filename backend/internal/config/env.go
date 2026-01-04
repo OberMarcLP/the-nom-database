@@ -41,7 +41,7 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		DatabaseURL:      os.Getenv("DATABASE_URL"),
 		GoogleMapsAPIKey: os.Getenv("GOOGLE_MAPS_API_KEY"),
-		AuthMode:         getEnvOrDefault("AUTH_MODE", "both"),
+		AuthMode:         getEnvOrDefault("AUTH_MODE", "local"),
 		JWTSecretKey:     os.Getenv("JWT_SECRET_KEY"),
 		OIDCIssuerURL:    os.Getenv("OIDC_ISSUER_URL"),
 		OIDCClientID:     os.Getenv("OIDC_CLIENT_ID"),

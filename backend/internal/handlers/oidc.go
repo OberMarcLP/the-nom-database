@@ -272,8 +272,8 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 
 	var userID int
 	err = database.GetPool().QueryRow(ctx,
-		`INSERT INTO users (email, username, provider, provider_id, full_name, avatar_url, email_verified, password_hash)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)
+		`INSERT INTO users (email, username, provider, provider_id, full_name, avatar_url, email_verified, password_hash, password_must_change)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, false)
 		RETURNING id`,
 		claims.Email, username, provider, claims.Sub, claims.Name, claims.Picture, claims.EmailVerified).Scan(&userID)
 

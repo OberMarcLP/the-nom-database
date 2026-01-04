@@ -91,8 +91,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var userID int
 	err = database.GetPool().QueryRow(ctx,
-		`INSERT INTO users (email, username, password_hash, provider, full_name, email_verified)
-		VALUES ($1, $2, $3, 'local', $4, false)
+		`INSERT INTO users (email, username, password_hash, provider, full_name, email_verified, password_must_change)
+		VALUES ($1, $2, $3, 'local', $4, false, false)
 		RETURNING id`,
 		req.Email, req.Username, passwordHash, req.FullName).Scan(&userID)
 
@@ -374,11 +374,11 @@ func getUserByID(ctx context.Context, userID int) (*models.User, error) {
 	var user models.User
 	err := database.GetPool().QueryRow(ctx,
 		`SELECT id, email, username, password_hash, provider, provider_id, full_name, avatar_url,
-		is_active, is_admin, email_verified, last_login_at, created_at, updated_at
+		is_active, is_admin, email_verified, password_must_change, last_login_at, created_at, updated_at
 		FROM users WHERE id = $1`, userID).Scan(
 		&user.ID, &user.Email, &user.Username, &user.PasswordHash, &user.Provider, &user.ProviderID,
 		&user.FullName, &user.AvatarURL, &user.IsActive, &user.IsAdmin, &user.EmailVerified,
-		&user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
+		&user.PasswordMustChange, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -389,11 +389,11 @@ func getUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	err := database.GetPool().QueryRow(ctx,
 		`SELECT id, email, username, password_hash, provider, provider_id, full_name, avatar_url,
-		is_active, is_admin, email_verified, last_login_at, created_at, updated_at
+		is_active, is_admin, email_verified, password_must_change, last_login_at, created_at, updated_at
 		FROM users WHERE email = $1`, email).Scan(
 		&user.ID, &user.Email, &user.Username, &user.PasswordHash, &user.Provider, &user.ProviderID,
 		&user.FullName, &user.AvatarURL, &user.IsActive, &user.IsAdmin, &user.EmailVerified,
-		&user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
+		&user.PasswordMustChange, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -433,6 +433,90 @@ func generateLoginResponseWithService(ctx context.Context, user *models.User, r 
 		ExpiresIn:    int(jwtSvc.GetAccessTokenDuration().Seconds()),
 		User:         *user,
 	}, nil
+}
+
+// @Summary Change password
+// @Description Change the current user's password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.ChangePasswordRequest true "Password change details"
+// @Success 200 {string} string "Password changed successfully"
+// @Failure 400 {string} string "Invalid request"
+// @Failure 401 {string} string "Unauthorized or invalid old password"
+// @Failure 500 {string} string "Internal server error"
+// @Security ApiKeyAuth
+// @Router /auth/change-password [post]
+func ChangePassword(w http.ResponseWriter, r *http.Request) {
+	// Get user from context (set by auth middleware)
+	user, ok := GetUserFromContext(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req models.ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate input
+	if req.OldPassword == "" || req.NewPassword == "" {
+		http.Error(w, "Old password and new password are required", http.StatusBadRequest)
+		return
+	}
+
+	// Password strength check
+	if len(req.NewPassword) < 8 {
+		http.Error(w, "New password must be at least 8 characters", http.StatusBadRequest)
+		return
+	}
+
+	// OAuth users cannot change password
+	if user.PasswordHash == nil {
+		http.Error(w, "OAuth users cannot change password", http.StatusBadRequest)
+		return
+	}
+
+	// Verify old password
+	valid, err := auth.VerifyPassword(req.OldPassword, *user.PasswordHash)
+	if err != nil {
+		logger.Error("Failed to verify password: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if !valid {
+		http.Error(w, "Invalid old password", http.StatusUnauthorized)
+		return
+	}
+
+	// Hash new password
+	newPasswordHash, err := auth.HashPassword(req.NewPassword, nil)
+	if err != nil {
+		logger.Error("Failed to hash new password: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Update password and clear password_must_change flag
+	ctx := context.Background()
+	_, err = database.GetPool().Exec(ctx,
+		`UPDATE users SET password_hash = $1, password_must_change = false, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+		newPasswordHash, user.ID)
+	if err != nil {
+		logger.Error("Failed to update password: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("Password changed for user: %s (ID: %d)", user.Email, user.ID)
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string]string{"message": "Password changed successfully"}); err != nil {
+		logger.Error("Failed to encode response: %v", err)
+	}
 }
 
 func isValidEmail(email string) bool {
