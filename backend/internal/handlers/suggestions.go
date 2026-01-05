@@ -411,6 +411,13 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 
 	ctx := context.Background()
 
+	// Get user from context
+	user, ok := GetUserFromContext(r)
+	var userID *int
+	if ok && user != nil {
+		userID = &user.ID
+	}
+
 	// Get the suggestion
 	var sug models.RestaurantSuggestion
 	err = database.GetPool().QueryRow(ctx,
@@ -442,10 +449,10 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 	// Create restaurant
 	var restaurantID int
 	err = database.GetPool().QueryRow(ctx,
-		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_by, updated_by)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id`,
-		sug.Name, req.Description, sug.Address, sug.Phone, sug.Website, sug.Latitude, sug.Longitude, sug.GooglePlaceID, categoryID,
+		sug.Name, req.Description, sug.Address, sug.Phone, sug.Website, sug.Latitude, sug.Longitude, sug.GooglePlaceID, categoryID, userID, userID,
 	).Scan(&restaurantID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -475,9 +482,9 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 
 	// Create initial rating from the conversion
 	_, err = database.GetPool().Exec(ctx,
-		`INSERT INTO ratings (restaurant_id, food_rating, service_rating, ambiance_rating, comment)
-		VALUES ($1, $2, $3, $4, $5)`,
-		restaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment,
+		`INSERT INTO ratings (restaurant_id, food_rating, service_rating, ambiance_rating, comment, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6)`,
+		restaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, userID,
 	)
 	if err != nil {
 		logger.Warn("Failed to create initial rating for restaurant %d: %v", restaurantID, err)
