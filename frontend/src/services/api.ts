@@ -103,9 +103,9 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   // Get auth token from localStorage
   const token = localStorage.getItem('access_token');
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options?.headers || {}),
+    ...(options?.headers as Record<string, string> || {}),
   };
 
   // Add Authorization header if token exists

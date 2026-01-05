@@ -14,9 +14,10 @@ import { RestaurantDetail } from './RestaurantDetail';
 
 interface HomePageProps {
   filters: RestaurantFilters;
+  isAuthenticated?: boolean;
 }
 
-export function HomePage({ filters }: HomePageProps) {
+export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showAddSuggestionModal, setShowAddSuggestionModal] = useState(false);
@@ -160,10 +161,12 @@ export function HomePage({ filters }: HomePageProps) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Restaurants</h1>
-        <button onClick={() => setShowAddSuggestionModal(true)} className="btn btn-primary flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Add Suggestion
-        </button>
+        {isAuthenticated && (
+          <button onClick={() => setShowAddSuggestionModal(true)} className="btn btn-primary flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add Suggestion
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -175,7 +178,7 @@ export function HomePage({ filters }: HomePageProps) {
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             {Object.keys(filters).length > 0 ? 'No restaurants match your filters.' : 'No restaurants yet.'}
           </p>
-          {Object.keys(filters).length === 0 && (
+          {Object.keys(filters).length === 0 && isAuthenticated && (
             <button onClick={() => setShowAddSuggestionModal(true)} className="btn btn-primary">
               Add your first suggestion
             </button>
