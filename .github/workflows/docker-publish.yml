@@ -2,23 +2,8 @@ name: Build and Publish Docker Images
 
 on:
   push:
-    branches:
-      - main
-      - develop
     tags:
       - 'v*.*.*'
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/docker-publish.yml'
-  pull_request:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/docker-publish.yml'
   release:
     types: [published]
 
@@ -49,41 +34,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check for backend changes
-        if: matrix.image == 'backend'
-        uses: dorny/paths-filter@v2
-        id: backend-changes
-        with:
-          filters: |
-            backend:
-              - 'backend/**'
-              - '.github/workflows/docker-publish.yml'
-
-      - name: Check for frontend changes
-        if: matrix.image == 'frontend'
-        uses: dorny/paths-filter@v2
-        id: frontend-changes
-        with:
-          filters: |
-            frontend:
-              - 'frontend/**'
-              - '.github/workflows/docker-publish.yml'
-
       - name: Set up Docker Buildx
-        if: |
-          (matrix.image == 'backend' && steps.backend-changes.outputs.backend == 'true') ||
-          (matrix.image == 'frontend' && steps.frontend-changes.outputs.frontend == 'true') ||
-          github.event_name == 'release' ||
-          startsWith(github.ref, 'refs/tags/')
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
-        if: |
-          github.event_name != 'pull_request' &&
-          ((matrix.image == 'backend' && steps.backend-changes.outputs.backend == 'true') ||
-          (matrix.image == 'frontend' && steps.frontend-changes.outputs.frontend == 'true') ||
-          github.event_name == 'release' ||
-          startsWith(github.ref, 'refs/tags/'))
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -91,36 +45,23 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels)
-        if: |
-          (matrix.image == 'backend' && steps.backend-changes.outputs.backend == 'true') ||
-          (matrix.image == 'frontend' && steps.frontend-changes.outputs.frontend == 'true') ||
-          github.event_name == 'release' ||
-          startsWith(github.ref, 'refs/tags/')
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.image }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       - name: Build and push Docker image
-        if: |
-          (matrix.image == 'backend' && steps.backend-changes.outputs.backend == 'true') ||
-          (matrix.image == 'frontend' && steps.frontend-changes.outputs.frontend == 'true') ||
-          github.event_name == 'release' ||
-          startsWith(github.ref, 'refs/tags/')
         id: build
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
