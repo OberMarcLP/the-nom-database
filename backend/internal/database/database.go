@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nomdb/backend/internal/auth"
 	"github.com/nomdb/backend/internal/logger"
+	"github.com/nomdb/backend/internal/services"
 )
 
 var pool *pgxpool.Pool
@@ -134,10 +135,14 @@ func InitDefaultAdmin() error {
 		return fmt.Errorf("failed to hash default password: %w", err)
 	}
 
-	// Update admin user with password
+	// Generate Gravatar URL for admin
+	gravatarService := services.NewGravatarService()
+	avatarURL := gravatarService.GetAvatarURL("admin@nomdb.local", 256)
+
+	// Update admin user with password and Gravatar
 	_, err = pool.Exec(ctx,
-		`UPDATE users SET password_hash = $1, password_must_change = true WHERE email = 'admin@nomdb.local' AND username = 'admin'`,
-		passwordHash)
+		`UPDATE users SET password_hash = $1, avatar_url = $2, password_must_change = true WHERE email = 'admin@nomdb.local' AND username = 'admin'`,
+		passwordHash, avatarURL)
 
 	if err != nil {
 		return fmt.Errorf("failed to set default admin password: %w", err)

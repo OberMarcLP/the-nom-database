@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { Avatar } from './Avatar';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -43,6 +44,16 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">User Profile</h2>
 
           <div className="space-y-6">
+            {/* Avatar Section */}
+            <div className="flex justify-center">
+              <Avatar
+                src={user.avatar_url}
+                alt={user.username}
+                size="xl"
+                fallbackText={user.full_name || user.username}
+              />
+            </div>
+
             {/* User Info */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>

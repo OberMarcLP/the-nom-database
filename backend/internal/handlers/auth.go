@@ -16,6 +16,7 @@ import (
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
+	"github.com/nomdb/backend/internal/services"
 )
 
 // InitAuthService initializes the JWT service and returns it
@@ -87,14 +88,18 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate Gravatar URL
+	gravatarService := services.NewGravatarService()
+	avatarURL := gravatarService.GetAvatarURL(req.Email, 256)
+
 	// Create user
 	ctx := context.Background()
 	var userID int
 	err = database.GetPool().QueryRow(ctx,
-		`INSERT INTO users (email, username, password_hash, provider, full_name, email_verified, password_must_change)
-		VALUES ($1, $2, $3, 'local', $4, false, false)
+		`INSERT INTO users (email, username, password_hash, provider, full_name, avatar_url, email_verified, password_must_change)
+		VALUES ($1, $2, $3, 'local', $4, $5, false, false)
 		RETURNING id`,
-		req.Email, req.Username, passwordHash, req.FullName).Scan(&userID)
+		req.Email, req.Username, passwordHash, req.FullName, avatarURL).Scan(&userID)
 
 	if err != nil {
 		if isDuplicateKeyError(err) {

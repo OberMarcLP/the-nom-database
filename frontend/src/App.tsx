@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Settings, Loader2, User, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { Home, Settings, Loader2, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useTheme } from './hooks/useTheme';
@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { SettingsModal } from './components/SettingsModal';
+import { Avatar } from './components/Avatar';
 
 // Lazy load page components for code splitting
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
@@ -80,19 +81,25 @@ function UserMenu({ onLoginClick, onRegisterClick, onProfileClick }: UserMenuPro
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">
-        {user.username}
-      </span>
       <button
         onClick={onProfileClick}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md"
+        className="flex items-center gap-2 px-2 py-1.5 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md"
+        title="View profile"
       >
-        <User className="w-4 h-4" />
-        <span className="text-sm hidden sm:inline">Profile</span>
+        <Avatar
+          src={user.avatar_url}
+          alt={user.username}
+          size="sm"
+          fallbackText={user.full_name || user.username}
+        />
+        <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">
+          {user.username}
+        </span>
       </button>
       <button
         onClick={handleLogout}
         className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md"
+        title="Logout"
       >
         <LogOut className="w-4 h-4" />
         <span className="text-sm hidden sm:inline">Logout</span>
