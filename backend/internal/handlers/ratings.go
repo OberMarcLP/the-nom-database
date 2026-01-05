@@ -31,8 +31,11 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := database.GetPool().Query(context.Background(),
-		`SELECT id, restaurant_id, food_rating, service_rating, ambiance_rating, comment, created_at
-		FROM ratings WHERE restaurant_id = $1 ORDER BY created_at DESC`, restaurantID)
+		`SELECT r.id, r.restaurant_id, r.food_rating, r.service_rating, r.ambiance_rating, r.comment, r.user_id, r.created_at,
+			u.id, u.username, u.full_name, u.avatar_url
+		FROM ratings r
+		LEFT JOIN users u ON r.user_id = u.id
+		WHERE r.restaurant_id = $1 ORDER BY r.created_at DESC`, restaurantID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -42,10 +45,26 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 	ratings := []models.Rating{}
 	for rows.Next() {
 		var rt models.Rating
-		if err := rows.Scan(&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating, &rt.Comment, &rt.CreatedAt); err != nil {
+		var userID *int
+		var username *string
+		var fullName *string
+		var avatarURL *string
+
+		if err := rows.Scan(&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating, &rt.Comment, &rt.UserID, &rt.CreatedAt,
+			&userID, &username, &fullName, &avatarURL); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		if userID != nil && username != nil {
+			rt.User = &models.UserSummary{
+				ID:        *userID,
+				Username:  *username,
+				FullName:  fullName,
+				AvatarURL: avatarURL,
+			}
+		}
+
 		ratings = append(ratings, rt)
 	}
 

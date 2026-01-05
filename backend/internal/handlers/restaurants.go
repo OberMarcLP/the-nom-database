@@ -264,7 +264,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 	restaurantQuery := fmt.Sprintf(`
 		SELECT
 			r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
-			r.google_place_id, r.category_id, r.created_at, r.updated_at,
+			r.google_place_id, r.category_id, r.created_by, r.updated_by, r.created_at, r.updated_at,
 			c.id, c.name,
 			COALESCE(AVG(rt.food_rating), 0) as avg_food,
 			COALESCE(AVG(rt.service_rating), 0) as avg_service,
@@ -272,13 +272,17 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 			COUNT(rt.id) as rating_count,
 			false as is_suggestion,
 			NULL::integer as suggestion_id,
-			NULL::text as status
+			NULL::text as status,
+			cu.id, cu.username, cu.full_name, cu.avatar_url,
+			uu.id, uu.username, uu.full_name, uu.avatar_url
 			%s
 		FROM restaurants r
 		LEFT JOIN categories c ON r.category_id = c.id
 		LEFT JOIN ratings rt ON r.id = rt.restaurant_id
+		LEFT JOIN users cu ON r.created_by = cu.id
+		LEFT JOIN users uu ON r.updated_by = uu.id
 		%s
-		GROUP BY r.id, c.id
+		GROUP BY r.id, c.id, cu.id, uu.id
 	`, distanceSelect, restaurantWhereClause)
 
 	args = restaurantArgs
@@ -354,7 +358,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		suggestionQuery := fmt.Sprintf(`
 			SELECT
 				s.id, s.name, NULL::text as description, s.address, s.phone, s.website, s.latitude, s.longitude,
-				s.google_place_id, s.suggested_category_id as category_id, s.created_at, s.updated_at,
+				s.google_place_id, s.suggested_category_id as category_id, NULL::integer as created_by, NULL::integer as updated_by, s.created_at, s.updated_at,
 				c.id, c.name,
 				0.0 as avg_food,
 				0.0 as avg_service,
@@ -362,7 +366,9 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 				0 as rating_count,
 				true as is_suggestion,
 				s.id as suggestion_id,
-				s.status
+				s.status,
+				NULL::integer as cu_id, NULL::text as cu_username, NULL::text as cu_full_name, NULL::text as cu_avatar_url,
+				NULL::integer as uu_id, NULL::text as uu_username, NULL::text as uu_full_name, NULL::text as uu_avatar_url
 				%s
 			FROM restaurant_suggestions s
 			LEFT JOIN categories c ON s.suggested_category_id = c.id
@@ -402,24 +408,31 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		var avgFood, avgService, avgAmbiance float64
 		var ratingCount int
 		var distance *float64
+		var cuID, uuID *int
+		var cuUsername, cuFullName, cuAvatarURL *string
+		var uuUsername, uuFullName, uuAvatarURL *string
 
 		var err error
 		if hasDistance {
 			err = rows.Scan(
 				&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-				&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedAt, &rest.UpdatedAt,
+				&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 				&catID, &catName,
 				&avgFood, &avgService, &avgAmbiance, &ratingCount,
 				&rest.IsSuggestion, &rest.SuggestionID, &rest.Status,
+				&cuID, &cuUsername, &cuFullName, &cuAvatarURL,
+				&uuID, &uuUsername, &uuFullName, &uuAvatarURL,
 				&distance,
 			)
 		} else {
 			err = rows.Scan(
 				&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-				&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedAt, &rest.UpdatedAt,
+				&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 				&catID, &catName,
 				&avgFood, &avgService, &avgAmbiance, &ratingCount,
 				&rest.IsSuggestion, &rest.SuggestionID, &rest.Status,
+				&cuID, &cuUsername, &cuFullName, &cuAvatarURL,
+				&uuID, &uuUsername, &uuFullName, &uuAvatarURL,
 			)
 		}
 		if err != nil {
@@ -433,6 +446,24 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 
 		if catID != nil && catName != nil {
 			rest.Category = &models.Category{ID: *catID, Name: *catName}
+		}
+
+		if cuID != nil && cuUsername != nil {
+			rest.CreatedByUser = &models.UserSummary{
+				ID:        *cuID,
+				Username:  *cuUsername,
+				FullName:  cuFullName,
+				AvatarURL: cuAvatarURL,
+			}
+		}
+
+		if uuID != nil && uuUsername != nil {
+			rest.UpdatedByUser = &models.UserSummary{
+				ID:        *uuID,
+				Username:  *uuUsername,
+				FullName:  uuFullName,
+				AvatarURL: uuAvatarURL,
+			}
 		}
 
 		if ratingCount > 0 {
@@ -515,17 +546,21 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 	query := `
 		SELECT
 			r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
-			r.google_place_id, r.category_id, r.created_at, r.updated_at,
+			r.google_place_id, r.category_id, r.created_by, r.updated_by, r.created_at, r.updated_at,
 			c.id, c.name,
 			COALESCE(AVG(rt.food_rating), 0) as avg_food,
 			COALESCE(AVG(rt.service_rating), 0) as avg_service,
 			COALESCE(AVG(rt.ambiance_rating), 0) as avg_ambiance,
-			COUNT(rt.id) as rating_count
+			COUNT(rt.id) as rating_count,
+			cu.id, cu.username, cu.full_name, cu.avatar_url,
+			uu.id, uu.username, uu.full_name, uu.avatar_url
 		FROM restaurants r
 		LEFT JOIN categories c ON r.category_id = c.id
 		LEFT JOIN ratings rt ON r.id = rt.restaurant_id
+		LEFT JOIN users cu ON r.created_by = cu.id
+		LEFT JOIN users uu ON r.updated_by = uu.id
 		WHERE r.id = $1
-		GROUP BY r.id, c.id
+		GROUP BY r.id, c.id, cu.id, uu.id
 	`
 
 	var rest models.Restaurant
@@ -533,12 +568,17 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 	var catName *string
 	var avgFood, avgService, avgAmbiance float64
 	var ratingCount int
+	var cuID, uuID *int
+	var cuUsername, cuFullName, cuAvatarURL *string
+	var uuUsername, uuFullName, uuAvatarURL *string
 
 	err = database.GetPool().QueryRow(ctx, query, id).Scan(
 		&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedAt, &rest.UpdatedAt,
+		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 		&catID, &catName,
 		&avgFood, &avgService, &avgAmbiance, &ratingCount,
+		&cuID, &cuUsername, &cuFullName, &cuAvatarURL,
+		&uuID, &uuUsername, &uuFullName, &uuAvatarURL,
 	)
 	if err != nil {
 		http.Error(w, "Restaurant not found", http.StatusNotFound)
@@ -547,6 +587,24 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 
 	if catID != nil && catName != nil {
 		rest.Category = &models.Category{ID: *catID, Name: *catName}
+	}
+
+	if cuID != nil && cuUsername != nil {
+		rest.CreatedByUser = &models.UserSummary{
+			ID:        *cuID,
+			Username:  *cuUsername,
+			FullName:  cuFullName,
+			AvatarURL: cuAvatarURL,
+		}
+	}
+
+	if uuID != nil && uuUsername != nil {
+		rest.UpdatedByUser = &models.UserSummary{
+			ID:        *uuID,
+			Username:  *uuUsername,
+			FullName:  uuFullName,
+			AvatarURL: uuAvatarURL,
+		}
 	}
 
 	// Get food types

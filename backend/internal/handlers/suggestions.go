@@ -56,10 +56,12 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 			SELECT
 				s.id, s.name, s.address, s.phone, s.website, s.latitude, s.longitude,
 				s.google_place_id, s.suggested_category_id, s.notes, s.status,
-				s.created_at, s.updated_at,
-				c.id, c.name
+				s.user_id, s.created_at, s.updated_at,
+				c.id, c.name,
+				u.id, u.username, u.full_name, u.avatar_url
 			FROM restaurant_suggestions s
 			LEFT JOIN categories c ON s.suggested_category_id = c.id
+			LEFT JOIN users u ON s.user_id = u.id
 			WHERE s.status = $1
 			ORDER BY s.created_at DESC
 		`
@@ -69,10 +71,12 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 			SELECT
 				s.id, s.name, s.address, s.phone, s.website, s.latitude, s.longitude,
 				s.google_place_id, s.suggested_category_id, s.notes, s.status,
-				s.created_at, s.updated_at,
-				c.id, c.name
+				s.user_id, s.created_at, s.updated_at,
+				c.id, c.name,
+				u.id, u.username, u.full_name, u.avatar_url
 			FROM restaurant_suggestions s
 			LEFT JOIN categories c ON s.suggested_category_id = c.id
+			LEFT JOIN users u ON s.user_id = u.id
 			ORDER BY s.created_at DESC
 		`
 	}
@@ -89,12 +93,17 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 		var sug models.RestaurantSuggestion
 		var catID *int
 		var catName *string
+		var userID *int
+		var username *string
+		var fullName *string
+		var avatarURL *string
 
 		if err := rows.Scan(
 			&sug.ID, &sug.Name, &sug.Address, &sug.Phone, &sug.Website, &sug.Latitude, &sug.Longitude,
 			&sug.GooglePlaceID, &sug.SuggestedCategoryID, &sug.Notes, &sug.Status,
-			&sug.CreatedAt, &sug.UpdatedAt,
+			&sug.UserID, &sug.CreatedAt, &sug.UpdatedAt,
 			&catID, &catName,
+			&userID, &username, &fullName, &avatarURL,
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -102,6 +111,15 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 
 		if catID != nil && catName != nil {
 			sug.Category = &models.Category{ID: *catID, Name: *catName}
+		}
+
+		if userID != nil && username != nil {
+			sug.User = &models.UserSummary{
+				ID:        *userID,
+				Username:  *username,
+				FullName:  fullName,
+				AvatarURL: avatarURL,
+			}
 		}
 
 		// Get food types
@@ -143,22 +161,29 @@ func GetSuggestion(w http.ResponseWriter, r *http.Request) {
 		SELECT
 			s.id, s.name, s.address, s.phone, s.website, s.latitude, s.longitude,
 			s.google_place_id, s.suggested_category_id, s.notes, s.status,
-			s.created_at, s.updated_at,
-			c.id, c.name
+			s.user_id, s.created_at, s.updated_at,
+			c.id, c.name,
+			u.id, u.username, u.full_name, u.avatar_url
 		FROM restaurant_suggestions s
 		LEFT JOIN categories c ON s.suggested_category_id = c.id
+		LEFT JOIN users u ON s.user_id = u.id
 		WHERE s.id = $1
 	`
 
 	var sug models.RestaurantSuggestion
 	var catID *int
 	var catName *string
+	var userID *int
+	var username *string
+	var fullName *string
+	var avatarURL *string
 
 	err = database.GetPool().QueryRow(ctx, query, id).Scan(
 		&sug.ID, &sug.Name, &sug.Address, &sug.Phone, &sug.Website, &sug.Latitude, &sug.Longitude,
 		&sug.GooglePlaceID, &sug.SuggestedCategoryID, &sug.Notes, &sug.Status,
-		&sug.CreatedAt, &sug.UpdatedAt,
+		&sug.UserID, &sug.CreatedAt, &sug.UpdatedAt,
 		&catID, &catName,
+		&userID, &username, &fullName, &avatarURL,
 	)
 	if err != nil {
 		http.Error(w, "Suggestion not found", http.StatusNotFound)
@@ -167,6 +192,15 @@ func GetSuggestion(w http.ResponseWriter, r *http.Request) {
 
 	if catID != nil && catName != nil {
 		sug.Category = &models.Category{ID: *catID, Name: *catName}
+	}
+
+	if userID != nil && username != nil {
+		sug.User = &models.UserSummary{
+			ID:        *userID,
+			Username:  *username,
+			FullName:  fullName,
+			AvatarURL: avatarURL,
+		}
 	}
 
 	// Get food types
@@ -206,6 +240,13 @@ func CreateSuggestion(w http.ResponseWriter, r *http.Request) {
 
 	ctx := context.Background()
 
+	// Get user from context
+	user, ok := GetUserFromContext(r)
+	var userID *int
+	if ok && user != nil {
+		userID = &user.ID
+	}
+
 	// Check if restaurant already exists in the restaurants table
 	var existingRestaurantID int
 	var checkQuery string
@@ -234,13 +275,13 @@ func CreateSuggestion(w http.ResponseWriter, r *http.Request) {
 
 	var sug models.RestaurantSuggestion
 	err := database.GetPool().QueryRow(ctx,
-		`INSERT INTO restaurant_suggestions (name, address, phone, website, latitude, longitude, google_place_id, suggested_category_id, notes)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		RETURNING id, name, address, phone, website, latitude, longitude, google_place_id, suggested_category_id, notes, status, created_at, updated_at`,
-		req.Name, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.SuggestedCategoryID, req.Notes,
+		`INSERT INTO restaurant_suggestions (name, address, phone, website, latitude, longitude, google_place_id, suggested_category_id, notes, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		RETURNING id, name, address, phone, website, latitude, longitude, google_place_id, suggested_category_id, notes, status, user_id, created_at, updated_at`,
+		req.Name, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.SuggestedCategoryID, req.Notes, userID,
 	).Scan(
 		&sug.ID, &sug.Name, &sug.Address, &sug.Phone, &sug.Website, &sug.Latitude, &sug.Longitude,
-		&sug.GooglePlaceID, &sug.SuggestedCategoryID, &sug.Notes, &sug.Status, &sug.CreatedAt, &sug.UpdatedAt,
+		&sug.GooglePlaceID, &sug.SuggestedCategoryID, &sug.Notes, &sug.Status, &sug.UserID, &sug.CreatedAt, &sug.UpdatedAt,
 	)
 	if err != nil {
 		// Check if it's a unique constraint violation
