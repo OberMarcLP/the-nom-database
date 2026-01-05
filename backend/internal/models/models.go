@@ -2,6 +2,14 @@ package models
 
 import "time"
 
+// UserSummary represents basic user information for display purposes
+type UserSummary struct {
+	ID        int     `json:"id"`
+	Username  string  `json:"username"`
+	FullName  *string `json:"full_name"`
+	AvatarURL *string `json:"avatar_url"`
+}
+
 type Category struct {
 	ID        int       `json:"id"`
 	Name      string    `json:"name"`
@@ -17,35 +25,41 @@ type FoodType struct {
 }
 
 type Restaurant struct {
-	ID            int        `json:"id"`
-	Name          string     `json:"name"`
-	Description   *string    `json:"description"`
-	Address       *string    `json:"address"`
-	Phone         *string    `json:"phone"`
-	Website       *string    `json:"website"`
-	Latitude      *float64   `json:"latitude"`
-	Longitude     *float64   `json:"longitude"`
-	GooglePlaceID *string    `json:"google_place_id"`
-	CategoryID    *int       `json:"category_id"`
-	Category      *Category  `json:"category,omitempty"`
-	FoodTypes     []FoodType `json:"food_types,omitempty"`
-	AvgRating     *AvgRating `json:"avg_rating,omitempty"`
-	Distance      *float64   `json:"distance,omitempty"` // Distance in km from search location
-	IsSuggestion  bool       `json:"is_suggestion"`      // Indicates if this is from suggestions table
-	SuggestionID  *int       `json:"suggestion_id,omitempty"`
-	Status        *string    `json:"status,omitempty"` // For suggestions: pending, approved, tested, rejected
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	ID            int          `json:"id"`
+	Name          string       `json:"name"`
+	Description   *string      `json:"description"`
+	Address       *string      `json:"address"`
+	Phone         *string      `json:"phone"`
+	Website       *string      `json:"website"`
+	Latitude      *float64     `json:"latitude"`
+	Longitude     *float64     `json:"longitude"`
+	GooglePlaceID *string      `json:"google_place_id"`
+	CategoryID    *int         `json:"category_id"`
+	Category      *Category    `json:"category,omitempty"`
+	FoodTypes     []FoodType   `json:"food_types,omitempty"`
+	AvgRating     *AvgRating   `json:"avg_rating,omitempty"`
+	Distance      *float64     `json:"distance,omitempty"` // Distance in km from search location
+	IsSuggestion  bool         `json:"is_suggestion"`      // Indicates if this is from suggestions table
+	SuggestionID  *int         `json:"suggestion_id,omitempty"`
+	Status        *string      `json:"status,omitempty"`    // For suggestions: pending, approved, tested, rejected
+	CreatedBy     *int         `json:"created_by,omitempty"` // User ID who created this restaurant
+	UpdatedBy     *int         `json:"updated_by,omitempty"` // User ID who last updated this restaurant
+	CreatedByUser *UserSummary `json:"created_by_user,omitempty"`
+	UpdatedByUser *UserSummary `json:"updated_by_user,omitempty"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
 }
 
 type Rating struct {
-	ID             int       `json:"id"`
-	RestaurantID   int       `json:"restaurant_id"`
-	FoodRating     int       `json:"food_rating"`
-	ServiceRating  int       `json:"service_rating"`
-	AmbianceRating int       `json:"ambiance_rating"`
-	Comment        *string   `json:"comment"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID             int          `json:"id"`
+	RestaurantID   int          `json:"restaurant_id"`
+	UserID         *int         `json:"user_id,omitempty"`
+	User           *UserSummary `json:"user,omitempty"`
+	FoodRating     int          `json:"food_rating"`
+	ServiceRating  int          `json:"service_rating"`
+	AmbianceRating int          `json:"ambiance_rating"`
+	Comment        *string      `json:"comment"`
+	CreatedAt      time.Time    `json:"created_at"`
 }
 
 type AvgRating struct {
@@ -124,21 +138,23 @@ type GooglePlaceResult struct{
 
 // Restaurant Suggestion System
 type RestaurantSuggestion struct {
-	ID                  int        `json:"id"`
-	Name                string     `json:"name"`
-	Address             *string    `json:"address"`
-	Phone               *string    `json:"phone"`
-	Website             *string    `json:"website"`
-	Latitude            *float64   `json:"latitude"`
-	Longitude           *float64   `json:"longitude"`
-	GooglePlaceID       *string    `json:"google_place_id"`
-	SuggestedCategoryID *int       `json:"suggested_category_id"`
-	Category            *Category  `json:"category,omitempty"`
-	FoodTypes           []FoodType `json:"food_types,omitempty"`
-	Notes               *string    `json:"notes"`
-	Status              string     `json:"status"`
-	CreatedAt           time.Time  `json:"created_at"`
-	UpdatedAt           time.Time  `json:"updated_at"`
+	ID                  int          `json:"id"`
+	Name                string       `json:"name"`
+	Address             *string      `json:"address"`
+	Phone               *string      `json:"phone"`
+	Website             *string      `json:"website"`
+	Latitude            *float64     `json:"latitude"`
+	Longitude           *float64     `json:"longitude"`
+	GooglePlaceID       *string      `json:"google_place_id"`
+	SuggestedCategoryID *int         `json:"suggested_category_id"`
+	Category            *Category    `json:"category,omitempty"`
+	FoodTypes           []FoodType   `json:"food_types,omitempty"`
+	Notes               *string      `json:"notes"`
+	Status              string       `json:"status"`
+	UserID              *int         `json:"user_id,omitempty"`
+	User                *UserSummary `json:"user,omitempty"`
+	CreatedAt           time.Time    `json:"created_at"`
+	UpdatedAt           time.Time    `json:"updated_at"`
 }
 
 type CreateSuggestionRequest struct {

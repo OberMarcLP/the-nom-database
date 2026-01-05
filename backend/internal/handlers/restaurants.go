@@ -596,17 +596,24 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get user from context
+	user, ok := GetUserFromContext(r)
+	var userID *int
+	if ok && user != nil {
+		userID = &user.ID
+	}
+
 	ctx := context.Background()
 
 	var rest models.Restaurant
 	err := database.GetPool().QueryRow(ctx,
-		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_at, updated_at`,
-		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID,
+		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_by, updated_by)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_by, updated_by, created_at, updated_at`,
+		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, userID, userID,
 	).Scan(
 		&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedAt, &rest.UpdatedAt,
+		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 	)
 	if err != nil {
 		// Check if it's a unique constraint violation
@@ -670,6 +677,13 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get user from context
+	user, ok := GetUserFromContext(r)
+	var userID *int
+	if ok && user != nil {
+		userID = &user.ID
+	}
+
 	ctx := context.Background()
 
 	var rest models.Restaurant
@@ -684,13 +698,14 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 			longitude = COALESCE($7, longitude),
 			google_place_id = COALESCE($8, google_place_id),
 			category_id = COALESCE($9, category_id),
+			updated_by = $10,
 			updated_at = NOW()
-		WHERE id = $10
-		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_at, updated_at`,
-		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, id,
+		WHERE id = $11
+		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_by, updated_by, created_at, updated_at`,
+		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, userID, id,
 	).Scan(
 		&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedAt, &rest.UpdatedAt,
+		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 	)
 	if err != nil {
 		http.Error(w, "Restaurant not found", http.StatusNotFound)

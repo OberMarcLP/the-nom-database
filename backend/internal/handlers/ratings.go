@@ -92,13 +92,20 @@ func CreateRating(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get user from context
+	user, ok := GetUserFromContext(r)
+	var userID *int
+	if ok && user != nil {
+		userID = &user.ID
+	}
+
 	var rt models.Rating
 	err = database.GetPool().QueryRow(context.Background(),
-		`INSERT INTO ratings (restaurant_id, food_rating, service_rating, ambiance_rating, comment)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, restaurant_id, food_rating, service_rating, ambiance_rating, comment, created_at`,
-		req.RestaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment,
-	).Scan(&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating, &rt.Comment, &rt.CreatedAt)
+		`INSERT INTO ratings (restaurant_id, food_rating, service_rating, ambiance_rating, comment, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, restaurant_id, food_rating, service_rating, ambiance_rating, comment, user_id, created_at`,
+		req.RestaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, userID,
+	).Scan(&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating, &rt.Comment, &rt.UserID, &rt.CreatedAt)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
