@@ -14,6 +14,13 @@ export interface FoodType {
   updated_at: string;
 }
 
+export interface UserSummary {
+  id: number;
+  username: string;
+  full_name: string | null;
+  avatar_url: string | null;
+}
+
 export interface AvgRating {
   food: number;
   service: number;
@@ -40,6 +47,10 @@ export interface Restaurant {
   is_suggestion: boolean; // Indicates if this is from suggestions table
   suggestion_id?: number;
   status?: 'pending' | 'approved' | 'tested' | 'rejected'; // For suggestions
+  created_by?: number;
+  updated_by?: number;
+  created_by_user?: UserSummary;
+  updated_by_user?: UserSummary;
   created_at: string;
   updated_at: string;
 }
@@ -86,6 +97,8 @@ export interface Rating {
   service_rating: number;
   ambiance_rating: number;
   comment: string | null;
+  user_id?: number;
+  user?: UserSummary;
   created_at: string;
 }
 
@@ -261,6 +274,8 @@ export interface RestaurantSuggestion {
   food_types?: FoodType[];
   notes: string | null;
   status: 'pending' | 'approved' | 'tested' | 'rejected';
+  user_id?: number;
+  user?: UserSummary;
   created_at: string;
   updated_at: string;
 }

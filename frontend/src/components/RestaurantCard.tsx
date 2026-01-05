@@ -1,6 +1,7 @@
 import { MapPin, Utensils, Tag, Lightbulb, CheckCircle, XCircle } from 'lucide-react';
 import { Restaurant } from '../services/api';
 import { StarRating } from './StarRating';
+import { UserBadge } from './UserBadge';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -66,6 +67,13 @@ export function RestaurantCard({ restaurant, onClick, onReview, onReject }: Rest
             <span className="text-sm text-gray-600 dark:text-gray-400">
               {restaurant.avg_rating.overall.toFixed(1)} ({restaurant.avg_rating.count} reviews)
             </span>
+          </div>
+        )}
+
+        {restaurant.created_by_user && (
+          <div className="flex items-center gap-2 pt-2 mt-2 border-t border-white/20 dark:border-white/10">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Created by</span>
+            <UserBadge user={restaurant.created_by_user} size="sm" />
           </div>
         )}
       </div>

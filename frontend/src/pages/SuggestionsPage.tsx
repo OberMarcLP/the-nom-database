@@ -13,6 +13,7 @@ import { Modal } from '../components/Modal';
 import { ReviewConvertModal } from '../components/ReviewConvertModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { AlertDialog } from '../components/AlertDialog';
+import { UserBadge } from '../components/UserBadge';
 
 type StatusFilter = '' | 'pending' | 'approved' | 'tested' | 'rejected';
 
@@ -200,9 +201,14 @@ export function SuggestionsPage() {
                     <p className="text-sm text-gray-600 dark:text-gray-400 italic">{suggestion.notes}</p>
                   )}
 
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                    Suggested {new Date(suggestion.created_at).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                      Suggested {new Date(suggestion.created_at).toLocaleDateString()}
+                    </p>
+                    {suggestion.user && (
+                      <UserBadge user={suggestion.user} size="sm" />
+                    )}
+                  </div>
                 </div>
 
                 {/* Action Buttons */}

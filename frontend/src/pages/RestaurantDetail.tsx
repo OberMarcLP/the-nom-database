@@ -7,6 +7,7 @@ import { RestaurantMap } from '../components/RestaurantMap';
 import { RatingForm } from '../components/RatingForm';
 import { PhotoUpload } from '../components/PhotoUpload';
 import { PhotoGallery } from '../components/PhotoGallery';
+import { UserBadge } from '../components/UserBadge';
 
 interface RestaurantDetailProps {
   restaurant: Restaurant;
@@ -247,9 +248,14 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
                   {rating.comment && (
                     <p className="text-gray-600 dark:text-gray-400 text-sm">{rating.comment}</p>
                   )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                    {new Date(rating.created_at).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {new Date(rating.created_at).toLocaleDateString()}
+                    </p>
+                    {rating.user && (
+                      <UserBadge user={rating.user} size="sm" />
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
