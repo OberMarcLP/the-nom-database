@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface UserProfileModalProps {
 }
 
 export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
+  useEscapeKey(onClose, isOpen);
   const { user } = useAuth();
   const navigate = useNavigate();
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Loader2, Tag, Utensils, X } from 'lucide-react';
 import { Category, FoodType, getCategories, getFoodTypes, createCategory, updateCategory, deleteCategory, createFoodType, updateFoodType, deleteFoodType } from '../services/api';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+  useEscapeKey(onClose, isOpen);
   const [categories, setCategories] = useState<Category[]>([]);
   const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
   const [loading, setLoading] = useState(true);
