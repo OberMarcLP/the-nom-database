@@ -11,20 +11,11 @@ interface RestaurantCardProps {
 }
 
 export function RestaurantCard({ restaurant, onClick, onReview, onReject }: RestaurantCardProps) {
-  const handleClick = () => {
-    // Don't allow clicking on suggestions to view details
-    if (!restaurant.is_suggestion) {
-      onClick();
-    }
-  };
-
   return (
     <div
-      className={`card-glass hover:shadow-2xl hover:scale-105 transition-all duration-300 group overflow-hidden relative p-6 ${
-        restaurant.is_suggestion ? '' : 'cursor-pointer'
-      }`}
+      className="card-glass hover:shadow-2xl hover:scale-105 transition-all duration-300 group overflow-hidden relative p-6 cursor-pointer"
     >
-      <div onClick={handleClick}>
+      <div onClick={onClick}>
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="text-xl font-semibold flex-1">{restaurant.name}</h3>
           {restaurant.is_suggestion && (

@@ -22,6 +22,7 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
   const navigate = useNavigate();
   const [showAddSuggestionModal, setShowAddSuggestionModal] = useState(false);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<number | null>(null);
+  const [viewingSuggestion, setViewingSuggestion] = useState<Restaurant | null>(null);
   const [editingRestaurant, setEditingRestaurant] = useState<Restaurant | null>(null);
   const [reviewingSuggestion, setReviewingSuggestion] = useState<Restaurant | null>(null);
   const [rejectingRestaurant, setRejectingRestaurant] = useState<Restaurant | null>(null);
@@ -190,7 +191,13 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
-              onClick={() => setSelectedRestaurantId(restaurant.id)}
+              onClick={() => {
+                if (restaurant.is_suggestion) {
+                  setViewingSuggestion(restaurant);
+                } else {
+                  setSelectedRestaurantId(restaurant.id);
+                }
+              }}
               onReview={handleReviewSuggestion}
               onReject={handleRejectSuggestion}
             />
@@ -230,6 +237,96 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
             }}
             onDelete={handleDelete}
           />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={viewingSuggestion !== null}
+        onClose={() => setViewingSuggestion(null)}
+        title={viewingSuggestion?.name || ''}
+      >
+        {viewingSuggestion && (
+          <div className="space-y-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                This is a pending suggestion. Review and convert it to add it to the database.
+              </p>
+            </div>
+
+            {viewingSuggestion.address && (
+              <div>
+                <h3 className="font-semibold mb-2">Address</h3>
+                <p className="text-gray-600 dark:text-gray-400">{viewingSuggestion.address}</p>
+              </div>
+            )}
+
+            {viewingSuggestion.phone && (
+              <div>
+                <h3 className="font-semibold mb-2">Phone</h3>
+                <p className="text-gray-600 dark:text-gray-400">{viewingSuggestion.phone}</p>
+              </div>
+            )}
+
+            {viewingSuggestion.website && (
+              <div>
+                <h3 className="font-semibold mb-2">Website</h3>
+                <a
+                  href={viewingSuggestion.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {viewingSuggestion.website}
+                </a>
+              </div>
+            )}
+
+            {viewingSuggestion.category && (
+              <div>
+                <h3 className="font-semibold mb-2">Category</h3>
+                <span className="badge-category">
+                  {viewingSuggestion.category.name}
+                </span>
+              </div>
+            )}
+
+            {viewingSuggestion.notes && (
+              <div>
+                <h3 className="font-semibold mb-2">Notes</h3>
+                <p className="text-gray-600 dark:text-gray-400">{viewingSuggestion.notes}</p>
+              </div>
+            )}
+
+            {viewingSuggestion.user && (
+              <div>
+                <h3 className="font-semibold mb-2">Suggested by</h3>
+                <UserBadge user={viewingSuggestion.user} />
+              </div>
+            )}
+
+            {isAuthenticated && (
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => {
+                    setViewingSuggestion(null);
+                    handleReviewSuggestion(viewingSuggestion);
+                  }}
+                  className="btn-glass-success flex-1"
+                >
+                  Review & Convert
+                </button>
+                <button
+                  onClick={() => {
+                    setViewingSuggestion(null);
+                    handleRejectSuggestion(viewingSuggestion);
+                  }}
+                  className="btn-glass-danger flex-1"
+                >
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </Modal>
 
