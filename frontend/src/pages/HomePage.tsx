@@ -12,6 +12,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { AlertDialog } from '../components/AlertDialog';
 import { RestaurantDetail } from './RestaurantDetail';
 import { UserBadge } from '../components/UserBadge';
+import { RestaurantMap } from '../components/RestaurantMap';
 
 interface HomePageProps {
   filters: RestaurantFilters;
@@ -253,6 +254,14 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
                 This is a pending suggestion. Review and convert it to add it to the database.
               </p>
             </div>
+
+            {viewingSuggestion.latitude && viewingSuggestion.longitude && (
+              <RestaurantMap
+                latitude={viewingSuggestion.latitude}
+                longitude={viewingSuggestion.longitude}
+                name={viewingSuggestion.name}
+              />
+            )}
 
             {viewingSuggestion.address && (
               <div>
