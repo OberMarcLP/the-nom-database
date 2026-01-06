@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, CheckCircle, XCircle, Tag, Utensils, MapPin, Phone, Globe } from 'lucide-react';
 import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters } from '../services/api';
 import { useRestaurants, useRestaurant, useUpdateRestaurant, useDeleteRestaurant, useCreateSuggestion, useConvertSuggestion, useDeleteSuggestion } from '../hooks/useApi';
 import { RestaurantCard } from '../components/RestaurantCard';
@@ -248,81 +248,23 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
         title={viewingSuggestion?.name || ''}
       >
         {viewingSuggestion && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 This is a pending suggestion. Review and convert it to add it to the database.
               </p>
             </div>
 
-            {viewingSuggestion.latitude && viewingSuggestion.longitude && (
-              <RestaurantMap
-                latitude={viewingSuggestion.latitude}
-                longitude={viewingSuggestion.longitude}
-                name={viewingSuggestion.name}
-              />
-            )}
-
-            {viewingSuggestion.address && (
-              <div>
-                <h3 className="font-semibold mb-2">Address</h3>
-                <p className="text-gray-600 dark:text-gray-400">{viewingSuggestion.address}</p>
-              </div>
-            )}
-
-            {viewingSuggestion.phone && (
-              <div>
-                <h3 className="font-semibold mb-2">Phone</h3>
-                <p className="text-gray-600 dark:text-gray-400">{viewingSuggestion.phone}</p>
-              </div>
-            )}
-
-            {viewingSuggestion.website && (
-              <div>
-                <h3 className="font-semibold mb-2">Website</h3>
-                <a
-                  href={viewingSuggestion.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  {viewingSuggestion.website}
-                </a>
-              </div>
-            )}
-
-            {viewingSuggestion.category && (
-              <div>
-                <h3 className="font-semibold mb-2">Category</h3>
-                <span className="badge-category">
-                  {viewingSuggestion.category.name}
-                </span>
-              </div>
-            )}
-
-            {viewingSuggestion.notes && (
-              <div>
-                <h3 className="font-semibold mb-2">Notes</h3>
-                <p className="text-gray-600 dark:text-gray-400">{viewingSuggestion.notes}</p>
-              </div>
-            )}
-
-            {viewingSuggestion.user && (
-              <div>
-                <h3 className="font-semibold mb-2">Suggested by</h3>
-                <UserBadge user={viewingSuggestion.user} />
-              </div>
-            )}
-
             {isAuthenticated && (
-              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-2">
                 <button
                   onClick={() => {
                     setViewingSuggestion(null);
                     handleReviewSuggestion(viewingSuggestion);
                   }}
-                  className="btn-glass-success flex-1"
+                  className="btn btn-primary flex items-center gap-2"
                 >
+                  <CheckCircle className="w-4 h-4" />
                   Review & Convert
                 </button>
                 <button
@@ -330,10 +272,69 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
                     setViewingSuggestion(null);
                     handleRejectSuggestion(viewingSuggestion);
                   }}
-                  className="btn-glass-danger flex-1"
+                  className="btn btn-danger flex items-center gap-2"
                 >
+                  <XCircle className="w-4 h-4" />
                   Reject
                 </button>
+              </div>
+            )}
+
+            {viewingSuggestion.notes && (
+              <p className="text-gray-600 dark:text-gray-400">{viewingSuggestion.notes}</p>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              {viewingSuggestion.category && (
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                  <Tag className="w-4 h-4" />
+                  {viewingSuggestion.category.name}
+                </span>
+              )}
+              {viewingSuggestion.food_types?.map((ft) => (
+                <span key={ft.id} className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
+                  <Utensils className="w-4 h-4" />
+                  {ft.name}
+                </span>
+              ))}
+            </div>
+
+            {viewingSuggestion.address && (
+              <div className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
+                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <span>{viewingSuggestion.address}</span>
+              </div>
+            )}
+
+            {viewingSuggestion.phone && (
+              <a href={`tel:${viewingSuggestion.phone}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
+                <Phone className="w-5 h-5 flex-shrink-0" />
+                <span>{viewingSuggestion.phone}</span>
+              </a>
+            )}
+
+            {viewingSuggestion.website && (
+              <a href={viewingSuggestion.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
+                <Globe className="w-5 h-5 flex-shrink-0" />
+                <span className="truncate">{viewingSuggestion.website}</span>
+              </a>
+            )}
+
+            {viewingSuggestion.latitude && viewingSuggestion.longitude && (
+              <div>
+                <h3 className="font-semibold mb-3">Location</h3>
+                <RestaurantMap
+                  latitude={viewingSuggestion.latitude}
+                  longitude={viewingSuggestion.longitude}
+                  name={viewingSuggestion.name}
+                />
+              </div>
+            )}
+
+            {viewingSuggestion.user && (
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="font-semibold mb-2">Suggested by</h3>
+                <UserBadge user={viewingSuggestion.user} />
               </div>
             )}
           </div>
