@@ -11,6 +11,7 @@ import { Modal } from '../components/Modal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { AlertDialog } from '../components/AlertDialog';
 import { RestaurantDetail } from './RestaurantDetail';
+import { UserBadge } from '../components/UserBadge';
 
 interface HomePageProps {
   filters: RestaurantFilters;

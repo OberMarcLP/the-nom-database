@@ -47,6 +47,9 @@ export interface Restaurant {
   is_suggestion: boolean; // Indicates if this is from suggestions table
   suggestion_id?: number;
   status?: 'pending' | 'approved' | 'tested' | 'rejected'; // For suggestions
+  notes?: string | null; // For suggestions
+  user_id?: number; // For suggestions
+  user?: UserSummary; // For suggestions
   created_by?: number;
   updated_by?: number;
   created_by_user?: UserSummary;
