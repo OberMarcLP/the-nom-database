@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
 	"github.com/nomdb/backend/internal/services"
@@ -135,7 +136,8 @@ func WithUserRoles(next http.Handler) http.Handler {
 		user, ok := r.Context().Value(models.UserContextKey).(*models.User)
 		if ok && user != nil {
 			// Load roles and permissions for this user
-			roles, permissions, err := services.GetUserRolesAndPermissions(r.Context(), user.ID)
+			db := database.GetPool()
+			roles, permissions, err := services.GetUserRolesAndPermissions(r.Context(), db, user.ID)
 			if err != nil {
 				logger.Error("Failed to load user roles/permissions for user %d: %v", user.ID, err)
 				// Continue without roles/permissions rather than failing the request

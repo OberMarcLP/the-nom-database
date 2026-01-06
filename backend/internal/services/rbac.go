@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nomdb/backend/internal/database"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nomdb/backend/internal/models"
 )
 
 // GetUserRolesAndPermissions fetches all roles and permissions for a user
-func GetUserRolesAndPermissions(ctx context.Context, userID int) ([]models.Role, []string, error) {
-	db := database.GetDB()
+func GetUserRolesAndPermissions(ctx context.Context, db *pgxpool.Pool, userID int) ([]models.Role, []string, error) {
 
 	// Query to get roles with their permissions
 	query := `
