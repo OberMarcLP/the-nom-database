@@ -13,12 +13,34 @@ type User struct {
 	FullName           *string    `json:"full_name"`
 	AvatarURL          *string    `json:"avatar_url"`
 	IsActive           bool       `json:"is_active"`
-	IsAdmin            bool       `json:"is_admin"`
+	IsAdmin            bool       `json:"is_admin"` // Deprecated - use Roles instead
 	EmailVerified      bool       `json:"email_verified"`
 	PasswordMustChange bool       `json:"password_must_change"`
 	LastLoginAt        *time.Time `json:"last_login_at"`
 	CreatedAt          time.Time  `json:"created_at"`
 	UpdatedAt          time.Time  `json:"updated_at"`
+	Roles              []Role     `json:"roles,omitempty"`       // User's roles
+	Permissions        []string   `json:"permissions,omitempty"` // Flattened list of permission names
+}
+
+// Role represents a role in the RBAC system
+type Role struct {
+	ID          int          `json:"id"`
+	Name        string       `json:"name"`
+	Description *string      `json:"description,omitempty"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+	Permissions []Permission `json:"permissions,omitempty"`
+}
+
+// Permission represents a specific permission in the RBAC system
+type Permission struct {
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description,omitempty"`
+	Resource    string    `json:"resource"` // e.g., 'restaurants', 'users', 'suggestions'
+	Action      string    `json:"action"`   // e.g., 'create', 'read', 'update', 'delete'
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // Session represents a user session with refresh token
