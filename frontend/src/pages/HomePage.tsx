@@ -13,6 +13,7 @@ import { AlertDialog } from '../components/AlertDialog';
 import { RestaurantDetail } from './RestaurantDetail';
 import { UserBadge } from '../components/UserBadge';
 import { RestaurantMap } from '../components/RestaurantMap';
+import { Recommendations } from '../components/Recommendations';
 
 interface HomePageProps {
   filters: RestaurantFilters;
@@ -161,22 +162,39 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Restaurants</h1>
-        {isAuthenticated && (
-          <button onClick={() => setShowAddSuggestionModal(true)} className="btn btn-primary flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            Add Suggestion
-          </button>
-        )}
-      </div>
+    <div className="space-y-12">
+      {/* Recommendations Section - Only show when no filters are active */}
+      {Object.keys(filters).length === 0 && (
+        <Recommendations
+          onRestaurantClick={(restaurant) => {
+            if (restaurant.is_suggestion) {
+              setViewingSuggestion(restaurant);
+            } else {
+              setSelectedRestaurantId(restaurant.id);
+            }
+          }}
+        />
+      )}
 
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      {/* Main Restaurant List */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">
+            {Object.keys(filters).length > 0 ? 'Search Results' : 'All Restaurants'}
+          </h1>
+          {isAuthenticated && (
+            <button onClick={() => setShowAddSuggestionModal(true)} className="btn btn-primary flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Add Suggestion
+            </button>
+          )}
         </div>
-      ) : restaurants.length === 0 ? (
+
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          </div>
+        ) : restaurants.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             {Object.keys(filters).length > 0 ? 'No restaurants match your filters.' : 'No restaurants yet.'}
@@ -187,25 +205,26 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
             </button>
           )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {restaurants.map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-              onClick={() => {
-                if (restaurant.is_suggestion) {
-                  setViewingSuggestion(restaurant);
-                } else {
-                  setSelectedRestaurantId(restaurant.id);
-                }
-              }}
-              onReview={handleReviewSuggestion}
-              onReject={handleRejectSuggestion}
-            />
-          ))}
-        </div>
-      )}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {restaurants.map((restaurant) => (
+              <RestaurantCard
+                key={restaurant.id}
+                restaurant={restaurant}
+                onClick={() => {
+                  if (restaurant.is_suggestion) {
+                    setViewingSuggestion(restaurant);
+                  } else {
+                    setSelectedRestaurantId(restaurant.id);
+                  }
+                }}
+                onReview={handleReviewSuggestion}
+                onReject={handleRejectSuggestion}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <Modal isOpen={showAddSuggestionModal} onClose={() => setShowAddSuggestionModal(false)} title="Add Suggestion">
         <SuggestionForm onSubmit={handleCreateSuggestion} onCancel={() => setShowAddSuggestionModal(false)} />

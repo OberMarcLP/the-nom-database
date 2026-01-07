@@ -297,6 +297,17 @@ func main() {
 	// Get lists for a specific restaurant
 	publicRoutes.HandleFunc("/restaurants/{restaurantId}/lists", handlers.GetRestaurantLists).Methods("GET")
 
+	// Recommendations (public routes)
+	publicRoutes.HandleFunc("/recommendations/similar", handlers.GetSimilarRestaurants).Methods("GET")
+	publicRoutes.HandleFunc("/recommendations/popular", handlers.GetPopularRestaurants).Methods("GET")
+	publicRoutes.HandleFunc("/recommendations/recent", handlers.GetRecentRestaurants).Methods("GET")
+
+	// Personalized recommendations (authenticated only)
+	recommendationsProtected := api.PathPrefix("/recommendations").Subrouter()
+	recommendationsProtected.Use(middleware.AuthMiddleware)
+	recommendationsProtected.Use(middleware.WithUserRoles)
+	recommendationsProtected.HandleFunc("/personalized", handlers.GetPersonalizedRecommendations).Methods("GET")
+
 	// User Profile
 	publicRoutes.HandleFunc("/users/{id}", handlers.GetUserProfile).Methods("GET")
 	publicRoutes.HandleFunc("/users/{id}/reviews", handlers.GetUserReviews).Methods("GET")

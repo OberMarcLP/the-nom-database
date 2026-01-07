@@ -616,3 +616,29 @@ export const updateUserProfile = (data: { username?: string; full_name?: string;
     method: 'PUT',
     body: JSON.stringify(data),
   });
+
+// Recommendations
+export const getSimilarRestaurants = (restaurantId: number, limit?: number) => {
+  const params = new URLSearchParams({ restaurant_id: restaurantId.toString() });
+  if (limit) params.append('limit', limit.toString());
+  return fetchApi<Restaurant[]>(`/recommendations/similar?${params.toString()}`);
+};
+
+export const getPopularRestaurants = (limit?: number, minRatings?: number) => {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit.toString());
+  if (minRatings) params.append('min_ratings', minRatings.toString());
+  return fetchApi<Restaurant[]>(`/recommendations/popular?${params.toString()}`);
+};
+
+export const getRecentRestaurants = (limit?: number) => {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit.toString());
+  return fetchApi<Restaurant[]>(`/recommendations/recent?${params.toString()}`);
+};
+
+export const getPersonalizedRecommendations = (limit?: number) => {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit.toString());
+  return fetchApi<Restaurant[]>(`/recommendations/personalized?${params.toString()}`);
+};
