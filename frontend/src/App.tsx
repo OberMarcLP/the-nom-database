@@ -48,16 +48,21 @@ const queryClient = new QueryClient({
 interface UserMenuProps {
   onLoginClick: () => void;
   onRegisterClick: () => void;
-  onProfileClick: () => void;
 }
 
-function UserMenu({ onLoginClick, onRegisterClick, onProfileClick }: UserMenuProps) {
+function UserMenu({ onLoginClick, onRegisterClick }: UserMenuProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout();
     navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    if (user) {
+      navigate(`/users/${user.id}`);
+    }
   };
 
   if (!user) {
@@ -84,7 +89,7 @@ function UserMenu({ onLoginClick, onRegisterClick, onProfileClick }: UserMenuPro
   return (
     <div className="flex items-center gap-2">
       <button
-        onClick={onProfileClick}
+        onClick={handleProfileClick}
         className="flex items-center gap-2 px-2 py-1.5 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md"
         title="View profile"
       >
@@ -131,14 +136,6 @@ function AppContent() {
   const handleRegisterClick = () => {
     setAuthModalMode('register');
     setAuthModalOpen(true);
-  };
-
-  const navigate = useNavigate();
-
-  const handleProfileClick = () => {
-    if (user) {
-      navigate(`/users/${user.id}`);
-    }
   };
 
   const handleSettingsClick = () => {
@@ -201,7 +198,7 @@ function AppContent() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <UserMenu onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onProfileClick={handleProfileClick} />
+                        <UserMenu onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} />
                         <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
                       </div>
                     </div>
