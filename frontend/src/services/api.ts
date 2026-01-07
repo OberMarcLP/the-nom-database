@@ -40,6 +40,7 @@ export interface Restaurant {
   longitude: number | null;
   google_place_id: string | null;
   category_id: number | null;
+  price_range?: number | null; // 1 = $, 2 = $$, 3 = $$$, 4 = $$$$
   category?: Category;
   food_types?: FoodType[];
   avg_rating?: AvgRating;
@@ -59,13 +60,16 @@ export interface Restaurant {
 }
 
 export interface RestaurantFilters {
+  q?: string; // search query
   category_id?: number;
   food_type_ids?: number[];
+  price_range?: number; // max price range 1-4
+  min_rating?: number; // minimum average rating 1-5
+  sort?: 'name' | 'rating' | 'date';
   lat?: number;
   lng?: number;
   radius?: number; // in km
   include_suggestions?: boolean;
-  q?: string; // search query
 }
 
 export interface PaginatedResponse<T> {
@@ -197,11 +201,23 @@ export const deleteFoodType = (id: number) =>
 // Restaurants
 export const getRestaurants = (filters?: RestaurantFilters) => {
   const params = new URLSearchParams();
+  if (filters?.q) {
+    params.set('q', filters.q);
+  }
   if (filters?.category_id) {
     params.set('category_id', filters.category_id.toString());
   }
   if (filters?.food_type_ids && filters.food_type_ids.length > 0) {
     params.set('food_type_ids', filters.food_type_ids.join(','));
+  }
+  if (filters?.price_range) {
+    params.set('price_range', filters.price_range.toString());
+  }
+  if (filters?.min_rating) {
+    params.set('min_rating', filters.min_rating.toString());
+  }
+  if (filters?.sort) {
+    params.set('sort', filters.sort);
   }
   if (filters?.lat !== undefined && filters?.lng !== undefined && filters?.radius !== undefined) {
     params.set('lat', filters.lat.toString());

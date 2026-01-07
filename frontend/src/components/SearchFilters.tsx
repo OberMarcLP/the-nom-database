@@ -18,7 +18,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
   const [gettingCurrentLocation, setGettingCurrentLocation] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
-  const hasActiveFilters = filters.category_id || (filters.food_type_ids && filters.food_type_ids.length > 0) || filters.radius;
+  const hasActiveFilters = filters.category_id || (filters.food_type_ids && filters.food_type_ids.length > 0) || filters.radius || filters.price_range || filters.min_rating || filters.sort;
 
   // Search for locations
   useEffect(() => {
@@ -174,6 +174,82 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
                   }`}
                 >
                   {ft.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Price Range Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Price Range
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 1, label: '$' },
+                { value: 2, label: '$$' },
+                { value: 3, label: '$$$' },
+                { value: 4, label: '$$$$' }
+              ].map((price) => (
+                <button
+                  key={price.value}
+                  onClick={() => onFiltersChange({ ...filters, price_range: filters.price_range === price.value ? undefined : price.value })}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                    filters.price_range === price.value
+                      ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-md border border-green-500/30 text-green-700 dark:text-green-300 shadow-lg'
+                      : 'btn-glass'
+                  }`}
+                >
+                  {price.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Shows restaurants up to and including selected price range</p>
+          </div>
+
+          {/* Rating Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Minimum Rating
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <button
+                  key={rating}
+                  onClick={() => onFiltersChange({ ...filters, min_rating: filters.min_rating === rating ? undefined : rating })}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                    filters.min_rating === rating
+                      ? 'bg-gradient-to-r from-yellow-400/30 to-orange-400/30 backdrop-blur-md border border-yellow-500/40 text-yellow-700 dark:text-yellow-200 shadow-lg'
+                      : 'btn-glass'
+                  }`}
+                >
+                  {rating}+ ⭐
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sort Options */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Sort By
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'date', label: 'Recently Added' },
+                { value: 'name', label: 'Name (A-Z)' },
+                { value: 'rating', label: 'Highest Rated' }
+              ].map((sort) => (
+                <button
+                  key={sort.value}
+                  onClick={() => onFiltersChange({ ...filters, sort: filters.sort === sort.value ? undefined : sort.value as any })}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                    filters.sort === sort.value
+                      ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-md border border-purple-500/30 text-purple-700 dark:text-purple-300 shadow-lg'
+                      : 'btn-glass'
+                  }`}
+                >
+                  {sort.label}
                 </button>
               ))}
             </div>

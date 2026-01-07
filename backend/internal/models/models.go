@@ -39,6 +39,7 @@ type Restaurant struct {
 	FoodTypes     []FoodType   `json:"food_types,omitempty"`
 	AvgRating     *AvgRating   `json:"avg_rating,omitempty"`
 	Distance      *float64     `json:"distance,omitempty"` // Distance in km from search location
+	PriceRange    *int         `json:"price_range,omitempty"` // 1 = $, 2 = $$, 3 = $$$, 4 = $$$$
 	IsSuggestion  bool         `json:"is_suggestion"`      // Indicates if this is from suggestions table
 	SuggestionID  *int         `json:"suggestion_id,omitempty"`
 	Status        *string      `json:"status,omitempty"`    // For suggestions: pending, approved, tested, rejected

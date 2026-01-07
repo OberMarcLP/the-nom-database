@@ -176,8 +176,12 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 
 	// Parse query parameters for filtering
 	queryParams := r.URL.Query()
+	searchQuery := queryParams.Get("q")        // search query for name/address
 	categoryID := queryParams.Get("category_id")
 	foodTypeIDs := queryParams.Get("food_type_ids") // comma-separated
+	priceRange := queryParams.Get("price_range")    // max price range (1-4)
+	minRating := queryParams.Get("min_rating")      // minimum average rating (1-5)
+	sortBy := queryParams.Get("sort")               // sort: name, rating, date
 	lat := queryParams.Get("lat")
 	lng := queryParams.Get("lng")
 	radius := queryParams.Get("radius") // in kilometers
@@ -193,10 +197,26 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 	var restaurantArgs []interface{}
 	restaurantArgIndex := 1
 
+	// Search query filter
+	if searchQuery != "" {
+		restaurantConditions = append(restaurantConditions, fmt.Sprintf("(r.name ILIKE $%d OR r.address ILIKE $%d)", restaurantArgIndex, restaurantArgIndex))
+		restaurantArgs = append(restaurantArgs, "%"+searchQuery+"%")
+		restaurantArgIndex++
+	}
+
 	if categoryID != "" {
 		if catID, err := strconv.Atoi(categoryID); err == nil {
 			restaurantConditions = append(restaurantConditions, fmt.Sprintf("r.category_id = $%d", restaurantArgIndex))
 			restaurantArgs = append(restaurantArgs, catID)
+			restaurantArgIndex++
+		}
+	}
+
+	// Price range filter
+	if priceRange != "" {
+		if pr, err := strconv.Atoi(priceRange); err == nil && pr >= 1 && pr <= 4 {
+			restaurantConditions = append(restaurantConditions, fmt.Sprintf("(r.price_range IS NULL OR r.price_range <= $%d)", restaurantArgIndex))
+			restaurantArgs = append(restaurantArgs, pr)
 			restaurantArgIndex++
 		}
 	}
@@ -261,10 +281,18 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		restaurantWhereClause = "WHERE " + strings.Join(restaurantConditions, " AND ")
 	}
 
+	// Build HAVING clause for min_rating filter
+	havingClause := ""
+	if minRating != "" {
+		if mr, err := strconv.ParseFloat(minRating, 64); err == nil && mr >= 1 && mr <= 5 {
+			havingClause = fmt.Sprintf("HAVING COALESCE(AVG((rt.food_rating + rt.service_rating + rt.ambiance_rating) / 3.0), 0) >= %f", mr)
+		}
+	}
+
 	restaurantQuery := fmt.Sprintf(`
 		SELECT
 			r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
-			r.google_place_id, r.category_id, r.created_by, r.updated_by, r.created_at, r.updated_at,
+			r.google_place_id, r.category_id, r.price_range, r.created_by, r.updated_by, r.created_at, r.updated_at,
 			c.id, c.name,
 			COALESCE(AVG(rt.food_rating), 0) as avg_food,
 			COALESCE(AVG(rt.service_rating), 0) as avg_service,
@@ -283,7 +311,8 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN users uu ON r.updated_by = uu.id
 		%s
 		GROUP BY r.id, c.id, cu.id, uu.id
-	`, distanceSelect, restaurantWhereClause)
+		%s
+	`, distanceSelect, restaurantWhereClause, havingClause)
 
 	args = restaurantArgs
 
@@ -358,7 +387,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		suggestionQuery := fmt.Sprintf(`
 			SELECT
 				s.id, s.name, NULL::text as description, s.address, s.phone, s.website, s.latitude, s.longitude,
-				s.google_place_id, s.suggested_category_id as category_id, NULL::integer as created_by, NULL::integer as updated_by, s.created_at, s.updated_at,
+				s.google_place_id, s.suggested_category_id as category_id, NULL::integer as price_range, NULL::integer as created_by, NULL::integer as updated_by, s.created_at, s.updated_at,
 				c.id, c.name,
 				0.0 as avg_food,
 				0.0 as avg_service,
@@ -375,19 +404,41 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 			%s
 		`, suggestionDistanceSelect, suggestionWhereClause)
 
+		// Build ORDER BY clause
+		orderByClause := "created_at DESC"
+		switch sortBy {
+		case "name":
+			orderByClause = "name ASC"
+		case "rating":
+			orderByClause = "avg_food DESC, avg_service DESC, avg_ambiance DESC"
+		case "date":
+			orderByClause = "created_at DESC"
+		}
+
 		finalQuery = fmt.Sprintf(`
 			SELECT * FROM (
 				%s
 				UNION ALL
 				%s
 			) combined
-			ORDER BY %s created_at DESC
-		`, restaurantQuery, suggestionQuery, distanceOrder)
+			ORDER BY %s %s
+		`, restaurantQuery, suggestionQuery, distanceOrder, orderByClause)
 	} else {
+		// Build ORDER BY clause for single query
+		orderByClause := "r.created_at DESC"
+		switch sortBy {
+		case "name":
+			orderByClause = "r.name ASC"
+		case "rating":
+			orderByClause = "avg_food DESC, avg_service DESC, avg_ambiance DESC"
+		case "date":
+			orderByClause = "r.created_at DESC"
+		}
+
 		finalQuery = fmt.Sprintf(`
 			%s
-			ORDER BY %s r.created_at DESC
-		`, restaurantQuery, distanceOrder)
+			ORDER BY %s %s
+		`, restaurantQuery, distanceOrder, orderByClause)
 	}
 
 	rows, err := database.GetPool().Query(ctx, finalQuery, args...)
@@ -416,7 +467,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		if hasDistance {
 			err = rows.Scan(
 				&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-				&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
+				&rest.GooglePlaceID, &rest.CategoryID, &rest.PriceRange, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 				&catID, &catName,
 				&avgFood, &avgService, &avgAmbiance, &ratingCount,
 				&rest.IsSuggestion, &rest.SuggestionID, &rest.Status,
@@ -427,7 +478,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		} else {
 			err = rows.Scan(
 				&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-				&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
+				&rest.GooglePlaceID, &rest.CategoryID, &rest.PriceRange, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 				&catID, &catName,
 				&avgFood, &avgService, &avgAmbiance, &ratingCount,
 				&rest.IsSuggestion, &rest.SuggestionID, &rest.Status,
