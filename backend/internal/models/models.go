@@ -51,15 +51,37 @@ type Restaurant struct {
 }
 
 type Rating struct {
-	ID             int          `json:"id"`
-	RestaurantID   int          `json:"restaurant_id"`
-	UserID         *int         `json:"user_id,omitempty"`
-	User           *UserSummary `json:"user,omitempty"`
-	FoodRating     int          `json:"food_rating"`
-	ServiceRating  int          `json:"service_rating"`
-	AmbianceRating int          `json:"ambiance_rating"`
-	Comment        *string      `json:"comment"`
-	CreatedAt      time.Time    `json:"created_at"`
+	ID               int           `json:"id"`
+	RestaurantID     int           `json:"restaurant_id"`
+	UserID           *int          `json:"user_id,omitempty"`
+	User             *UserSummary  `json:"user,omitempty"`
+	FoodRating       int           `json:"food_rating"`
+	ServiceRating    int           `json:"service_rating"`
+	AmbianceRating   int           `json:"ambiance_rating"`
+	Comment          *string       `json:"comment"`
+	Photos           []ReviewPhoto `json:"photos,omitempty"`
+	HelpfulCount     int           `json:"helpful_count"`
+	NotHelpfulCount  int           `json:"not_helpful_count"`
+	UserVote         *string       `json:"user_vote,omitempty"` // Current user's vote: "helpful", "not_helpful", or null
+	CreatedAt        time.Time     `json:"created_at"`
+	UpdatedAt        time.Time     `json:"updated_at"`
+}
+
+type ReviewPhoto struct {
+	ID           int     `json:"id"`
+	RatingID     int     `json:"rating_id"`
+	PhotoURL     string  `json:"photo_url"`
+	Caption      *string `json:"caption,omitempty"`
+	DisplayOrder int     `json:"display_order"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type ReviewVote struct {
+	ID        int       `json:"id"`
+	RatingID  int       `json:"rating_id"`
+	UserID    int       `json:"user_id"`
+	VoteType  string    `json:"vote_type"` // "helpful" or "not_helpful"
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type AvgRating struct {
@@ -199,4 +221,43 @@ type MenuPhoto struct {
 
 type UploadPhotoResponse struct {
 	Photo MenuPhoto `json:"photo"`
+}
+
+// Restaurant Lists
+type RestaurantList struct {
+	ID             int          `json:"id"`
+	UserID         int          `json:"user_id"`
+	User           *UserSummary `json:"user,omitempty"`
+	Name           string       `json:"name"`
+	Description    *string      `json:"description"`
+	IsPublic       bool         `json:"is_public"`
+	RestaurantCount int         `json:"restaurant_count,omitempty"`
+	CreatedAt      time.Time    `json:"created_at"`
+	UpdatedAt      time.Time    `json:"updated_at"`
+}
+
+type ListRestaurant struct {
+	ID           int         `json:"id"`
+	ListID       int         `json:"list_id"`
+	RestaurantID int         `json:"restaurant_id"`
+	Restaurant   *Restaurant `json:"restaurant,omitempty"`
+	Notes        *string     `json:"notes"`
+	AddedAt      time.Time   `json:"added_at"`
+}
+
+type CreateListRequest struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	IsPublic    bool    `json:"is_public"`
+}
+
+type UpdateListRequest struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	IsPublic    *bool   `json:"is_public"`
+}
+
+type AddRestaurantToListRequest struct {
+	RestaurantID int     `json:"restaurant_id"`
+	Notes        *string `json:"notes"`
 }

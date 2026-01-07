@@ -1,12 +1,25 @@
 import { useState } from 'react';
 import { MenuPhoto } from '../services/api';
-import { Trash2, Edit2, Check, X } from 'lucide-react';
+import { Trash2, Edit2, Check, X, Star, User } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
 import { AlertDialog } from './AlertDialog';
 import { LazyImage } from './LazyImage';
 
+interface ExtendedPhoto extends MenuPhoto {
+  source?: 'menu' | 'review';
+  reviewInfo?: {
+    username: string;
+    date: string;
+    ratings: {
+      food: number;
+      service: number;
+      ambiance: number;
+    };
+  } | null;
+}
+
 interface PhotoGalleryProps {
-  photos: MenuPhoto[];
+  photos: ExtendedPhoto[];
   onCaptionUpdate: (id: number, caption: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
 }
@@ -130,13 +143,43 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete }: PhotoGallery
             ) : (
               <>
                 <h3 className="font-semibold text-sm mb-1">{photo.caption}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(photo.created_at).toLocaleDateString()}
-                </p>
-                {photo.file_size && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {(photo.file_size / 1024).toFixed(1)} KB
-                  </p>
+
+                {photo.source === 'review' && photo.reviewInfo ? (
+                  <div className="space-y-1 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                      <User className="w-3 h-3" />
+                      <span className="font-medium">{photo.reviewInfo.username}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">Food:</span>
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-3 h-3 ${
+                              i < photo.reviewInfo!.ratings.food
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300 dark:text-gray-600'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(photo.reviewInfo.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(photo.created_at).toLocaleDateString()}
+                    </p>
+                    {photo.file_size && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        {(photo.file_size / 1024).toFixed(1)} KB
+                      </p>
+                    )}
+                  </>
                 )}
               </>
             )}

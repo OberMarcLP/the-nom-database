@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { MapPin, Tag, Utensils, Edit, Trash2, Plus, Loader2, Phone, Globe, Camera, ChevronUp } from 'lucide-react';
-import { Restaurant } from '../services/api';
-import { useRatings, useCreateRating, useMenuPhotos, useUploadMenuPhoto, useUpdatePhotoCaption, useDeleteMenuPhoto } from '../hooks/useApi';
+import { MapPin, Tag, Utensils, Edit, Trash2, Plus, Loader2, Phone, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Restaurant, voteOnReview, removeVote, uploadReviewPhoto } from '../services/api';
+import { useRatings, useCreateRating, useMenuPhotos, useUpdatePhotoCaption, useDeleteMenuPhoto } from '../hooks/useApi';
 import { StarRating } from '../components/StarRating';
 import { RestaurantMap } from '../components/RestaurantMap';
 import { RatingForm } from '../components/RatingForm';
-import { PhotoUpload } from '../components/PhotoUpload';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { UserBadge } from '../components/UserBadge';
+import { AddToListButton } from '../components/AddToListButton';
 
 interface RestaurantDetailProps {
   restaurant: Restaurant;
@@ -17,42 +17,96 @@ interface RestaurantDetailProps {
 
 export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDetailProps) {
   const [showRatingForm, setShowRatingForm] = useState(false);
-  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [sortBy, setSortBy] = useState<'recent' | 'helpful' | 'rating'>('recent');
 
   // Use React Query hooks
-  const { data: ratings = [], isLoading: loading } = useRatings(restaurant.id);
+  const { data: ratings = [], isLoading: loading, refetch: refetchRatings } = useRatings(restaurant.id);
   const { data: photos = [], isLoading: loadingPhotos } = useMenuPhotos(restaurant.id);
   const createRatingMutation = useCreateRating();
-  const uploadPhotoMutation = useUploadMenuPhoto();
   const updateCaptionMutation = useUpdatePhotoCaption();
   const deletePhotoMutation = useDeleteMenuPhoto();
+
+  // Combine menu photos and review photos for the gallery
+  const allPhotos = [
+    ...photos.map(photo => ({
+      ...photo,
+      source: 'menu' as const,
+      reviewInfo: null,
+    })),
+    ...ratings.flatMap(rating =>
+      (rating.photos || []).map(photo => ({
+        id: photo.id,
+        restaurant_id: restaurant.id,
+        filename: photo.photo_url,
+        original_filename: null,
+        caption: photo.caption || 'Review photo',
+        file_size: null,
+        mime_type: null,
+        url: photo.photo_url,
+        created_at: photo.created_at,
+        updated_at: photo.created_at,
+        source: 'review' as const,
+        reviewInfo: {
+          username: rating.user?.username || 'Anonymous',
+          date: rating.created_at,
+          ratings: {
+            food: rating.food_rating,
+            service: rating.service_rating,
+            ambiance: rating.ambiance_rating,
+          },
+        },
+      }))
+    ),
+  ];
+
+  const handleVote = async (ratingId: number, voteType: 'helpful' | 'not_helpful', currentVote?: string | null) => {
+    try {
+      if (currentVote === voteType) {
+        // Remove vote if clicking the same button
+        await removeVote(ratingId);
+      } else {
+        // Add or change vote
+        await voteOnReview(ratingId, voteType);
+      }
+      refetchRatings();
+    } catch (error) {
+      console.error('Failed to vote:', error);
+    }
+  };
 
   const handleAddRating = async (data: {
     food_rating: number;
     service_rating: number;
     ambiance_rating: number;
     comment?: string;
+    photos?: { file: File; caption: string }[];
   }) => {
     createRatingMutation.mutate(
       { ...data, restaurant_id: restaurant.id },
       {
-        onSuccess: () => {
+        onSuccess: async (newRating) => {
+          // Upload photos if any
+          if (data.photos && data.photos.length > 0) {
+            console.log('Uploading photos for rating ID:', newRating.id);
+            try {
+              for (const photo of data.photos) {
+                console.log('Uploading photo:', photo.file.name, 'with caption:', photo.caption);
+                const result = await uploadReviewPhoto(newRating.id, photo.file, photo.caption);
+                console.log('Photo uploaded successfully:', result);
+              }
+              // Refetch ratings to show the new photos
+              refetchRatings();
+            } catch (error) {
+              console.error('Failed to upload photos:', error);
+              alert(`Failed to upload photos: ${error}`);
+            }
+          }
           setShowRatingForm(false);
         },
       }
     );
   };
 
-  const handlePhotoUpload = async (file: File, caption: string) => {
-    uploadPhotoMutation.mutate(
-      { restaurantId: restaurant.id, photo: file, caption },
-      {
-        onSuccess: () => {
-          setShowPhotoUpload(false);
-        },
-      }
-    );
-  };
 
   const handleCaptionUpdate = async (id: number, caption: string) => {
     updateCaptionMutation.mutate({ id, caption, restaurantId: restaurant.id });
@@ -62,9 +116,24 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
     deletePhotoMutation.mutate({ id, restaurantId: restaurant.id });
   };
 
+  // Sort ratings based on selected option
+  const sortedRatings = [...ratings].sort((a, b) => {
+    if (sortBy === 'recent') {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    } else if (sortBy === 'helpful') {
+      return (b.helpful_count - b.not_helpful_count) - (a.helpful_count - a.not_helpful_count);
+    } else if (sortBy === 'rating') {
+      const avgA = (a.food_rating + a.service_rating + a.ambiance_rating) / 3;
+      const avgB = (b.food_rating + b.service_rating + b.ambiance_rating) / 3;
+      return avgB - avgA;
+    }
+    return 0;
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        <AddToListButton restaurantId={restaurant.id} restaurantName={restaurant.name} />
         <button onClick={onEdit} className="btn btn-secondary flex items-center gap-2">
           <Edit className="w-4 h-4" />
           Edit
@@ -157,42 +226,22 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
 
       {!restaurant.is_suggestion && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Camera className="w-5 h-5" />
-              Menu Photos
-            </h3>
-            <button
-              onClick={() => setShowPhotoUpload(!showPhotoUpload)}
-              className="btn btn-primary flex items-center gap-2 text-sm"
-            >
-              {showPhotoUpload ? (
-                <>
-                  <ChevronUp className="w-4 h-4" />
-                  Hide Upload
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  Upload Photo
-                </>
-              )}
-            </button>
-          </div>
-
-          {showPhotoUpload && (
-            <div className="card mb-4">
-              <PhotoUpload onUpload={handlePhotoUpload} />
-            </div>
-          )}
+          <h3 className="font-semibold flex items-center gap-2 mb-4">
+            <Camera className="w-5 h-5" />
+            Photos ({allPhotos.length})
+          </h3>
 
           {loadingPhotos ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
             </div>
+          ) : allPhotos.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              No photos yet. Add photos when you write a review!
+            </p>
           ) : (
             <PhotoGallery
-              photos={photos}
+              photos={allPhotos}
               onCaptionUpdate={handleCaptionUpdate}
               onDelete={handlePhotoDelete}
             />
@@ -203,7 +252,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
       {!restaurant.is_suggestion && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Reviews</h3>
+            <h3 className="font-semibold">Reviews ({ratings.length})</h3>
             <button
               onClick={() => setShowRatingForm(true)}
               className="btn btn-primary flex items-center gap-2 text-sm"
@@ -219,6 +268,21 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
             </div>
           )}
 
+          {ratings.length > 0 && (
+            <div className="mb-4 flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'recent' | 'helpful' | 'rating')}
+                className="input-glass text-sm py-1 px-3"
+              >
+                <option value="recent">Most Recent</option>
+                <option value="helpful">Most Helpful</option>
+                <option value="rating">Highest Rating</option>
+              </select>
+            </div>
+          )}
+
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
@@ -229,7 +293,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
             </p>
           ) : (
             <div className="space-y-4">
-              {ratings.map((rating) => (
+              {sortedRatings.map((rating) => (
                 <div key={rating.id} className="card">
                   <div className="grid grid-cols-3 gap-4 mb-3">
                     <div>
@@ -246,9 +310,34 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
                     </div>
                   </div>
                   {rating.comment && (
-                    <p className="text-gray-600 dark:text-gray-400 text-sm">{rating.comment}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{rating.comment}</p>
                   )}
-                  <div className="flex items-center justify-between mt-2">
+
+                  {/* Voting buttons */}
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => handleVote(rating.id, 'helpful', rating.user_vote)}
+                      className={`flex items-center gap-1 text-xs transition-colors ${
+                        rating.user_vote === 'helpful'
+                          ? 'text-blue-600 dark:text-blue-400 font-medium'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                      <span>{rating.helpful_count || 0}</span>
+                    </button>
+                    <button
+                      onClick={() => handleVote(rating.id, 'not_helpful', rating.user_vote)}
+                      className={`flex items-center gap-1 text-xs transition-colors ${
+                        rating.user_vote === 'not_helpful'
+                          ? 'text-red-600 dark:text-red-400 font-medium'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+                      }`}
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+                      <span>{rating.not_helpful_count || 0}</span>
+                    </button>
+                    <div className="flex-1" />
                     <p className="text-xs text-gray-400 dark:text-gray-500">
                       {new Date(rating.created_at).toLocaleDateString()}
                     </p>

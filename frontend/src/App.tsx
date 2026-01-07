@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Settings, Loader2, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { Home, Settings, Loader2, LogIn, LogOut, UserPlus, Bookmark } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useTheme } from './hooks/useTheme';
@@ -20,6 +20,7 @@ import { Avatar } from './components/Avatar';
 // Lazy load page components for code splitting
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
+const ListsPage = lazy(() => import('./pages/ListsPage').then(m => ({ default: m.ListsPage })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -169,13 +170,28 @@ function AppContent() {
                             <span>Restaurants</span>
                           </NavLink>
                           {user && (
-                            <button
-                              onClick={handleSettingsClick}
-                              className="flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md"
-                            >
-                              <Settings className="w-4 h-4" />
-                              <span>Settings</span>
-                            </button>
+                            <>
+                              <NavLink
+                                to="/lists"
+                                className={({ isActive }) =>
+                                  `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                                    isActive
+                                      ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
+                                      : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
+                                  }`
+                                }
+                              >
+                                <Bookmark className="w-4 h-4" />
+                                <span>My Lists</span>
+                              </NavLink>
+                              <button
+                                onClick={handleSettingsClick}
+                                className="flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md"
+                              >
+                                <Settings className="w-4 h-4" />
+                                <span>Settings</span>
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -211,13 +227,28 @@ function AppContent() {
                         <span className="text-sm">Restaurants</span>
                       </NavLink>
                       {user && (
-                        <button
-                          onClick={handleSettingsClick}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md"
-                        >
-                          <Settings className="w-4 h-4" />
-                          <span className="text-sm">Settings</span>
-                        </button>
+                        <>
+                          <NavLink
+                            to="/lists"
+                            className={({ isActive }) =>
+                              `flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap ${
+                                isActive
+                                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
+                                  : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
+                              }`
+                            }
+                          >
+                            <Bookmark className="w-4 h-4" />
+                            <span className="text-sm">My Lists</span>
+                          </NavLink>
+                          <button
+                            onClick={handleSettingsClick}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md"
+                          >
+                            <Settings className="w-4 h-4" />
+                            <span className="text-sm">Settings</span>
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -227,6 +258,14 @@ function AppContent() {
               <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Routes>
                   <Route path="/" element={<HomePage filters={filters} isAuthenticated={!!user} />} />
+                  <Route
+                    path="/lists"
+                    element={
+                      <ProtectedRoute>
+                        <ListsPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/change-password"
                     element={

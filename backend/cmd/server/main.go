@@ -218,6 +218,25 @@ func main() {
 	ratingsDelete.Use(middleware.WithUserRoles)
 	ratingsDelete.HandleFunc("/{id}", handlers.DeleteRating).Methods("DELETE")
 
+	// Vote on reviews (authenticated users only)
+	ratingsVote := api.PathPrefix("/ratings").Subrouter()
+	ratingsVote.Use(middleware.AuthMiddleware)
+	ratingsVote.Use(middleware.WithUserRoles)
+	ratingsVote.HandleFunc("/{id}/vote", handlers.VoteOnReview).Methods("POST")
+	ratingsVote.HandleFunc("/{id}/vote", handlers.RemoveVote).Methods("DELETE")
+
+	// Review photos upload (separate route to avoid conflicts)
+	ratingsPhotos := api.PathPrefix("").Subrouter()
+	ratingsPhotos.Use(middleware.AuthMiddleware)
+	ratingsPhotos.Use(middleware.WithUserRoles)
+	ratingsPhotos.HandleFunc("/ratings/{id}/photos", handlers.UploadReviewPhoto).Methods("POST")
+
+	// Review photos (authenticated users only)
+	reviewPhotos := api.PathPrefix("/review-photos").Subrouter()
+	reviewPhotos.Use(middleware.AuthMiddleware)
+	reviewPhotos.Use(middleware.WithUserRoles)
+	reviewPhotos.HandleFunc("/{id}", handlers.DeleteReviewPhoto).Methods("DELETE")
+
 	// Google Maps (proxied through backend - public with rate limiting)
 	publicRoutes.HandleFunc("/places/search", handlers.SearchPlaces).Methods("GET")
 	publicRoutes.HandleFunc("/places/{placeId}", handlers.GetPlaceDetails).Methods("GET")
@@ -262,6 +281,21 @@ func main() {
 	photosModify.Use(middleware.WithUserRoles)
 	photosModify.HandleFunc("/{id}", handlers.UpdatePhotoCaption).Methods("PATCH")
 	photosModify.HandleFunc("/{id}", handlers.DeleteMenuPhoto).Methods("DELETE")
+
+	// Restaurant Lists (authenticated users only)
+	listsProtected := api.PathPrefix("/lists").Subrouter()
+	listsProtected.Use(middleware.AuthMiddleware)
+	listsProtected.Use(middleware.WithUserRoles)
+	listsProtected.HandleFunc("", handlers.GetUserLists).Methods("GET")
+	listsProtected.HandleFunc("", handlers.CreateList).Methods("POST")
+	listsProtected.HandleFunc("/{id}", handlers.GetList).Methods("GET")
+	listsProtected.HandleFunc("/{id}", handlers.UpdateList).Methods("PUT")
+	listsProtected.HandleFunc("/{id}", handlers.DeleteList).Methods("DELETE")
+	listsProtected.HandleFunc("/{id}/restaurants", handlers.AddRestaurantToList).Methods("POST")
+	listsProtected.HandleFunc("/{id}/restaurants/{restaurantId}", handlers.RemoveRestaurantFromList).Methods("DELETE")
+
+	// Get lists for a specific restaurant
+	publicRoutes.HandleFunc("/restaurants/{restaurantId}/lists", handlers.GetRestaurantLists).Methods("GET")
 
 	// Health check (support both GET and HEAD for Docker healthcheck)
 	api.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

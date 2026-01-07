@@ -1,5 +1,11 @@
 import { useState } from 'react';
+import { Camera, X } from 'lucide-react';
 import { StarRating } from './StarRating';
+
+interface PhotoWithCaption {
+  file: File;
+  caption: string;
+}
 
 interface RatingFormProps {
   onSubmit: (data: {
@@ -7,6 +13,7 @@ interface RatingFormProps {
     service_rating: number;
     ambiance_rating: number;
     comment?: string;
+    photos?: PhotoWithCaption[];
   }) => void;
   onCancel: () => void;
 }
@@ -16,17 +23,46 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
   const [serviceRating, setServiceRating] = useState(0);
   const [ambianceRating, setAmbianceRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [photos, setPhotos] = useState<PhotoWithCaption[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newPhotos = Array.from(e.target.files).map(file => ({
+        file,
+        caption: '',
+      }));
+      setPhotos([...photos, ...newPhotos]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(photos.filter((_, i) => i !== index));
+  };
+
+  const updateCaption = (index: number, caption: string) => {
+    const updated = [...photos];
+    updated[index].caption = caption;
+    setPhotos(updated);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (foodRating === 0 || serviceRating === 0 || ambianceRating === 0) {
       return;
     }
+
+    // Validate that all photos have captions
+    if (photos.some(photo => !photo.caption.trim())) {
+      alert('Please add a description for all photos');
+      return;
+    }
+
     onSubmit({
       food_rating: foodRating,
       service_rating: serviceRating,
       ambiance_rating: ambianceRating,
       comment: comment || undefined,
+      photos: photos.length > 0 ? photos : undefined,
     });
   };
 
@@ -56,6 +92,59 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
           placeholder="Share your experience..."
           rows={3}
         />
+      </div>
+
+      <div>
+        <label className="label mb-2">Photos (optional)</label>
+        <div className="space-y-3">
+          <label className="btn-glass inline-flex items-center gap-2 cursor-pointer">
+            <Camera className="w-4 h-4" />
+            Add Photos
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+
+          {photos.length > 0 && (
+            <div className="space-y-3">
+              {photos.map((photo, index) => (
+                <div key={index} className="card p-3">
+                  <div className="flex gap-3">
+                    <img
+                      src={URL.createObjectURL(photo.file)}
+                      alt={`Preview ${index + 1}`}
+                      className="w-20 h-20 object-cover rounded flex-shrink-0"
+                    />
+                    <div className="flex-1 space-y-2">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {photo.file.name}
+                      </p>
+                      <input
+                        type="text"
+                        value={photo.caption}
+                        onChange={(e) => updateCaption(index, e.target.value)}
+                        placeholder="Add photo description (required) *"
+                        className="input-glass text-sm w-full"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(index)}
+                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded-full transition-colors self-start"
+                    >
+                      <X className="w-4 h-4 text-red-500" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-3">

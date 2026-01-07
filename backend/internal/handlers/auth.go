@@ -111,6 +111,17 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Assign default 'user' role to new user
+	_, err = database.GetPool().Exec(ctx,
+		`INSERT INTO user_roles (user_id, role_id)
+		SELECT $1, id FROM roles WHERE name = 'user'
+		ON CONFLICT DO NOTHING`,
+		userID)
+	if err != nil {
+		logger.Warn("Failed to assign default role to user %d: %v", userID, err)
+		// Continue - this is not a critical failure
+	}
+
 	// Fetch created user
 	user, err := getUserByID(ctx, userID)
 	if err != nil {

@@ -93,6 +93,15 @@ export interface CreateRestaurantData {
   food_type_ids?: number[];
 }
 
+export interface ReviewPhoto {
+  id: number;
+  rating_id: number;
+  photo_url: string;
+  caption?: string;
+  display_order: number;
+  created_at: string;
+}
+
 export interface Rating {
   id: number;
   restaurant_id: number;
@@ -102,7 +111,12 @@ export interface Rating {
   comment: string | null;
   user_id?: number;
   user?: UserSummary;
+  photos?: ReviewPhoto[];
+  helpful_count: number;
+  not_helpful_count: number;
+  user_vote?: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface GooglePlaceResult {
@@ -120,9 +134,13 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   const token = localStorage.getItem('access_token');
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options?.headers as Record<string, string> || {}),
   };
+
+  // Only set Content-Type if body is not FormData (browser sets it automatically for FormData)
+  if (!(options?.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // Add Authorization header if token exists
   if (token) {
@@ -254,6 +272,32 @@ export const createRating = (data: {
 export const deleteRating = (id: number) =>
   fetchApi<void>(`/ratings/${id}`, { method: 'DELETE' });
 
+export const voteOnReview = (ratingId: number, voteType: 'helpful' | 'not_helpful') =>
+  fetchApi<Rating>(`/ratings/${ratingId}/vote`, {
+    method: 'POST',
+    body: JSON.stringify({ vote_type: voteType }),
+  });
+
+export const removeVote = (ratingId: number) =>
+  fetchApi<Rating>(`/ratings/${ratingId}/vote`, { method: 'DELETE' });
+
+// Review Photos
+export const uploadReviewPhoto = (ratingId: number, photo: File, caption?: string) => {
+  const formData = new FormData();
+  formData.append('photo', photo);
+  if (caption) {
+    formData.append('caption', caption);
+  }
+
+  return fetchApi<ReviewPhoto>(`/ratings/${ratingId}/photos`, {
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const deleteReviewPhoto = (photoId: number) =>
+  fetchApi(`/review-photos/${photoId}`, { method: 'DELETE' });
+
 // Google Maps
 export const searchPlaces = (query: string) =>
   fetchApi<GooglePlaceResult[]>(`/places/search?q=${encodeURIComponent(query)}`);
@@ -376,6 +420,24 @@ export const deleteMenuPhoto = (id: number) =>
   fetchApi<void>(`/photos/${id}`, { method: 'DELETE' });
 
 // Authentication
+export interface Permission {
+  id: number;
+  name: string;
+  description?: string;
+  resource: string;
+  action: string;
+  created_at: string;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  permissions?: Permission[];
+}
+
 export interface User {
   id: number;
   email: string;
@@ -391,6 +453,8 @@ export interface User {
   last_login_at?: string;
   created_at: string;
   updated_at: string;
+  roles?: Role[];
+  permissions?: string[];
 }
 
 export interface LoginResponse {
@@ -448,3 +512,66 @@ export const refreshToken = (refreshToken: string) =>
     method: 'POST',
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
+
+// Restaurant Lists
+export interface RestaurantList {
+  id: number;
+  user_id: number;
+  name: string;
+  description: string | null;
+  is_public: boolean;
+  restaurant_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ListRestaurant {
+  id: number;
+  list_id: number;
+  restaurant_id: number;
+  restaurant?: Restaurant;
+  notes: string | null;
+  added_at: string;
+}
+
+export interface ListWithRestaurants {
+  list: RestaurantList;
+  restaurants: ListRestaurant[];
+}
+
+export interface ListWithStatus extends RestaurantList {
+  contains_restaurant: boolean;
+}
+
+export const getUserLists = () =>
+  fetchApi<RestaurantList[]>('/lists');
+
+export const getList = (listId: number) =>
+  fetchApi<ListWithRestaurants>(`/lists/${listId}`);
+
+export const createList = (data: { name: string; description?: string; is_public: boolean }) =>
+  fetchApi<RestaurantList>('/lists', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const updateList = (listId: number, data: { name?: string; description?: string; is_public?: boolean }) =>
+  fetchApi<RestaurantList>(`/lists/${listId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+export const deleteList = (listId: number) =>
+  fetchApi<void>(`/lists/${listId}`, { method: 'DELETE' });
+
+export const addRestaurantToList = (listId: number, restaurantId: number, notes?: string) =>
+  fetchApi<ListRestaurant>(`/lists/${listId}/restaurants`, {
+    method: 'POST',
+    body: JSON.stringify({ restaurant_id: restaurantId, notes }),
+  });
+
+export const removeRestaurantFromList = (listId: number, restaurantId: number) =>
+  fetchApi<void>(`/lists/${listId}/restaurants/${restaurantId}`, { method: 'DELETE' });
+
+export const getRestaurantLists = (restaurantId: number) =>
+  fetchApi<ListWithStatus[]>(`/restaurants/${restaurantId}/lists`);

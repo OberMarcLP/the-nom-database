@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Loader2, Utensils } from 'lucide-react';
 import { FoodType, getFoodTypes, createFoodType, updateFoodType, deleteFoodType } from '../services/api';
+import { PermissionGuard } from '../components/PermissionGuard';
 
 export function FoodTypesPage() {
   const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
@@ -76,19 +77,21 @@ export function FoodTypesPage() {
         <h1 className="text-3xl font-bold text-gradient">Food Types</h1>
       </div>
 
-      <form onSubmit={handleCreate} className="flex gap-2 mb-6">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="New food type name..."
-          className="input-glass flex-1"
-        />
-        <button type="submit" className="btn-glass-primary flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Add
-        </button>
-      </form>
+      <PermissionGuard permissions={['food_types.create', 'food_types.update', 'food_types.delete']}>
+        <form onSubmit={handleCreate} className="flex gap-2 mb-6">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="New food type name..."
+            className="input-glass flex-1"
+          />
+          <button type="submit" className="btn-glass-primary flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add
+          </button>
+        </form>
+      </PermissionGuard>
 
       {foodTypes.length === 0 ? (
         <p className="text-center text-gray-500 dark:text-gray-400 py-8">
@@ -123,20 +126,22 @@ export function FoodTypesPage() {
               ) : (
                 <>
                   <span className="font-medium">{foodType.name}</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => startEdit(foodType)}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(foodType.id)}
-                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <PermissionGuard permissions={['food_types.create', 'food_types.update', 'food_types.delete']}>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEdit(foodType)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(foodType.id)}
+                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </PermissionGuard>
                 </>
               )}
             </div>

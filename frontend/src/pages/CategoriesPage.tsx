@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Loader2, Tag } from 'lucide-react';
 import { Category, getCategories, createCategory, updateCategory, deleteCategory } from '../services/api';
+import { PermissionGuard } from '../components/PermissionGuard';
 
 export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -76,19 +77,21 @@ export function CategoriesPage() {
         <h1 className="text-3xl font-bold text-gradient">Categories</h1>
       </div>
 
-      <form onSubmit={handleCreate} className="flex gap-2 mb-6">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="New category name..."
-          className="input-glass flex-1"
-        />
-        <button type="submit" className="btn-glass-primary flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Add
-        </button>
-      </form>
+      <PermissionGuard permissions={['categories.create', 'categories.update', 'categories.delete']}>
+        <form onSubmit={handleCreate} className="flex gap-2 mb-6">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="New category name..."
+            className="input-glass flex-1"
+          />
+          <button type="submit" className="btn-glass-primary flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add
+          </button>
+        </form>
+      </PermissionGuard>
 
       {categories.length === 0 ? (
         <p className="text-center text-gray-500 dark:text-gray-400 py-8">
@@ -123,20 +126,22 @@ export function CategoriesPage() {
               ) : (
                 <>
                   <span className="font-medium">{category.name}</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => startEdit(category)}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(category.id)}
-                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <PermissionGuard permissions={['categories.create', 'categories.update', 'categories.delete']}>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEdit(category)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(category.id)}
+                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </PermissionGuard>
                 </>
               )}
             </div>

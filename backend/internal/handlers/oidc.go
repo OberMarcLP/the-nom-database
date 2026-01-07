@@ -293,6 +293,17 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 		} else {
 			return nil, err
 		}
+	} else {
+		// New user created - assign default 'user' role
+		_, err = database.GetPool().Exec(ctx,
+			`INSERT INTO user_roles (user_id, role_id)
+			SELECT $1, id FROM roles WHERE name = 'user'
+			ON CONFLICT DO NOTHING`,
+			userID)
+		if err != nil {
+			logger.Warn("Failed to assign default role to OAuth user %d: %v", userID, err)
+			// Continue - this is not a critical failure
+		}
 	}
 
 	// Fetch created user

@@ -14,6 +14,7 @@ import { ReviewConvertModal } from '../components/ReviewConvertModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { AlertDialog } from '../components/AlertDialog';
 import { UserBadge } from '../components/UserBadge';
+import { PermissionGuard } from '../components/PermissionGuard';
 
 type StatusFilter = '' | 'pending' | 'approved' | 'tested' | 'rejected';
 
@@ -213,26 +214,30 @@ export function SuggestionsPage() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 ml-4">
-                  {suggestion.status === 'pending' && (
-                    <button
-                      onClick={() => {
-                        setReviewingId(suggestion.id);
-                        setReviewingName(suggestion.name);
-                      }}
-                      className="btn btn-sm bg-green-500 hover:bg-green-600 text-white flex items-center gap-1"
-                    >
-                      <ListChecks className="w-4 h-4" />
-                      Test & Review
-                    </button>
-                  )}
+                  <PermissionGuard permission="suggestions.convert">
+                    {suggestion.status === 'pending' && (
+                      <button
+                        onClick={() => {
+                          setReviewingId(suggestion.id);
+                          setReviewingName(suggestion.name);
+                        }}
+                        className="btn btn-sm bg-green-500 hover:bg-green-600 text-white flex items-center gap-1"
+                      >
+                        <ListChecks className="w-4 h-4" />
+                        Test & Review
+                      </button>
+                    )}
+                  </PermissionGuard>
 
-                  <button
-                    onClick={() => handleDelete(suggestion.id)}
-                    className="btn btn-sm bg-gray-500 hover:bg-gray-600 text-white flex items-center gap-1"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
+                  <PermissionGuard permission="suggestions.delete">
+                    <button
+                      onClick={() => handleDelete(suggestion.id)}
+                      className="btn btn-sm bg-gray-500 hover:bg-gray-600 text-white flex items-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </PermissionGuard>
                 </div>
               </div>
             </div>
