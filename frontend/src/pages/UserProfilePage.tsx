@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, Star, MapPin, List, MessageSquare, Calendar, Edit2, ArrowLeft } from 'lucide-react';
-import { getUserProfile, getUserReviews, UserProfile, Rating } from '../services/api';
+import { User, Star, MapPin, List, MessageSquare, Calendar, Edit2, ArrowLeft, Lock, Globe } from 'lucide-react';
+import { getUserProfile, getUserReviews, getUserLists, UserProfile, Rating, RestaurantList } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { StarRating } from '../components/StarRating';
 import { EditProfileModal } from '../components/EditProfileModal';
@@ -14,6 +14,7 @@ export default function UserProfilePage() {
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [reviews, setReviews] = useState<Rating[]>([]);
+  const [lists, setLists] = useState<RestaurantList[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('reviews');
   const [showEditModal, setShowEditModal] = useState(false);
@@ -43,6 +44,16 @@ export default function UserProfilePage() {
     }
   }, [id]);
 
+  const loadLists = useCallback(async () => {
+    if (!isOwnProfile) return; // Only load lists for own profile for now
+    try {
+      const data = await getUserLists();
+      setLists(data);
+    } catch (error) {
+      console.error('Failed to load lists:', error);
+    }
+  }, [isOwnProfile]);
+
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
@@ -50,8 +61,10 @@ export default function UserProfilePage() {
   useEffect(() => {
     if (activeTab === 'reviews') {
       loadReviews();
+    } else if (activeTab === 'lists') {
+      loadLists();
     }
-  }, [activeTab, loadReviews]);
+  }, [activeTab, loadReviews, loadLists]);
 
   if (loading) {
     return (
@@ -299,9 +312,62 @@ export default function UserProfilePage() {
           )}
 
           {activeTab === 'lists' && (
-            <div className="card-glass p-12 text-center">
-              <List className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 dark:text-gray-400">Lists feature coming soon</p>
+            <div className="space-y-4">
+              {!isOwnProfile ? (
+                <div className="card-glass p-12 text-center">
+                  <Lock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 dark:text-gray-400">User lists are private</p>
+                </div>
+              ) : lists.length === 0 ? (
+                <div className="card-glass p-12 text-center">
+                  <List className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">No lists yet</p>
+                  <button
+                    onClick={() => navigate('/lists')}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                  >
+                    <List className="w-4 h-4" />
+                    Create Your First List
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {lists.map((list) => (
+                    <div
+                      key={list.id}
+                      onClick={() => navigate(`/lists/${list.id}`)}
+                      className="card-glass p-6 hover:shadow-xl transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-blue-500 transition-colors">
+                            {list.name}
+                          </h3>
+                          {list.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                              {list.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                          {list.is_public ? (
+                            <div title="Public"><Globe className="w-4 h-4" /></div>
+                          ) : (
+                            <div title="Private"><Lock className="w-4 h-4" /></div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {list.restaurant_count || 0} restaurant{list.restaurant_count !== 1 ? 's' : ''}
+                        </span>
+                        <span>{new Date(list.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
