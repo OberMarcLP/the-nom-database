@@ -119,23 +119,26 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var lr models.ListRestaurant
 		var restaurant models.Restaurant
-		var category models.Category
 		var categoryID *int
+		var categoryName *string
 
 		err := rows.Scan(
 			&lr.ID, &lr.ListID, &lr.RestaurantID, &lr.Notes, &lr.AddedAt,
 			&restaurant.ID, &restaurant.Name, &restaurant.Description, &restaurant.Address,
 			&restaurant.Phone, &restaurant.Website, &restaurant.Latitude, &restaurant.Longitude,
 			&restaurant.GooglePlaceID, &categoryID, &restaurant.CreatedAt, &restaurant.UpdatedAt,
-			&category.ID, &category.Name,
+			&categoryID, &categoryName,
 		)
 		if err != nil {
 			log.Printf("ERROR: Failed to scan list restaurant: %v", err)
 			continue
 		}
 
-		if categoryID != nil {
-			restaurant.Category = &category
+		if categoryID != nil && categoryName != nil {
+			restaurant.Category = &models.Category{
+				ID:   *categoryID,
+				Name: *categoryName,
+			}
 		}
 		lr.Restaurant = &restaurant
 		restaurants = append(restaurants, lr)
