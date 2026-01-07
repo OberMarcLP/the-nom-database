@@ -21,6 +21,7 @@ import { Avatar } from './components/Avatar';
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
 const ListsPage = lazy(() => import('./pages/ListsPage').then(m => ({ default: m.ListsPage })));
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -132,8 +133,12 @@ function AppContent() {
     setAuthModalOpen(true);
   };
 
+  const navigate = useNavigate();
+
   const handleProfileClick = () => {
-    setProfileModalOpen(true);
+    if (user) {
+      navigate(`/users/${user.id}`);
+    }
   };
 
   const handleSettingsClick = () => {
@@ -266,6 +271,7 @@ function AppContent() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/users/:id" element={<UserProfilePage />} />
                   <Route
                     path="/change-password"
                     element={
