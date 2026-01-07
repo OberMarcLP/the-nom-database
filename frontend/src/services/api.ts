@@ -642,3 +642,28 @@ export const getPersonalizedRecommendations = (limit?: number) => {
   if (limit) params.append('limit', limit.toString());
   return fetchApi<Restaurant[]>(`/recommendations/personalized?${params.toString()}`);
 };
+
+// Activity Feed
+export interface ActivityItem {
+  type: 'review' | 'restaurant';
+  timestamp: string;
+  user?: UserSummary;
+  restaurant?: {
+    id: number;
+    name: string;
+    address?: string;
+  };
+  review?: {
+    id: number;
+    food_rating: number;
+    service_rating: number;
+    ambiance_rating: number;
+    comment?: string;
+  };
+}
+
+export const getActivityFeed = (limit?: number) => {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit.toString());
+  return fetchApi<ActivityItem[]>(`/activity?${params.toString()}`);
+};

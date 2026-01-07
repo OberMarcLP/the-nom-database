@@ -14,6 +14,7 @@ import { RestaurantDetail } from './RestaurantDetail';
 import { UserBadge } from '../components/UserBadge';
 import { RestaurantMap } from '../components/RestaurantMap';
 import { Recommendations } from '../components/Recommendations';
+import { ActivityFeed } from '../components/ActivityFeed';
 
 interface HomePageProps {
   filters: RestaurantFilters;
@@ -176,9 +177,11 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
         />
       )}
 
-      {/* Main Restaurant List */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
+      {/* Main Content Grid */}
+      <div className={Object.keys(filters).length === 0 ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : ""}>
+        {/* Main Restaurant List */}
+        <div className={Object.keys(filters).length === 0 ? "lg:col-span-2" : ""}>
+          <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">
             {Object.keys(filters).length > 0 ? 'Search Results' : 'All Restaurants'}
           </h1>
@@ -222,6 +225,17 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
                 onReject={handleRejectSuggestion}
               />
             ))}
+          </div>
+        )}
+        </div>
+
+        {/* Activity Feed Sidebar - Only show when no filters are active */}
+        {Object.keys(filters).length === 0 && (
+          <div className="lg:col-span-1">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Recent Activity</h2>
+            <ActivityFeed
+              onRestaurantClick={(restaurantId) => setSelectedRestaurantId(restaurantId)}
+            />
           </div>
         )}
       </div>

@@ -308,6 +308,9 @@ func main() {
 	recommendationsProtected.Use(middleware.WithUserRoles)
 	recommendationsProtected.HandleFunc("/personalized", handlers.GetPersonalizedRecommendations).Methods("GET")
 
+	// Activity Feed (public)
+	publicRoutes.HandleFunc("/activity", handlers.GetActivityFeed).Methods("GET")
+
 	// User Profile
 	publicRoutes.HandleFunc("/users/{id}", handlers.GetUserProfile).Methods("GET")
 	publicRoutes.HandleFunc("/users/{id}/reviews", handlers.GetUserReviews).Methods("GET")
