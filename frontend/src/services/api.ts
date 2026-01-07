@@ -591,3 +591,28 @@ export const removeRestaurantFromList = (listId: number, restaurantId: number) =
 
 export const getRestaurantLists = (restaurantId: number) =>
   fetchApi<ListWithStatus[]>(`/restaurants/${restaurantId}/lists`);
+
+// User Profile
+export interface UserProfile {
+  user: User;
+  stats: {
+    total_reviews: number;
+    total_restaurants: number;
+    total_lists: number;
+    avg_food_rating: number;
+    avg_service_rating: number;
+    avg_ambiance_rating: number;
+  };
+}
+
+export const getUserProfile = (userId: number) =>
+  fetchApi<UserProfile>(`/users/${userId}`);
+
+export const getUserReviews = (userId: number) =>
+  fetchApi<Rating[]>(`/users/${userId}/reviews`);
+
+export const updateUserProfile = (data: { username?: string; full_name?: string; email?: string }) =>
+  fetchApi<User>('/user/profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });

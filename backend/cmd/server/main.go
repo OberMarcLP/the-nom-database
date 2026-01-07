@@ -297,6 +297,15 @@ func main() {
 	// Get lists for a specific restaurant
 	publicRoutes.HandleFunc("/restaurants/{restaurantId}/lists", handlers.GetRestaurantLists).Methods("GET")
 
+	// User Profile
+	publicRoutes.HandleFunc("/users/{id}", handlers.GetUserProfile).Methods("GET")
+	publicRoutes.HandleFunc("/users/{id}/reviews", handlers.GetUserReviews).Methods("GET")
+
+	// Update profile (authenticated)
+	userProtected := api.PathPrefix("/user").Subrouter()
+	userProtected.Use(middleware.AuthMiddleware)
+	userProtected.HandleFunc("/profile", handlers.UpdateUserProfile).Methods("PUT")
+
 	// Health check (support both GET and HEAD for Docker healthcheck)
 	api.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
