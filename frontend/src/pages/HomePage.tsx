@@ -13,8 +13,6 @@ import { AlertDialog } from '../components/AlertDialog';
 import { RestaurantDetail } from './RestaurantDetail';
 import { UserBadge } from '../components/UserBadge';
 import { RestaurantMap } from '../components/RestaurantMap';
-import { Recommendations } from '../components/Recommendations';
-import { ActivityFeed } from '../components/ActivityFeed';
 
 interface HomePageProps {
   filters: RestaurantFilters;
@@ -163,25 +161,9 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
   }
 
   return (
-    <div className="space-y-12">
-      {/* Recommendations Section - Only show when no filters are active */}
-      {Object.keys(filters).length === 0 && (
-        <Recommendations
-          onRestaurantClick={(restaurant) => {
-            if (restaurant.is_suggestion) {
-              setViewingSuggestion(restaurant);
-            } else {
-              setSelectedRestaurantId(restaurant.id);
-            }
-          }}
-        />
-      )}
-
-      {/* Main Content Grid */}
-      <div className={Object.keys(filters).length === 0 ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : ""}>
-        {/* Main Restaurant List */}
-        <div className={Object.keys(filters).length === 0 ? "lg:col-span-2" : ""}>
-          <div className="flex items-center justify-between mb-6">
+    <>
+      <div className="space-y-12">
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">
             {Object.keys(filters).length > 0 ? 'Search Results' : 'All Restaurants'}
           </h1>
@@ -198,16 +180,16 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
           </div>
         ) : restaurants.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            {Object.keys(filters).length > 0 ? 'No restaurants match your filters.' : 'No restaurants yet.'}
-          </p>
-          {Object.keys(filters).length === 0 && isAuthenticated && (
-            <button onClick={() => setShowAddSuggestionModal(true)} className="btn btn-primary">
-              Add your first suggestion
-            </button>
-          )}
-        </div>
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {Object.keys(filters).length > 0 ? 'No restaurants match your filters.' : 'No restaurants yet.'}
+            </p>
+            {Object.keys(filters).length === 0 && isAuthenticated && (
+              <button onClick={() => setShowAddSuggestionModal(true)} className="btn btn-primary">
+                Add your first suggestion
+              </button>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {restaurants.map((restaurant) => (
@@ -225,17 +207,6 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
                 onReject={handleRejectSuggestion}
               />
             ))}
-          </div>
-        )}
-        </div>
-
-        {/* Activity Feed Sidebar - Only show when no filters are active */}
-        {Object.keys(filters).length === 0 && (
-          <div className="lg:col-span-1">
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Recent Activity</h2>
-            <ActivityFeed
-              onRestaurantClick={(restaurantId) => setSelectedRestaurantId(restaurantId)}
-            />
           </div>
         )}
       </div>
@@ -410,6 +381,6 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
         onClose={() => setAlertMessage('')}
         message={alertMessage}
       />
-    </div>
+    </>
   );
 }
