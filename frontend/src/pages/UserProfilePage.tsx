@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Star, MapPin, List, MessageSquare, Calendar, Edit2, ArrowLeft } from 'lucide-react';
 import { getUserProfile, getUserReviews, UserProfile, Rating } from '../services/api';
@@ -20,17 +20,8 @@ export default function UserProfilePage() {
 
   const isOwnProfile = currentUser?.id === Number(id);
 
-  useEffect(() => {
-    loadProfile();
-  }, [id]);
-
-  useEffect(() => {
-    if (activeTab === 'reviews') {
-      loadReviews();
-    }
-  }, [activeTab, id]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
+    if (!id) return;
     try {
       setLoading(true);
       const data = await getUserProfile(Number(id));
@@ -40,16 +31,27 @@ export default function UserProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
+    if (!id) return;
     try {
       const data = await getUserReviews(Number(id));
       setReviews(data);
     } catch (error) {
       console.error('Failed to load reviews:', error);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      loadReviews();
+    }
+  }, [activeTab, loadReviews]);
 
   if (loading) {
     return (
