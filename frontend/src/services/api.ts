@@ -17,6 +17,7 @@ export interface FoodType {
 export interface UserSummary {
   id: number;
   username: string;
+  email?: string;
   full_name: string | null;
   avatar_url: string | null;
 }
@@ -449,6 +450,7 @@ export interface Role {
   id: number;
   name: string;
   description?: string;
+  is_system: boolean;
   created_at: string;
   updated_at: string;
   permissions?: Permission[];
@@ -462,6 +464,7 @@ export interface User {
   provider_id?: string;
   full_name?: string;
   avatar_url?: string;
+  bio?: string;
   is_active: boolean;
   is_admin: boolean;
   email_verified: boolean;
@@ -617,3 +620,19 @@ export const updateUserProfile = (data: { username?: string; full_name?: string;
     body: JSON.stringify(data),
   });
 
+
+// Generic API client for admin and other features
+export const api = {
+  get: <T>(endpoint: string) => fetchApi<T>(endpoint),
+  post: <T>(endpoint: string, data?: any) => fetchApi<T>(endpoint, {
+    method: 'POST',
+    body: data ? JSON.stringify(data) : undefined,
+  }),
+  put: <T>(endpoint: string, data?: any) => fetchApi<T>(endpoint, {
+    method: 'PUT',
+    body: data ? JSON.stringify(data) : undefined,
+  }),
+  delete: <T>(endpoint: string) => fetchApi<T>(endpoint, {
+    method: 'DELETE',
+  }),
+};

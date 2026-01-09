@@ -19,7 +19,7 @@ export function RestaurantCard({ restaurant, onClick, onReview, onReject }: Rest
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="text-xl font-semibold flex-1">{restaurant.name}</h3>
           {restaurant.is_suggestion && (
-            <span className="badge-suggestion backdrop-blur-xl animate-pulse flex-shrink-0">
+            <span className="badge-suggestion animate-pulse flex-shrink-0">
               <Lightbulb className="w-3 h-3" />
               Suggestion
             </span>

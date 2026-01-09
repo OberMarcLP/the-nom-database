@@ -2,11 +2,11 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"os"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nomdb/backend/internal/auth"
 	"github.com/nomdb/backend/internal/logger"
@@ -107,15 +107,49 @@ func Close() {
 func InitDefaultAdmin() error {
 	ctx := context.Background()
 
-	// Check if admin user exists and has password set
+	// Check if admin user exists
+	var userID int
 	var hasPassword bool
 	err := pool.QueryRow(ctx,
-		`SELECT password_hash IS NOT NULL FROM users WHERE email = 'admin@nomdb.local' AND username = 'admin'`).
-		Scan(&hasPassword)
+		`SELECT id, password_hash IS NOT NULL FROM users WHERE email = 'admin@nomdb.local' AND username = 'admin'`).
+		Scan(&userID, &hasPassword)
 
-	if err == sql.ErrNoRows {
-		// Admin user doesn't exist yet - will be created by migration
-		logger.Debug("Admin user not found - will be created by migration")
+	// Hash default password "admin"
+	passwordHash, err2 := auth.HashPassword("admin", nil)
+	if err2 != nil {
+		return fmt.Errorf("failed to hash default password: %w", err2)
+	}
+
+	// Generate Gravatar URL for admin
+	gravatarService := services.NewGravatarService()
+	avatarURL := gravatarService.GetAvatarURL("admin@nomdb.local", 256)
+
+	if err == pgx.ErrNoRows {
+		// Admin user doesn't exist - create it
+		logger.Info("Creating default admin user (username: admin, password: admin)")
+
+		err = pool.QueryRow(ctx,
+			`INSERT INTO users (username, email, password_hash, full_name, avatar_url, is_active, is_admin, email_verified, password_must_change, provider)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			RETURNING id`,
+			"admin", "admin@nomdb.local", passwordHash, "Administrator", avatarURL, true, true, true, true, "local").
+			Scan(&userID)
+
+		if err != nil {
+			return fmt.Errorf("failed to create admin user: %w", err)
+		}
+
+		// Assign admin role
+		_, err = pool.Exec(ctx,
+			`INSERT INTO user_roles (user_id, role_id)
+			SELECT $1, id FROM roles WHERE name = 'admin'`,
+			userID)
+
+		if err != nil {
+			return fmt.Errorf("failed to assign admin role: %w", err)
+		}
+
+		logger.Info("✅ Default admin user created successfully")
 		return nil
 	}
 
@@ -128,16 +162,6 @@ func InitDefaultAdmin() error {
 		logger.Debug("Default admin user already has password set")
 		return nil
 	}
-
-	// Hash default password "admin"
-	passwordHash, err := auth.HashPassword("admin", nil)
-	if err != nil {
-		return fmt.Errorf("failed to hash default password: %w", err)
-	}
-
-	// Generate Gravatar URL for admin
-	gravatarService := services.NewGravatarService()
-	avatarURL := gravatarService.GetAvatarURL("admin@nomdb.local", 256)
 
 	// Update admin user with password and Gravatar
 	_, err = pool.Exec(ctx,

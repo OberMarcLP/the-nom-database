@@ -247,7 +247,7 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 
 	if err == nil {
 		// User exists, update info if changed
-		if user.Email != claims.Email || (user.FullName != nil && *user.FullName != claims.Name) {
+		if user.Email != claims.Email || (user.FullName != "" && user.FullName != claims.Name) {
 			_, err = database.GetPool().Exec(ctx,
 				`UPDATE users SET email = $1, full_name = $2, avatar_url = $3, email_verified = $4
 				WHERE id = $5`,

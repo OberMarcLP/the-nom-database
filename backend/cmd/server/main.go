@@ -262,6 +262,8 @@ func main() {
 	suggestionsModerate.Use(middleware.AuthMiddleware)
 	suggestionsModerate.Use(middleware.WithUserRoles)
 	suggestionsModerate.Use(middleware.RequireAnyPermission("suggestions.approve", "suggestions.convert", "suggestions.reject"))
+	suggestionsModerate.HandleFunc("/{id}/approve", handlers.ApproveSuggestion).Methods("POST")
+	suggestionsModerate.HandleFunc("/{id}/reject", handlers.RejectSuggestion).Methods("POST")
 	suggestionsModerate.HandleFunc("/{id}/status", handlers.UpdateSuggestionStatus).Methods("PATCH")
 	suggestionsModerate.HandleFunc("/{id}/convert", handlers.ConvertSuggestion).Methods("POST")
 	suggestionsModerate.HandleFunc("/{id}", handlers.DeleteSuggestion).Methods("DELETE")
@@ -305,6 +307,56 @@ func main() {
 	userProtected := api.PathPrefix("/user").Subrouter()
 	userProtected.Use(middleware.AuthMiddleware)
 	userProtected.HandleFunc("/profile", handlers.UpdateUserProfile).Methods("PUT")
+
+	// Admin Routes (requires admin permissions)
+	adminRoutes := api.PathPrefix("/admin").Subrouter()
+	adminRoutes.Use(middleware.AuthMiddleware)
+	adminRoutes.Use(middleware.WithUserRoles)
+	adminRoutes.Use(middleware.RequireRole("admin"))
+
+	// User Management
+	adminRoutes.HandleFunc("/users", handlers.AdminListUsers).Methods("GET")
+	adminRoutes.HandleFunc("/users", handlers.AdminCreateUser).Methods("POST")
+	adminRoutes.HandleFunc("/users/{id}", handlers.AdminGetUser).Methods("GET")
+	adminRoutes.HandleFunc("/users/{id}", handlers.AdminUpdateUser).Methods("PUT")
+	adminRoutes.HandleFunc("/users/{id}", handlers.AdminDeleteUser).Methods("DELETE")
+	adminRoutes.HandleFunc("/users/{id}/roles", handlers.AdminAssignRole).Methods("POST")
+	adminRoutes.HandleFunc("/users/{id}/roles/{roleId}", handlers.AdminRemoveRole).Methods("DELETE")
+	adminRoutes.HandleFunc("/users/{id}/reset-password", handlers.AdminResetPassword).Methods("POST")
+
+	// Role Management
+	adminRoutes.HandleFunc("/roles", handlers.AdminListRoles).Methods("GET")
+	adminRoutes.HandleFunc("/roles", handlers.AdminCreateRole).Methods("POST")
+	adminRoutes.HandleFunc("/roles/{id}", handlers.AdminGetRole).Methods("GET")
+	adminRoutes.HandleFunc("/roles/{id}", handlers.AdminUpdateRole).Methods("PUT")
+	adminRoutes.HandleFunc("/roles/{id}", handlers.AdminDeleteRole).Methods("DELETE")
+	adminRoutes.HandleFunc("/roles/{id}/permissions", handlers.AdminAssignPermission).Methods("POST")
+	adminRoutes.HandleFunc("/roles/{id}/permissions/{permissionId}", handlers.AdminRemovePermission).Methods("DELETE")
+
+	// Permission Management
+	adminRoutes.HandleFunc("/permissions", handlers.AdminListPermissions).Methods("GET")
+
+	// System Statistics and Analytics
+	adminRoutes.HandleFunc("/stats", handlers.AdminGetStatistics).Methods("GET")
+	adminRoutes.HandleFunc("/analytics/user-growth", handlers.AdminGetUserGrowth).Methods("GET")
+	adminRoutes.HandleFunc("/analytics/active-users", handlers.AdminGetActiveUsers).Methods("GET")
+	adminRoutes.HandleFunc("/analytics/popular-restaurants", handlers.AdminGetPopularRestaurants).Methods("GET")
+
+	// System Settings
+	adminRoutes.HandleFunc("/settings", handlers.AdminGetSettings).Methods("GET")
+
+	// Audit Logs
+	adminRoutes.HandleFunc("/audit-logs", handlers.AdminGetAuditLogs).Methods("GET")
+
+	// Content Moderation
+	adminRoutes.HandleFunc("/ratings", handlers.AdminListRatings).Methods("GET")
+	adminRoutes.HandleFunc("/ratings/{id}", handlers.AdminDeleteRating).Methods("DELETE")
+	adminRoutes.HandleFunc("/photos", handlers.AdminListPhotos).Methods("GET")
+	adminRoutes.HandleFunc("/photos/{type}/{id}", handlers.AdminDeletePhoto).Methods("DELETE")
+
+	// Restaurant Moderation
+	adminRoutes.HandleFunc("/restaurants/{id}", handlers.AdminUpdateRestaurant).Methods("PUT")
+	adminRoutes.HandleFunc("/restaurants/{id}", handlers.AdminDeleteRestaurant).Methods("DELETE")
 
 	// Health check (support both GET and HEAD for Docker healthcheck)
 	api.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

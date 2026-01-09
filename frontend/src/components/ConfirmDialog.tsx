@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AlertTriangle, Globe } from 'lucide-react';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -8,7 +9,8 @@ interface ConfirmDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  confirmClassName?: string;
+  isDangerous?: boolean;
+  confirmClassName?: string; // Deprecated: kept for backward compatibility
 }
 
 export function ConfirmDialog({
@@ -19,7 +21,8 @@ export function ConfirmDialog({
   message,
   confirmText = 'OK',
   cancelText = 'Cancel',
-  confirmClassName = 'bg-red-600 hover:bg-red-700 text-white',
+  isDangerous = false,
+  confirmClassName: _confirmClassName, // Deprecated - ignored
 }: ConfirmDialogProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -45,33 +48,30 @@ export function ConfirmDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="modal-overlay"
-        onClick={onClose}
-      />
-      <div className="modal-glass w-full max-w-md m-4 shadow-2xl shadow-black/20">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-            {title}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            {message}
-          </p>
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="btn-glass"
-            >
-              {cancelText}
-            </button>
-            <button
-              onClick={handleConfirm}
-              className={confirmClassName === 'bg-red-600 hover:bg-red-700 text-white' ? 'btn-glass-danger' : 'btn-glass-primary'}
-            >
-              {confirmText}
-            </button>
+    <div className="admin-confirm-overlay" onClick={onClose}>
+      <div className="admin-confirm-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-confirm-header">
+          <div className="admin-confirm-icon">
+            {isDangerous ? <AlertTriangle size={24} /> : <Globe size={24} />}
           </div>
+          <h2 className="admin-confirm-title">{title}</h2>
+        </div>
+        <div className="admin-confirm-body">
+          {message}
+        </div>
+        <div className="admin-confirm-footer">
+          <button
+            className="admin-btn"
+            onClick={onClose}
+          >
+            {cancelText}
+          </button>
+          <button
+            className={`admin-btn ${isDangerous ? 'admin-btn-danger' : 'admin-btn-primary'}`}
+            onClick={handleConfirm}
+          >
+            {confirmText}
+          </button>
         </div>
       </div>
     </div>

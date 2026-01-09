@@ -505,6 +505,127 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @Summary Approve a suggestion
+// @Description Approve a restaurant suggestion and convert it to a restaurant
+// @Tags Suggestions
+// @Accept json
+// @Produce json
+// @Param id path int true "Suggestion ID"
+// @Success 200 {object} map[string]interface{} "Approval result with restaurant_id"
+// @Failure 400 {object} map[string]string "Invalid suggestion ID"
+// @Failure 404 {object} map[string]string "Suggestion not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /suggestions/{id}/approve [post]
+func ApproveSuggestion(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	// Get user from context
+	user, ok := GetUserFromContext(r)
+	var userID *int
+	if ok && user != nil {
+		userID = &user.ID
+	}
+
+	// Get the suggestion
+	var sug models.RestaurantSuggestion
+	err = database.GetPool().QueryRow(ctx,
+		`SELECT id, name, address, phone, website, latitude, longitude, google_place_id, suggested_category_id, status
+		FROM restaurant_suggestions WHERE id = $1`, id,
+	).Scan(
+		&sug.ID, &sug.Name, &sug.Address, &sug.Phone, &sug.Website, &sug.Latitude, &sug.Longitude,
+		&sug.GooglePlaceID, &sug.SuggestedCategoryID, &sug.Status,
+	)
+	if err != nil {
+		http.Error(w, "Suggestion not found", http.StatusNotFound)
+		return
+	}
+
+	// Create restaurant
+	var restaurantID int
+	err = database.GetPool().QueryRow(ctx,
+		`INSERT INTO restaurants (name, address, phone, website, latitude, longitude, google_place_id, category_id, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id`,
+		sug.Name, sug.Address, sug.Phone, sug.Website, sug.Latitude, sug.Longitude, sug.GooglePlaceID, sug.SuggestedCategoryID, userID,
+	).Scan(&restaurantID)
+	if err != nil {
+		logger.Error("Failed to create restaurant from suggestion: %v", err)
+		http.Error(w, "Failed to create restaurant", http.StatusInternalServerError)
+		return
+	}
+
+	// Copy food types from suggestion to restaurant
+	foodTypes, err := getFoodTypesForSuggestion(ctx, sug.ID)
+	if err == nil && len(foodTypes) > 0 {
+		for _, ft := range foodTypes {
+			_, _ = database.GetPool().Exec(ctx,
+				"INSERT INTO restaurant_food_types (restaurant_id, food_type_id) VALUES ($1, $2)",
+				restaurantID, ft.ID)
+		}
+	}
+
+	// Update suggestion status to approved
+	_, err = database.GetPool().Exec(ctx,
+		"UPDATE restaurant_suggestions SET status = 'approved', updated_at = NOW() WHERE id = $1", id)
+	if err != nil {
+		logger.Warn("Failed to update suggestion status: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"restaurant_id": restaurantID,
+		"message":       "Suggestion approved and converted to restaurant successfully",
+	})
+}
+
+// @Summary Reject a suggestion
+// @Description Reject a restaurant suggestion
+// @Tags Suggestions
+// @Accept json
+// @Produce json
+// @Param id path int true "Suggestion ID"
+// @Success 200 {object} map[string]interface{} "Rejection result"
+// @Failure 400 {object} map[string]string "Invalid suggestion ID"
+// @Failure 404 {object} map[string]string "Suggestion not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /suggestions/{id}/reject [post]
+func RejectSuggestion(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	// Update suggestion status to rejected
+	result, err := database.GetPool().Exec(ctx,
+		"UPDATE restaurant_suggestions SET status = 'rejected', updated_at = NOW() WHERE id = $1", id)
+	if err != nil {
+		logger.Error("Failed to reject suggestion: %v", err)
+		http.Error(w, "Failed to reject suggestion", http.StatusInternalServerError)
+		return
+	}
+
+	if result.RowsAffected() == 0 {
+		http.Error(w, "Suggestion not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Suggestion rejected successfully",
+	})
+}
+
 // @Summary Delete a suggestion
 // @Description Delete a restaurant suggestion by ID
 // @Tags Suggestions

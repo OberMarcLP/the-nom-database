@@ -1,9 +1,10 @@
 import { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Settings, Loader2, LogIn, LogOut, UserPlus, Bookmark } from 'lucide-react';
+import { Home, Loader2, LogIn, LogOut, UserPlus, Bookmark, Shield } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useTheme } from './hooks/useTheme';
+import { usePermissions } from './hooks/usePermissions';
 import { ThemeToggle } from './components/ThemeToggle';
 import { GlobalSearch } from './components/GlobalSearch';
 import { useCategories, useFoodTypes } from './hooks/useApi';
@@ -14,7 +15,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
-import { SettingsModal } from './components/SettingsModal';
 import { Avatar } from './components/Avatar';
 
 // Lazy load page components for code splitting
@@ -22,6 +22,17 @@ const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.H
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
 const ListsPage = lazy(() => import('./pages/ListsPage').then(m => ({ default: m.ListsPage })));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
+
+// Admin pages
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminOverview = lazy(() => import('./pages/AdminOverview').then(m => ({ default: m.AdminOverview })));
+const AdminUsers = lazy(() => import('./pages/AdminUsers').then(m => ({ default: m.AdminUsers })));
+const AdminRoles = lazy(() => import('./pages/AdminRoles').then(m => ({ default: m.AdminRoles })));
+const AdminRestaurants = lazy(() => import('./pages/AdminRestaurants').then(m => ({ default: m.AdminRestaurants })));
+const AdminContent = lazy(() => import('./pages/AdminContent').then(m => ({ default: m.AdminContent })));
+const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics').then(m => ({ default: m.AdminAnalytics })));
+const AdminAudit = lazy(() => import('./pages/AdminAudit').then(m => ({ default: m.AdminAudit })));
+const AdminSettings = lazy(() => import('./pages/AdminSettings').then(m => ({ default: m.AdminSettings })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -118,11 +129,11 @@ function UserMenu({ onLoginClick, onRegisterClick }: UserMenuProps) {
 function AppContent() {
   const { isDark, toggleTheme } = useTheme();
   const { user } = useAuth();
+  const { isAdmin } = usePermissions();
   const [filters, setFilters] = useState<RestaurantFilters>({});
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   // Use React Query hooks instead of manual fetching
   const { data: categories = [] } = useCategories();
@@ -138,16 +149,12 @@ function AppContent() {
     setAuthModalOpen(true);
   };
 
-  const handleSettingsClick = () => {
-    setSettingsModalOpen(true);
-  };
-
   return (
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Main app routes - with navigation */}
-          <Route path="/*" element={
+          {/* Admin routes - full width */}
+          <Route path="/admin/*" element={
             <div className="min-h-screen">
               <nav className="nav-glass sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -186,13 +193,21 @@ function AppContent() {
                                 <Bookmark className="w-4 h-4" />
                                 <span>My Lists</span>
                               </NavLink>
-                              <button
-                                onClick={handleSettingsClick}
-                                className="flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md"
-                              >
-                                <Settings className="w-4 h-4" />
-                                <span>Settings</span>
-                              </button>
+                              {isAdmin() && (
+                                <NavLink
+                                  to="/admin"
+                                  className={({ isActive }) =>
+                                    `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                                      isActive
+                                        ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-md border border-red-500/30 shadow-lg shadow-red-500/20'
+                                        : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
+                                    }`
+                                  }
+                                >
+                                  <Shield className="w-4 h-4" />
+                                  <span>Admin</span>
+                                </NavLink>
+                              )}
                             </>
                           )}
                         </div>
@@ -243,13 +258,133 @@ function AppContent() {
                             <Bookmark className="w-4 h-4" />
                             <span className="text-sm">My Lists</span>
                           </NavLink>
-                          <button
-                            onClick={handleSettingsClick}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md"
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </nav>
+
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            </div>
+          }>
+            <Route index element={<AdminOverview />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="roles" element={<AdminRoles />} />
+            <Route path="restaurants" element={<AdminRestaurants />} />
+            <Route path="content" element={<AdminContent />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="audit" element={<AdminAudit />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+
+          {/* Main app routes - with navigation and max-width */}
+          <Route path="/*" element={
+            <div className="min-h-screen">
+              <nav className="nav-glass sticky top-0 z-40">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="flex flex-col gap-3 py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-8">
+                        <span className="text-xl font-bold text-gradient">
+                          The Nom Database
+                        </span>
+                        <div className="hidden lg:flex gap-2">
+                          <NavLink
+                            to="/"
+                            className={({ isActive }) =>
+                              `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                                isActive
+                                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
+                                  : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
+                              }`
+                            }
                           >
-                            <Settings className="w-4 h-4" />
-                            <span className="text-sm">Settings</span>
-                          </button>
+                            <Home className="w-4 h-4" />
+                            <span>Restaurants</span>
+                          </NavLink>
+                          {user && (
+                            <>
+                              <NavLink
+                                to="/lists"
+                                className={({ isActive }) =>
+                                  `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                                    isActive
+                                      ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
+                                      : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
+                                  }`
+                                }
+                              >
+                                <Bookmark className="w-4 h-4" />
+                                <span>My Lists</span>
+                              </NavLink>
+                              {isAdmin() && (
+                                <NavLink
+                                  to="/admin"
+                                  className={({ isActive }) =>
+                                    `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                                      isActive
+                                        ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-md border border-red-500/30 shadow-lg shadow-red-500/20'
+                                        : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
+                                    }`
+                                  }
+                                >
+                                  <Shield className="w-4 h-4" />
+                                  <span>Admin</span>
+                                </NavLink>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <UserMenu onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} />
+                        <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
+                      </div>
+                    </div>
+
+                    {/* Global Search Bar */}
+                    <div className="w-full">
+                      <GlobalSearch
+                        categories={categories}
+                        foodTypes={foodTypes}
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                      />
+                    </div>
+
+                    {/* Mobile Navigation */}
+                    <div className="flex lg:hidden gap-2 overflow-x-auto pb-1">
+                      <NavLink
+                        to="/"
+                        className={({ isActive }) =>
+                          `flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap ${
+                            isActive
+                              ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
+                              : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
+                          }`
+                        }
+                      >
+                        <Home className="w-4 h-4" />
+                        <span className="text-sm">Restaurants</span>
+                      </NavLink>
+                      {user && (
+                        <>
+                          <NavLink
+                            to="/lists"
+                            className={({ isActive }) =>
+                              `flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap ${
+                                isActive
+                                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
+                                  : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
+                              }`
+                            }
+                          >
+                            <Bookmark className="w-4 h-4" />
+                            <span className="text-sm">My Lists</span>
+                          </NavLink>
                         </>
                       )}
                     </div>
@@ -293,10 +428,6 @@ function AppContent() {
       <UserProfileModal
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
-      />
-      <SettingsModal
-        isOpen={settingsModalOpen}
-        onClose={() => setSettingsModalOpen(false)}
       />
     </BrowserRouter>
   );

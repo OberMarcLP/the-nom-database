@@ -141,3 +141,61 @@ func IsAdmin(roles []models.Role) bool {
 func IsModerator(roles []models.Role) bool {
 	return HasRole(roles, "moderator")
 }
+
+// GetUserRoles fetches roles for a user
+func GetUserRoles(ctx context.Context, db *pgxpool.Pool, userID int) ([]models.Role, error) {
+	query := `
+		SELECT r.id, r.name, r.description, r.is_system, r.created_at, r.updated_at
+		FROM roles r
+		JOIN user_roles ur ON r.id = ur.role_id
+		WHERE ur.user_id = $1
+		ORDER BY r.name
+	`
+
+	rows, err := db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query user roles: %w", err)
+	}
+	defer rows.Close()
+
+	var roles []models.Role
+	for rows.Next() {
+		var role models.Role
+		err := rows.Scan(&role.ID, &role.Name, &role.Description, &role.IsSystem, &role.CreatedAt, &role.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan role: %w", err)
+		}
+		roles = append(roles, role)
+	}
+
+	return roles, nil
+}
+
+// GetUserPermissions fetches permission names for a user
+func GetUserPermissions(ctx context.Context, db *pgxpool.Pool, userID int) ([]string, error) {
+	query := `
+		SELECT DISTINCT p.name
+		FROM permissions p
+		JOIN role_permissions rp ON p.id = rp.permission_id
+		JOIN user_roles ur ON rp.role_id = ur.role_id
+		WHERE ur.user_id = $1
+		ORDER BY p.name
+	`
+
+	rows, err := db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query user permissions: %w", err)
+	}
+	defer rows.Close()
+
+	var permissions []string
+	for rows.Next() {
+		var perm string
+		if err := rows.Scan(&perm); err != nil {
+			return nil, fmt.Errorf("failed to scan permission: %w", err)
+		}
+		permissions = append(permissions, perm)
+	}
+
+	return permissions, nil
+}

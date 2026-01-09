@@ -292,7 +292,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 	restaurantQuery := fmt.Sprintf(`
 		SELECT
 			r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
-			r.google_place_id, r.category_id, r.price_range, r.created_by, r.updated_by, r.created_at, r.updated_at,
+			r.google_place_id, r.category_id, NULL::integer as price_range, r.user_id as created_by, NULL::integer as updated_by, r.created_at, r.updated_at,
 			c.id, c.name,
 			COALESCE(AVG(rt.food_rating), 0) as avg_food,
 			COALESCE(AVG(rt.service_rating), 0) as avg_service,
@@ -302,15 +302,14 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 			NULL::integer as suggestion_id,
 			NULL::text as status,
 			cu.id, cu.username, cu.full_name, cu.avatar_url,
-			uu.id, uu.username, uu.full_name, uu.avatar_url
+			NULL::integer as uu_id, NULL::text as uu_username, NULL::text as uu_full_name, NULL::text as uu_avatar_url
 			%s
 		FROM restaurants r
 		LEFT JOIN categories c ON r.category_id = c.id
 		LEFT JOIN ratings rt ON r.id = rt.restaurant_id
-		LEFT JOIN users cu ON r.created_by = cu.id
-		LEFT JOIN users uu ON r.updated_by = uu.id
+		LEFT JOIN users cu ON r.user_id = cu.id
 		%s
-		GROUP BY r.id, c.id, cu.id, uu.id
+		GROUP BY r.id, c.id, cu.id
 		%s
 	`, distanceSelect, restaurantWhereClause, havingClause)
 
@@ -597,21 +596,20 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 	query := `
 		SELECT
 			r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
-			r.google_place_id, r.category_id, r.created_by, r.updated_by, r.created_at, r.updated_at,
+			r.google_place_id, r.category_id, r.user_id as created_by, NULL::integer as updated_by, r.created_at, r.updated_at,
 			c.id, c.name,
 			COALESCE(AVG(rt.food_rating), 0) as avg_food,
 			COALESCE(AVG(rt.service_rating), 0) as avg_service,
 			COALESCE(AVG(rt.ambiance_rating), 0) as avg_ambiance,
 			COUNT(rt.id) as rating_count,
 			cu.id, cu.username, cu.full_name, cu.avatar_url,
-			uu.id, uu.username, uu.full_name, uu.avatar_url
+			NULL::integer as uu_id, NULL::text as uu_username, NULL::text as uu_full_name, NULL::text as uu_avatar_url
 		FROM restaurants r
 		LEFT JOIN categories c ON r.category_id = c.id
 		LEFT JOIN ratings rt ON r.id = rt.restaurant_id
-		LEFT JOIN users cu ON r.created_by = cu.id
-		LEFT JOIN users uu ON r.updated_by = uu.id
+		LEFT JOIN users cu ON r.user_id = cu.id
 		WHERE r.id = $1
-		GROUP BY r.id, c.id, cu.id, uu.id
+		GROUP BY r.id, c.id, cu.id
 	`
 
 	var rest models.Restaurant
