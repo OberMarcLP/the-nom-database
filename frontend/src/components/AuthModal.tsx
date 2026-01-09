@@ -84,37 +84,25 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
   if (!isOpen) return null;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)' }}>
-      {/* Backdrop */}
-      <div
-        style={{ position: 'fixed', inset: 0 }}
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '480px', background: 'var(--brutalist-card)', border: '2px solid var(--brutalist-accent)', borderRadius: '8px', padding: '32px', boxShadow: '0 20px 60px rgba(0, 255, 136, 0.3)' }}>
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="btn-glass"
-          style={{ position: 'absolute', top: '16px', right: '16px', padding: '8px', minWidth: 'auto' }}
-        >
-          <X size={20} />
-        </button>
-
-        {/* Header */}
-        <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--brutalist-text)', marginBottom: '8px' }}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-glass admin-modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <h2 className="admin-modal-title">
             {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
           </h2>
-          <p style={{ fontSize: '14px', color: 'var(--brutalist-text-muted)' }}>
+          <button onClick={onClose} className="admin-modal-close">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="admin-modal-body">
+          <p className="text-sm text-[var(--text-muted)] mb-6">
             {mode === 'login' ? (
               <>
                 Or{' '}
                 <button
                   onClick={() => setMode('register')}
-                  className="btn-link"
-                  style={{ color: 'var(--brutalist-accent)', textDecoration: 'none', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: 600 }}
+                  className="text-[var(--accent)] hover:text-[var(--accent)] font-semibold"
                 >
                   create a new account
                 </button>
@@ -124,157 +112,154 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
                 Or{' '}
                 <button
                   onClick={() => setMode('login')}
-                  className="btn-link"
-                  style={{ color: 'var(--brutalist-accent)', textDecoration: 'none', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: 600 }}
+                  className="text-[var(--accent)] hover:text-[var(--accent)] font-semibold"
                 >
                   sign in to existing account
                 </button>
               </>
             )}
           </p>
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-5 p-4 border-2 border-[var(--danger)] bg-[var(--danger)]/10 rounded">
+              <p className="text-sm text-[var(--danger)] font-semibold">{error}</p>
+            </div>
+          )}
+
+          {/* Login Form */}
+          {mode === 'login' && (
+            <form onSubmit={handleLoginSubmit} className="space-y-5">
+              <div className="admin-form-group">
+                <label htmlFor="email" className="admin-label">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="admin-input"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="admin-form-group">
+                <label htmlFor="password" className="admin-label">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="admin-input"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="admin-btn-primary w-full mt-2"
+              >
+                {loading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </form>
+          )}
+
+          {/* Register Form */}
+          {mode === 'register' && (
+            <form onSubmit={handleRegisterSubmit} className="space-y-5">
+              <div className="admin-form-group">
+                <label htmlFor="register-email" className="admin-label">
+                  Email address
+                </label>
+                <input
+                  id="register-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="admin-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="admin-form-group">
+                <label htmlFor="register-username" className="admin-label">
+                  Username
+                </label>
+                <input
+                  id="register-username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  className="admin-input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+              <div className="admin-form-group">
+                <label htmlFor="register-fullname" className="admin-label">
+                  Full Name (optional)
+                </label>
+                <input
+                  id="register-fullname"
+                  name="fullName"
+                  type="text"
+                  autoComplete="name"
+                  className="admin-input"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+              <div className="admin-form-group">
+                <label htmlFor="register-password" className="admin-label">
+                  Password
+                </label>
+                <input
+                  id="register-password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  className="admin-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Must be at least 8 characters</p>
+              </div>
+              <div className="admin-form-group">
+                <label htmlFor="register-confirm-password" className="admin-label">
+                  Confirm Password
+                </label>
+                <input
+                  id="register-confirm-password"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  className="admin-input"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="admin-btn-primary w-full mt-2"
+              >
+                {loading ? 'Creating account...' : 'Create account'}
+              </button>
+            </form>
+          )}
         </div>
-
-        {/* Error message */}
-        {error && (
-          <div style={{ marginBottom: '20px', padding: '16px', border: '2px solid var(--brutalist-danger)', backgroundColor: 'rgba(255, 51, 102, 0.1)', borderRadius: '6px' }}>
-            <p style={{ fontSize: '14px', color: 'var(--brutalist-danger)', fontWeight: 600 }}>{error}</p>
-          </div>
-        )}
-
-        {/* Login Form */}
-        {mode === 'login' && (
-          <form onSubmit={handleLoginSubmit} style={{ display: 'grid', gap: '20px' }}>
-            <div>
-              <label htmlFor="email" style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--brutalist-text)', marginBottom: '8px' }}>
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="input-glass"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--brutalist-text)', marginBottom: '8px' }}>
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="input-glass"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-glass-primary"
-              style={{ width: '100%', marginTop: '8px' }}
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </form>
-        )}
-
-        {/* Register Form */}
-        {mode === 'register' && (
-          <form onSubmit={handleRegisterSubmit} style={{ display: 'grid', gap: '20px' }}>
-            <div>
-              <label htmlFor="register-email" style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--brutalist-text)', marginBottom: '8px' }}>
-                Email address
-              </label>
-              <input
-                id="register-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="input-glass"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="register-username" style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--brutalist-text)', marginBottom: '8px' }}>
-                Username
-              </label>
-              <input
-                id="register-username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                required
-                className="input-glass"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="register-fullname" style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--brutalist-text)', marginBottom: '8px' }}>
-                Full Name (optional)
-              </label>
-              <input
-                id="register-fullname"
-                name="fullName"
-                type="text"
-                autoComplete="name"
-                className="input-glass"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="register-password" style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--brutalist-text)', marginBottom: '8px' }}>
-                Password
-              </label>
-              <input
-                id="register-password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="input-glass"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <p style={{ marginTop: '4px', fontSize: '12px', color: 'var(--brutalist-text-muted)' }}>Must be at least 8 characters</p>
-            </div>
-            <div>
-              <label htmlFor="register-confirm-password" style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--brutalist-text)', marginBottom: '8px' }}>
-                Confirm Password
-              </label>
-              <input
-                id="register-confirm-password"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="input-glass"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-glass-primary"
-              style={{ width: '100%', marginTop: '8px' }}
-            >
-              {loading ? 'Creating account...' : 'Create account'}
-            </button>
-          </form>
-        )}
       </div>
     </div>
   );

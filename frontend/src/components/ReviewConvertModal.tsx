@@ -60,74 +60,70 @@ export function ReviewConvertModal({ isOpen, onClose, onSubmit, restaurantName }
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={`Test & Review: ${restaurantName}`}>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="admin-form-group">
+          <label className="admin-label">
             Description (Optional)
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Add a description for this restaurant..."
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                     focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="admin-textarea"
             rows={3}
           />
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-[var(--text)]">
             Your Review
           </h3>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="admin-form-group">
+            <label className="admin-label">
               Food Rating *
             </label>
             <StarRating rating={foodRating} onRatingChange={setFoodRating} />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="admin-form-group">
+            <label className="admin-label">
               Service Rating *
             </label>
             <StarRating rating={serviceRating} onRatingChange={setServiceRating} />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="admin-form-group">
+            <label className="admin-label">
               Ambiance Rating *
             </label>
             <StarRating rating={ambianceRating} onRatingChange={setAmbianceRating} />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="admin-form-group">
+            <label className="admin-label">
               Comment (Optional)
             </label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Share your experience..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                       focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="admin-textarea"
               rows={4}
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="admin-btn"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="admin-btn-primary"
           >
             Submit Review & Convert
           </button>

@@ -72,53 +72,41 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center gap-2"
+        className="btn-glass flex items-center gap-2"
       >
         <Bookmark className="w-4 h-4" />
         Add to List
       </button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowModal(false)}
-          />
-
-          {/* Modal */}
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={(e) => e.stopPropagation()}>
-              {/* Close button */}
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-              >
-                <X className="w-6 h-6" />
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-glass admin-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h2 className="admin-modal-title">
+                Add "{restaurantName}" to List
+              </h2>
+              <button onClick={() => setShowModal(false)} className="admin-modal-close">
+                <X className="w-5 h-5" />
               </button>
+            </div>
 
-              {/* Header */}
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Add "{restaurantName}" to List
-                </h2>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  Select lists to add this restaurant to
-                </p>
-              </div>
+            <div className="admin-modal-body">
+              <p className="text-sm text-[var(--text-muted)] mb-6">
+                Select lists to add this restaurant to
+              </p>
 
               {loading ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-[var(--text-muted)]">
                   Loading lists...
                 </div>
               ) : (
                 <>
                   {lists.length === 0 && !showCreateForm ? (
                     <div className="text-center py-8">
-                      <p className="mb-4 text-gray-600 dark:text-gray-400">You don't have any lists yet.</p>
+                      <p className="mb-4 text-[var(--text-muted)]">You don't have any lists yet.</p>
                       <button
                         onClick={() => setShowCreateForm(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                        className="admin-btn-primary inline-flex items-center gap-2"
                       >
                         <Plus className="w-4 h-4" />
                         Create Your First List
@@ -131,25 +119,25 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
                           <button
                             key={list.id}
                             onClick={() => handleToggleList(list.id, list.contains_restaurant)}
-                            className={`w-full p-3 rounded-lg border-2 transition-all text-left flex items-center justify-between ${
+                            className={`w-full p-3 rounded border-2 transition-all text-left flex items-center justify-between ${
                               list.contains_restaurant
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-gray-900 dark:text-white'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-gray-900 dark:text-gray-100'
+                                ? 'border-[var(--accent)] bg-[var(--accent)]/10'
+                                : 'border-[var(--border)] hover:border-[var(--accent)]/50'
                             }`}
                           >
                             <div>
-                              <h3 className="font-semibold text-gray-900 dark:text-white">{list.name}</h3>
+                              <h3 className="font-semibold text-[var(--text)]">{list.name}</h3>
                               {list.description && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <p className="text-sm text-[var(--text-muted)]">
                                   {list.description}
                                 </p>
                               )}
-                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                              <p className="text-xs text-[var(--text-muted)] mt-1">
                                 {list.restaurant_count || 0} restaurant{list.restaurant_count !== 1 ? 's' : ''}
                               </p>
                             </div>
                             {list.contains_restaurant && (
-                              <Check className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                              <Check className="w-5 h-5 text-[var(--accent)] flex-shrink-0" />
                             )}
                           </button>
                         ))}
@@ -158,21 +146,21 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
                       {!showCreateForm ? (
                         <button
                           onClick={() => setShowCreateForm(true)}
-                          className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center gap-2"
+                          className="admin-btn w-full flex items-center justify-center gap-2"
                         >
                           <Plus className="w-4 h-4" />
                           Create New List
                         </button>
                       ) : (
-                        <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">Create New List</h3>
-                          <form onSubmit={handleCreateList} className="space-y-3">
+                        <div className="admin-card p-4">
+                          <h3 className="admin-card-title mb-4">Create New List</h3>
+                          <form onSubmit={handleCreateList} className="space-y-4">
                             <input
                               type="text"
                               value={newListName}
                               onChange={(e) => setNewListName(e.target.value)}
                               placeholder="List name (e.g., Want to Try)"
-                              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700"
+                              className="admin-input"
                               autoFocus
                               required
                             />
@@ -180,7 +168,7 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
                               <button
                                 type="submit"
                                 disabled={creating || !newListName.trim()}
-                                className="flex-1 flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="admin-btn-primary flex-1"
                               >
                                 {creating ? 'Creating...' : 'Create'}
                               </button>
@@ -190,7 +178,7 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
                                   setShowCreateForm(false);
                                   setNewListName('');
                                 }}
-                                className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                className="admin-btn"
                               >
                                 Cancel
                               </button>

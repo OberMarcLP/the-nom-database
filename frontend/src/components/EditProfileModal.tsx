@@ -60,41 +60,29 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={(e) => e.stopPropagation()}>
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-          >
-            <X className="w-6 h-6" />
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-glass" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <h2 className="admin-modal-title">Edit Profile</h2>
+          <button onClick={onClose} className="admin-modal-close">
+            <X className="w-5 h-5" />
           </button>
+        </div>
 
-          {/* Header */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Profile</h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Update your profile information
-            </p>
-          </div>
+        <div className="admin-modal-body">
+          <p className="text-sm text-[var(--text-muted)] mb-6">
+            Update your profile information
+          </p>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-              {error}
+            <div className="mb-5 p-4 border-2 border-[var(--danger)] bg-[var(--danger)]/10 rounded">
+              <p className="text-sm text-[var(--danger)] font-semibold">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="admin-form-group">
+              <label htmlFor="username" className="admin-label">
                 Username *
               </label>
               <input
@@ -102,13 +90,13 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700"
+                className="admin-input"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="admin-form-group">
+              <label htmlFor="fullName" className="admin-label">
                 Full Name
               </label>
               <input
@@ -116,12 +104,12 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700"
+                className="admin-input"
               />
             </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="admin-form-group">
+              <label htmlFor="email" className="admin-label">
                 Email *
               </label>
               <input
@@ -129,23 +117,23 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700"
+                className="admin-input"
                 required
               />
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-2">
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="admin-btn-primary flex-1"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="admin-btn"
               >
                 Cancel
               </button>

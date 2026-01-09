@@ -142,7 +142,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
       <div className="space-y-4">
           {/* Category Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="admin-label">
               Category
             </label>
             <select
@@ -159,7 +159,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
 
           {/* Food Types Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="admin-label">
               Food Types
             </label>
             <div className="flex flex-wrap gap-2">
@@ -181,7 +181,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
 
           {/* Price Range Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="admin-label">
               Price Range
             </label>
             <div className="flex flex-wrap gap-2">
@@ -196,7 +196,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
                   onClick={() => onFiltersChange({ ...filters, price_range: filters.price_range === price.value ? undefined : price.value })}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
                     filters.price_range === price.value
-                      ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-md border border-green-500/30 text-green-700 dark:text-green-300 shadow-lg'
+                      ? 'bg-[var(--success)]/20 border-2 border-[var(--success)] text-[var(--success)]'
                       : 'btn-glass'
                   }`}
                 >
@@ -204,12 +204,12 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Shows restaurants up to and including selected price range</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Shows restaurants up to and including selected price range</p>
           </div>
 
           {/* Rating Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="admin-label">
               Minimum Rating
             </label>
             <div className="flex flex-wrap gap-2">
@@ -219,7 +219,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
                   onClick={() => onFiltersChange({ ...filters, min_rating: filters.min_rating === rating ? undefined : rating })}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
                     filters.min_rating === rating
-                      ? 'bg-gradient-to-r from-yellow-400/30 to-orange-400/30 backdrop-blur-md border border-yellow-500/40 text-yellow-700 dark:text-yellow-200 shadow-lg'
+                      ? 'bg-[var(--warning)]/20 border-2 border-[var(--warning)] text-[var(--warning)]'
                       : 'btn-glass'
                   }`}
                 >
@@ -231,7 +231,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
 
           {/* Sort Options */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="admin-label">
               Sort By
             </label>
             <div className="flex flex-wrap gap-2">
@@ -245,7 +245,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
                   onClick={() => onFiltersChange({ ...filters, sort: filters.sort === sort.value ? undefined : sort.value as any })}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
                     filters.sort === sort.value
-                      ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-md border border-purple-500/30 text-purple-700 dark:text-purple-300 shadow-lg'
+                      ? 'bg-[var(--accent)]/20 border-2 border-[var(--accent)] text-[var(--accent)]'
                       : 'btn-glass'
                   }`}
                 >
@@ -257,21 +257,21 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
 
           {/* Location Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="admin-label">
               Location & Radius
             </label>
 
             {selectedLocation ? (
-              <div className="flex items-center gap-2 mb-3 p-3 bg-blue-500/20 dark:bg-blue-500/30 backdrop-blur-md border border-blue-500/40 rounded-xl">
-                <MapPin className="w-4 h-4 text-blue-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 font-medium">
+              <div className="flex items-center gap-2 mb-3 p-3 bg-[var(--info)]/10 border-2 border-[var(--info)] rounded">
+                <MapPin className="w-4 h-4 text-[var(--info)]" />
+                <span className="text-sm text-[var(--text)] flex-1 font-medium">
                   {selectedLocation.name}
                 </span>
                 <button
                   onClick={clearLocationFilter}
-                  className="p-1 hover:bg-red-500/20 rounded-full transition-colors"
+                  className="p-1 hover:bg-[var(--danger)]/20 rounded-full transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                  <X className="w-4 h-4 text-[var(--text-muted)] hover:text-[var(--danger)]" />
                 </button>
               </div>
             ) : (
@@ -284,22 +284,22 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
                     placeholder="Search city..."
                     className="input-glass pl-10"
                   />
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" />
                   {searchingLocation && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] animate-spin" />
                   )}
                 </div>
 
                 {locationResults.length > 0 && (
-                  <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl border border-white/30 dark:border-white/10 rounded-2xl shadow-2xl shadow-black/20 max-h-48 overflow-y-auto animate-slide-down">
+                  <div className="bg-[var(--surface)] border-2 border-[var(--border)] rounded shadow-lg max-h-48 overflow-y-auto animate-slide-down">
                     {locationResults.map((place) => (
                       <button
                         key={place.place_id}
                         onClick={() => handleLocationSelect(place)}
-                        className="w-full px-4 py-3 text-left hover:bg-white/40 dark:hover:bg-white/10 text-sm transition-all duration-200 first:rounded-t-2xl last:rounded-b-2xl"
+                        className="w-full px-4 py-3 text-left hover:bg-[var(--surface-hover)] text-sm transition-all duration-200"
                       >
-                        <div className="font-medium text-gray-900 dark:text-white">{place.name}</div>
-                        <div className="text-gray-500 dark:text-gray-400 text-xs">{place.address}</div>
+                        <div className="font-medium text-[var(--text)]">{place.name}</div>
+                        <div className="text-[var(--text-muted)] text-xs">{place.address}</div>
                       </button>
                     ))}
                   </div>
@@ -308,7 +308,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
                 <button
                   onClick={handleUseCurrentLocation}
                   disabled={gettingCurrentLocation}
-                  className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-600 disabled:opacity-50"
+                  className="flex items-center gap-2 text-sm text-[var(--info)] hover:text-[var(--info)] disabled:opacity-50"
                 >
                   {gettingCurrentLocation ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -329,7 +329,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
                   disabled={!selectedLocation}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
                     filters.radius === km
-                      ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
+                      ? 'bg-[var(--info)]/20 border-2 border-[var(--info)] text-[var(--info)]'
                       : 'btn-glass disabled:opacity-50 disabled:cursor-not-allowed'
                   }`}
                 >
@@ -338,7 +338,7 @@ export function SearchFilters({ categories, foodTypes, filters, onFiltersChange 
               ))}
             </div>
             {!selectedLocation && (
-              <p className="text-xs text-gray-500 mt-1">Select a location first to filter by radius</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Select a location first to filter by radius</p>
             )}
           </div>
       </div>

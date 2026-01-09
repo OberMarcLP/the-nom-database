@@ -32,9 +32,10 @@ export function StarRating({
           <Star
             className={`${sizeClasses[size]} transition-all duration-200 ${
               star <= rating
-                ? 'fill-yellow-400 text-yellow-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)] hover:drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]'
-                : 'fill-none text-gray-300 dark:text-gray-600'
+                ? 'fill-[var(--warning)] text-[var(--warning)]'
+                : 'fill-none text-[var(--border)]'
             }`}
+            style={star <= rating ? { filter: 'drop-shadow(0 0 8px var(--warning))' } : undefined}
           />
         </button>
       ))}

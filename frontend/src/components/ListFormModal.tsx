@@ -34,35 +34,23 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={(e) => e.stopPropagation()}>
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-          >
-            <X className="w-6 h-6" />
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-glass" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <h2 className="admin-modal-title">Create New List</h2>
+          <button onClick={onClose} className="admin-modal-close">
+            <X className="w-5 h-5" />
           </button>
+        </div>
 
-          {/* Header */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create New List</h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Organize restaurants you want to try or your favorites
-            </p>
-          </div>
+        <div className="admin-modal-body">
+          <p className="text-sm text-[var(--text-muted)] mb-6">
+            Organize restaurants you want to try or your favorites
+          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="listName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="admin-form-group">
+              <label htmlFor="listName" className="admin-label">
                 List Name *
               </label>
               <input
@@ -71,14 +59,14 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Want to Try, Favorites, Date Night"
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700"
+                className="admin-input"
                 required
                 autoFocus
               />
             </div>
 
-            <div>
-              <label htmlFor="listDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="admin-form-group">
+              <label htmlFor="listDescription" className="admin-label">
                 Description (optional)
               </label>
               <textarea
@@ -86,7 +74,7 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add a description for this list..."
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 min-h-[80px]"
+                className="admin-textarea"
                 rows={3}
               />
             </div>
@@ -97,9 +85,9 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
                 id="isPublic"
                 checked={isPublic}
                 onChange={(e) => setIsPublic(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 bg-white dark:bg-gray-700"
+                className="w-4 h-4 rounded border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0"
               />
-              <label htmlFor="isPublic" className="text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor="isPublic" className="text-sm text-[var(--text)]">
                 Make this list public (others can view it)
               </label>
             </div>
@@ -108,14 +96,14 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
               <button
                 type="submit"
                 disabled={loading || !name.trim()}
-                className="flex-1 flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="admin-btn-primary flex-1"
               >
                 {loading ? 'Creating...' : 'Create List'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="admin-btn"
               >
                 Cancel
               </button>

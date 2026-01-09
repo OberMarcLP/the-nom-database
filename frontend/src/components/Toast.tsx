@@ -35,22 +35,22 @@ const Toast = ({ toast, onClose }: ToastProps) => {
   };
 
   const icons = {
-    success: <CheckCircle className="w-5 h-5 text-green-500" />,
-    error: <AlertCircle className="w-5 h-5 text-red-500" />,
-    warning: <AlertTriangle className="w-5 h-5 text-yellow-500" />,
-    info: <Info className="w-5 h-5 text-blue-500" />,
+    success: <CheckCircle className="w-5 h-5 text-[var(--success)]" />,
+    error: <AlertCircle className="w-5 h-5 text-[var(--danger)]" />,
+    warning: <AlertTriangle className="w-5 h-5 text-[var(--warning)]" />,
+    info: <Info className="w-5 h-5 text-[var(--info)]" />,
   };
 
   const bgColors = {
-    success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
-    error: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
-    info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+    success: 'bg-[var(--success)]/10 border-[var(--success)]',
+    error: 'bg-[var(--danger)]/10 border-[var(--danger)]',
+    warning: 'bg-[var(--warning)]/10 border-[var(--warning)]',
+    info: 'bg-[var(--info)]/10 border-[var(--info)]',
   };
 
   return (
     <div
-      className={`flex items-start gap-3 p-4 rounded-lg border shadow-lg backdrop-blur-md transition-all duration-300 ${
+      className={`flex items-start gap-3 p-4 rounded border-2 shadow-lg bg-[var(--surface)] transition-all duration-300 ${
         bgColors[toast.type]
       } ${
         isExiting
@@ -61,14 +61,14 @@ const Toast = ({ toast, onClose }: ToastProps) => {
       <div className="flex-shrink-0 mt-0.5">{icons[toast.type]}</div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white break-words">
+        <p className="text-sm font-medium text-[var(--text)] break-words">
           {toast.message}
         </p>
       </div>
 
       <button
         onClick={handleClose}
-        className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
       >
         <X className="w-4 h-4" />
       </button>
