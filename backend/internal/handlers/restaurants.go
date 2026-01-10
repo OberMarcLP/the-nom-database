@@ -784,13 +784,6 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user from context
-	user, ok := GetUserFromContext(r)
-	var userID *int
-	if ok && user != nil {
-		userID = &user.ID
-	}
-
 	ctx := context.Background()
 
 	var rest models.Restaurant
@@ -805,16 +798,16 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 			longitude = COALESCE($7, longitude),
 			google_place_id = COALESCE($8, google_place_id),
 			category_id = COALESCE($9, category_id),
-			updated_by = $10,
 			updated_at = NOW()
-		WHERE id = $11
-		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_by, updated_by, created_at, updated_at`,
-		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, userID, id,
+		WHERE id = $10
+		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, user_id, created_at, updated_at`,
+		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, id,
 	).Scan(
 		&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
+		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 	)
 	if err != nil {
+		logger.Error("Failed to update restaurant ID %d: %v", id, err)
 		http.Error(w, "Restaurant not found", http.StatusNotFound)
 		return
 	}
