@@ -4,6 +4,7 @@ import { Trash2, Edit2, Check, X, Star, User } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
 import { AlertDialog } from './AlertDialog';
 import { LazyImage } from './LazyImage';
+import { PhotoLightbox } from './PhotoLightbox';
 
 interface ExtendedPhoto extends MenuPhoto {
   source?: 'menu' | 'review';
@@ -29,6 +30,8 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete }: PhotoGallery
   const [editCaption, setEditCaption] = useState('');
   const [deletingPhotoId, setDeletingPhotoId] = useState<number | null>(null);
   const [alertMessage, setAlertMessage] = useState('');
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const handleStartEdit = (photo: MenuPhoto) => {
     setEditingId(photo.id);
@@ -70,10 +73,27 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete }: PhotoGallery
     }
   };
 
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+  };
+
+  const nextPhoto = () => {
+    setLightboxIndex((prev) => (prev + 1) % photos.length);
+  };
+
+  const previousPhoto = () => {
+    setLightboxIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  };
+
   if (photos.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        No photos uploaded yet
+      <div className="text-center py-12 text-[var(--text-muted)] font-mono text-sm">
+        NO PHOTOS UPLOADED YET
       </div>
     );
   }
@@ -83,107 +103,107 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete }: PhotoGallery
       {photos.map((photo) => (
         <div
           key={photo.id}
-          className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white dark:bg-gray-800"
+          className="relative overflow-hidden flex flex-col h-full border-2 border-[var(--border)] bg-[var(--surface)] rounded-lg"
         >
-          <div className="relative group">
+          <div className="relative group flex-1 cursor-pointer" onClick={() => openLightbox(photos.indexOf(photo))}>
             <LazyImage
               src={photo.url}
               alt={photo.caption}
-              className="w-full h-48 object-cover"
+              className="w-full h-full min-h-[400px] object-cover"
               onError={(e) => {
-                e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%" y="50%" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+                e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23141414" width="100" height="100"/%3E%3Ctext fill="%23888" x="50%" y="50%" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
               }}
             />
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-10">
               <button
-                onClick={() => handleStartEdit(photo)}
-                className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleStartEdit(photo);
+                }}
+                className="admin-btn-icon"
                 title="Edit caption"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
               <button
-                onClick={() => handleDelete(photo.id)}
-                className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(photo.id);
+                }}
+                className="admin-btn-icon bg-[var(--danger)] hover:bg-[var(--danger)]"
                 title="Delete photo"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
-          </div>
 
-          <div className="p-3">
-            {editingId === photo.id ? (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={editCaption}
-                  onChange={(e) => setEditCaption(e.target.value)}
-                  className="input text-sm py-1"
-                  placeholder="Dish name"
-                  autoFocus
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleSaveEdit(photo.id)}
-                    className="flex-1 btn btn-sm bg-green-500 hover:bg-green-600 text-white flex items-center justify-center gap-1"
-                  >
-                    <Check className="w-4 h-4" />
-                    Save
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="flex-1 btn btn-sm bg-gray-500 hover:bg-gray-600 text-white flex items-center justify-center gap-1"
-                  >
-                    <X className="w-4 h-4" />
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <h3 className="font-semibold text-sm mb-1">{photo.caption}</h3>
+            {/* Overlay caption and info on the image */}
+            {editingId !== photo.id && (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end p-4">
+                <h3 className="text-white font-bold text-base mb-2">{photo.caption}</h3>
 
                 {photo.source === 'review' && photo.reviewInfo ? (
-                  <div className="space-y-1 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-                      <User className="w-3 h-3" />
-                      <span className="font-medium">{photo.reviewInfo.username}</span>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <User className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      <span className="text-white font-mono">{photo.reviewInfo.username}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">Food:</span>
+                      <span className="text-white/90 font-mono font-semibold">FOOD:</span>
                       <div className="flex items-center gap-0.5">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`w-3 h-3 ${
+                            className={`w-3.5 h-3.5 ${
                               i < photo.reviewInfo!.ratings.food
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300 dark:text-gray-600'
+                                ? 'fill-[var(--accent)] text-[var(--accent)]'
+                                : 'text-white/20'
                             }`}
                           />
                         ))}
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-white/80 font-mono">
                       {new Date(photo.reviewInfo.date).toLocaleDateString()}
                     </p>
                   </div>
                 ) : (
-                  <>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(photo.created_at).toLocaleDateString()}
-                    </p>
-                    {photo.file_size && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        {(photo.file_size / 1024).toFixed(1)} KB
-                      </p>
-                    )}
-                  </>
+                  <p className="text-xs text-white/80 font-mono">
+                    {new Date(photo.created_at).toLocaleDateString()}
+                  </p>
                 )}
-              </>
+              </div>
             )}
           </div>
+
+          {editingId === photo.id && (
+            <div className="p-4 space-y-3 bg-[var(--surface)]">
+              <input
+                type="text"
+                value={editCaption}
+                onChange={(e) => setEditCaption(e.target.value)}
+                className="admin-input text-sm"
+                placeholder="Dish name"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleSaveEdit(photo.id)}
+                  className="flex-1 admin-btn-sm admin-btn-primary flex items-center justify-center gap-1"
+                >
+                  <Check className="w-4 h-4" />
+                  Save
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="flex-1 admin-btn-sm flex items-center justify-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
       <ConfirmDialog
@@ -201,6 +221,15 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete }: PhotoGallery
         onClose={() => setAlertMessage('')}
         message={alertMessage}
       />
+      {lightboxOpen && (
+        <PhotoLightbox
+          photos={photos.map(p => ({ id: p.id, url: p.url, caption: p.caption }))}
+          currentIndex={lightboxIndex}
+          onClose={closeLightbox}
+          onNext={nextPhoto}
+          onPrevious={previousPhoto}
+        />
+      )}
     </div>
   );
 }

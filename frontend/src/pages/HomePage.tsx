@@ -320,7 +320,7 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
             {viewingSuggestion.website && (
               <a href={viewingSuggestion.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
                 <Globe className="w-5 h-5 flex-shrink-0" />
-                <span className="truncate">{viewingSuggestion.website}</span>
+                <span className="truncate">{viewingSuggestion.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
               </a>
             )}
 

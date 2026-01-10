@@ -372,6 +372,7 @@ body::before {
   background: var(--surface);
   border-bottom: 2px solid var(--border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 200;
 }
 
 /* =========================
@@ -679,15 +680,21 @@ body::before {
   border-right: 2px solid var(--border);
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  position: fixed;
+  top: 120px;
+  left: 0;
+  height: calc(100vh - 120px);
+  overflow: hidden;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
 }
 
 .admin-sidebar.collapsed {
   width: var(--admin-sidebar-collapsed);
+}
+
+.admin-sidebar.collapsed ~ .admin-content {
+  margin-left: var(--admin-sidebar-collapsed);
 }
 
 .admin-sidebar-header {
@@ -786,9 +793,11 @@ body::before {
 
 .admin-content {
   flex: 1;
+  margin-left: var(--admin-sidebar-width);
   padding: 0;
   overflow-y: auto;
   animation: fadeIn 0.4s ease-out;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .admin-content-inner {
@@ -1057,6 +1066,7 @@ body::before {
   }
 
   .admin-content {
+    margin-left: 0;
     padding: 0;
   }
 

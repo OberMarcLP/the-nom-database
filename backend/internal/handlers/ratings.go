@@ -463,10 +463,10 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 	// Insert photo record
 	var photo models.ReviewPhoto
 	err = database.GetPool().QueryRow(context.Background(),
-		`INSERT INTO review_photos (rating_id, photo_url, caption, display_order)
-		VALUES ($1, $2, $3, $4)
+		`INSERT INTO review_photos (rating_id, user_id, filename, photo_url, caption, display_order)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, rating_id, photo_url, caption, display_order, created_at`,
-		ratingID, photoURL, caption, maxOrder+1).Scan(
+		ratingID, user.ID, filename, photoURL, caption, maxOrder+1).Scan(
 		&photo.ID, &photo.RatingID, &photo.PhotoURL, &photo.Caption, &photo.DisplayOrder, &photo.CreatedAt)
 	if err != nil {
 		log.Printf("ERROR: Failed to insert review photo - ratingID=%d, error=%v", ratingID, err)
