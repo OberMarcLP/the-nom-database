@@ -449,12 +449,13 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 	// Create restaurant
 	var restaurantID int
 	err = database.GetPool().QueryRow(ctx,
-		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_by, updated_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id`,
-		sug.Name, req.Description, sug.Address, sug.Phone, sug.Website, sug.Latitude, sug.Longitude, sug.GooglePlaceID, categoryID, userID, userID,
+		sug.Name, req.Description, sug.Address, sug.Phone, sug.Website, sug.Latitude, sug.Longitude, sug.GooglePlaceID, categoryID, userID,
 	).Scan(&restaurantID)
 	if err != nil {
+		logger.Error("Failed to create restaurant from suggestion: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
