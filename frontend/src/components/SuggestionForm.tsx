@@ -90,7 +90,7 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="label">Search Google Maps</label>
+        <label className="admin-label">Search Google Maps</label>
         <PlaceSearch onSelect={handlePlaceSelect} />
         {loadingDetails && (
           <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
@@ -101,51 +101,51 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
       </div>
 
       <div>
-        <label className="label">Name *</label>
+        <label className="admin-label">Name *</label>
         <input
           type="text"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="input-glass"
+          className="admin-input"
           required
         />
       </div>
 
       <div>
-        <label className="label">Address</label>
+        <label className="admin-label">Address</label>
         <input
           type="text"
           value={formData.address}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          className="input-glass"
+          className="admin-input"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="label">Phone</label>
+          <label className="admin-label">Phone</label>
           <input
             type="tel"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="input-glass"
+            className="admin-input"
             placeholder="+1 234 567 8900"
           />
         </div>
         <div>
-          <label className="label">Website</label>
+          <label className="admin-label">Website</label>
           <input
             type="url"
             value={formData.website}
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-            className="input-glass"
+            className="admin-input"
             placeholder="https://..."
           />
         </div>
       </div>
 
       <div>
-        <label className="label">Suggested Category</label>
+        <label className="admin-label">Suggested Category</label>
         <select
           value={formData.suggested_category_id || ''}
           onChange={(e) =>
@@ -154,7 +154,7 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
               suggested_category_id: e.target.value ? parseInt(e.target.value) : null,
             })
           }
-          className="input-glass"
+          className="admin-select"
         >
           <option value="">Select category</option>
           {categories.map((cat) => (
@@ -166,7 +166,7 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
       </div>
 
       <div>
-        <label className="label">Food Types (select multiple)</label>
+        <label className="admin-label">Food Types (select multiple)</label>
 
         {selectedFoodTypes.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
@@ -211,11 +211,11 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
       </div>
 
       <div>
-        <label className="label">Notes</label>
+        <label className="admin-label">Notes</label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          className="input min-h-[100px]"
+          className="admin-textarea min-h-[100px]"
           rows={3}
           placeholder="Any additional notes about this restaurant..."
         />

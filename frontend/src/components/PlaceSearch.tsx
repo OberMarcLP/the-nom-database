@@ -47,14 +47,14 @@ export function PlaceSearch({ onSelect }: PlaceSearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search restaurant name..."
-            className="input !pl-12"
+            className="admin-input !pl-12"
           />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         </div>
         <button
           onClick={handleSearch}
           disabled={loading || !query.trim()}
-          className="btn btn-primary flex items-center gap-2"
+          className="admin-btn-primary flex items-center gap-2"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
         </button>
@@ -63,15 +63,21 @@ export function PlaceSearch({ onSelect }: PlaceSearchProps) {
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
       {results.length > 0 && (
-        <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-80 overflow-y-auto">
+        <div className="absolute z-10 w-full mt-2 rounded-lg shadow-lg border-2 max-h-80 overflow-y-auto" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
           {results.map((place) => (
             <button
               key={place.place_id}
               onClick={() => handleSelect(place)}
-              className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0"
+              className="w-full text-left px-4 py-3 transition-colors border-b-2 last:border-0"
+              style={{
+                borderColor: 'var(--border)',
+                color: 'var(--text)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <p className="font-medium">{place.name}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{place.address}</p>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{place.address}</p>
             </button>
           ))}
         </div>

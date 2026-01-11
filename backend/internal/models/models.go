@@ -43,6 +43,9 @@ type Restaurant struct {
 	IsSuggestion  bool         `json:"is_suggestion"`      // Indicates if this is from suggestions table
 	SuggestionID  *int         `json:"suggestion_id,omitempty"`
 	Status        *string      `json:"status,omitempty"`    // For suggestions: pending, approved, tested, rejected
+	Notes         *string      `json:"notes,omitempty"`     // For suggestions: user notes about the suggestion
+	UserID        *int         `json:"user_id,omitempty"`   // For suggestions: user ID who suggested this
+	User          *UserSummary `json:"user,omitempty"`      // For suggestions: user who suggested this
 	CreatedBy     *int         `json:"created_by,omitempty"` // User ID who created this restaurant
 	UpdatedBy     *int         `json:"updated_by,omitempty"` // User ID who last updated this restaurant
 	CreatedByUser *UserSummary `json:"created_by_user,omitempty"`

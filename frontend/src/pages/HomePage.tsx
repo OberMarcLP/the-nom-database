@@ -259,33 +259,11 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
               </p>
             </div>
 
-            {isAuthenticated && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setViewingSuggestion(null);
-                    handleReviewSuggestion(viewingSuggestion);
-                  }}
-                  className="btn btn-primary flex items-center gap-2"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Review & Convert
-                </button>
-                <button
-                  onClick={() => {
-                    setViewingSuggestion(null);
-                    handleRejectSuggestion(viewingSuggestion);
-                  }}
-                  className="btn btn-danger flex items-center gap-2"
-                >
-                  <XCircle className="w-4 h-4" />
-                  Reject
-                </button>
-              </div>
-            )}
-
             {viewingSuggestion.notes && (
-              <p className="text-gray-600 dark:text-gray-400">{viewingSuggestion.notes}</p>
+              <div className="card-glass p-4">
+                <h3 className="admin-label mb-2">Notes</h3>
+                <p style={{ color: 'var(--text)' }}>{viewingSuggestion.notes}</p>
+              </div>
             )}
 
             <div className="flex flex-wrap gap-2">
@@ -336,9 +314,34 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
             )}
 
             {viewingSuggestion.user && (
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="font-semibold mb-2">Suggested by</h3>
+              <div className="pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
+                <h3 className="admin-label mb-2">Suggested by</h3>
                 <UserBadge user={viewingSuggestion.user} />
+              </div>
+            )}
+
+            {isAuthenticated && (
+              <div className="flex gap-2 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
+                <button
+                  onClick={() => {
+                    setViewingSuggestion(null);
+                    handleReviewSuggestion(viewingSuggestion);
+                  }}
+                  className="btn-glass-success flex-1 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Review & Convert
+                </button>
+                <button
+                  onClick={() => {
+                    setViewingSuggestion(null);
+                    handleRejectSuggestion(viewingSuggestion);
+                  }}
+                  className="btn-glass-danger flex-1 flex items-center justify-center gap-2"
+                >
+                  <XCircle className="w-4 h-4" />
+                  Reject
+                </button>
               </div>
             )}
           </div>

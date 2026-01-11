@@ -379,7 +379,8 @@ export const useCreateSuggestion = (
   return useMutation({
     mutationFn: api.createSuggestion,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['suggestions'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['restaurants'], refetchType: 'active' });
     },
     ...options,
   });

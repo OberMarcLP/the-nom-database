@@ -301,6 +301,8 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 			false as is_suggestion,
 			NULL::integer as suggestion_id,
 			NULL::text as status,
+			NULL::text as notes,
+			NULL::integer as user_id,
 			cu.id, cu.username, cu.full_name, cu.avatar_url,
 			NULL::integer as uu_id, NULL::text as uu_username, NULL::text as uu_full_name, NULL::text as uu_avatar_url
 			%s
@@ -395,11 +397,14 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 				true as is_suggestion,
 				s.id as suggestion_id,
 				s.status,
-				NULL::integer as cu_id, NULL::text as cu_username, NULL::text as cu_full_name, NULL::text as cu_avatar_url,
+				s.notes,
+				s.user_id,
+				u.id, u.username, u.full_name, u.avatar_url,
 				NULL::integer as uu_id, NULL::text as uu_username, NULL::text as uu_full_name, NULL::text as uu_avatar_url
 				%s
 			FROM restaurant_suggestions s
 			LEFT JOIN categories c ON s.suggested_category_id = c.id
+			LEFT JOIN users u ON s.user_id = u.id
 			%s
 		`, suggestionDistanceSelect, suggestionWhereClause)
 
@@ -470,6 +475,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 				&catID, &catName,
 				&avgFood, &avgService, &avgAmbiance, &ratingCount,
 				&rest.IsSuggestion, &rest.SuggestionID, &rest.Status,
+				&rest.Notes, &rest.UserID,
 				&cuID, &cuUsername, &cuFullName, &cuAvatarURL,
 				&uuID, &uuUsername, &uuFullName, &uuAvatarURL,
 				&distance,
@@ -481,6 +487,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 				&catID, &catName,
 				&avgFood, &avgService, &avgAmbiance, &ratingCount,
 				&rest.IsSuggestion, &rest.SuggestionID, &rest.Status,
+				&rest.Notes, &rest.UserID,
 				&cuID, &cuUsername, &cuFullName, &cuAvatarURL,
 				&uuID, &uuUsername, &uuFullName, &uuAvatarURL,
 			)
@@ -499,11 +506,21 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if cuID != nil && cuUsername != nil {
-			rest.CreatedByUser = &models.UserSummary{
-				ID:        *cuID,
-				Username:  *cuUsername,
-				FullName:  cuFullName,
-				AvatarURL: cuAvatarURL,
+			// For suggestions, this is the user who created the suggestion
+			if rest.IsSuggestion {
+				rest.User = &models.UserSummary{
+					ID:        *cuID,
+					Username:  *cuUsername,
+					FullName:  cuFullName,
+					AvatarURL: cuAvatarURL,
+				}
+			} else {
+				rest.CreatedByUser = &models.UserSummary{
+					ID:        *cuID,
+					Username:  *cuUsername,
+					FullName:  cuFullName,
+					AvatarURL: cuAvatarURL,
+				}
 			}
 		}
 
