@@ -3,9 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink, useNavigate } from 'react-router
 import { Home, Loader2, LogIn, LogOut, UserPlus, Bookmark, Shield } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useTheme } from './hooks/useTheme';
 import { usePermissions } from './hooks/usePermissions';
-import { ThemeToggle } from './components/ThemeToggle';
 import { GlobalSearch } from './components/GlobalSearch';
 import { useCategories, useFoodTypes } from './hooks/useApi';
 import { RestaurantFilters } from './services/api';
@@ -127,7 +125,6 @@ function UserMenu({ onLoginClick, onRegisterClick }: UserMenuProps) {
 }
 
 function AppContent() {
-  const { isDark, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { isAdmin } = usePermissions();
   const [filters, setFilters] = useState<RestaurantFilters>({});
@@ -214,7 +211,7 @@ function AppContent() {
                       </div>
                       <div className="flex items-center gap-4">
                         <UserMenu onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} />
-                        <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
+                        
                       </div>
                     </div>
 
@@ -341,7 +338,7 @@ function AppContent() {
                       </div>
                       <div className="flex items-center gap-4">
                         <UserMenu onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} />
-                        <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
+                        
                       </div>
                     </div>
 

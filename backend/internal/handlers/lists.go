@@ -25,7 +25,7 @@ func GetUserLists(w http.ResponseWriter, r *http.Request) {
 			l.id, l.user_id, l.name, l.description, l.is_public, l.created_at, l.updated_at,
 			COUNT(lr.id) as restaurant_count
 		FROM restaurant_lists l
-		LEFT JOIN list_restaurants lr ON l.id = lr.list_id
+		LEFT JOIN restaurant_list_items lr ON l.id = lr.list_id
 		WHERE l.user_id = $1
 		GROUP BY l.id
 		ORDER BY l.updated_at DESC
@@ -100,7 +100,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 			r.latitude, r.longitude, r.google_place_id, r.category_id,
 			r.created_at, r.updated_at,
 			c.id, c.name
-		FROM list_restaurants lr
+		FROM restaurant_list_items lr
 		JOIN restaurants r ON lr.restaurant_id = r.id
 		LEFT JOIN categories c ON r.category_id = c.id
 		WHERE lr.list_id = $1
@@ -335,7 +335,7 @@ func AddRestaurantToList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := `
-		INSERT INTO list_restaurants (list_id, restaurant_id, notes)
+		INSERT INTO restaurant_list_items (list_id, restaurant_id, notes)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (list_id, restaurant_id) DO UPDATE SET notes = $3
 		RETURNING id, list_id, restaurant_id, notes, added_at
@@ -392,7 +392,7 @@ func RemoveRestaurantFromList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = database.GetPool().Exec(context.Background(),
-		"DELETE FROM list_restaurants WHERE list_id = $1 AND restaurant_id = $2",
+		"DELETE FROM restaurant_list_items WHERE list_id = $1 AND restaurant_id = $2",
 		listID, restaurantID)
 	if err != nil {
 		log.Printf("ERROR: Failed to remove restaurant from list: %v", err)
@@ -421,7 +421,7 @@ func GetRestaurantLists(w http.ResponseWriter, r *http.Request) {
 	query := `
 		SELECT
 			l.id, l.user_id, l.name, l.description, l.is_public, l.created_at, l.updated_at,
-			EXISTS(SELECT 1 FROM list_restaurants WHERE list_id = l.id AND restaurant_id = $2) as contains_restaurant
+			EXISTS(SELECT 1 FROM restaurant_list_items WHERE list_id = l.id AND restaurant_id = $2) as contains_restaurant
 		FROM restaurant_lists l
 		WHERE l.user_id = $1
 		ORDER BY l.name
