@@ -391,7 +391,7 @@ function AppContent() {
 
               <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Routes>
-                  <Route path="/" element={<HomePage filters={filters} isAuthenticated={!!user} />} />
+                  <Route path="/" element={<HomePage key={user?.id || 'guest'} filters={filters} isAuthenticated={!!user} />} />
                   <Route
                     path="/lists"
                     element={

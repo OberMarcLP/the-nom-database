@@ -53,29 +53,31 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Change Password
-          </h2>
-          {isRequired && (
-            <div className="mt-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                ⚠️ You must change your password before continuing
-              </p>
-            </div>
-          )}
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-            </div>
-          )}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="oldPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        <div className="card-glass">
+          <div className="mb-6">
+            <h2 className="admin-page-title text-center mb-4">
+              Change Password
+            </h2>
+            {isRequired && (
+              <div className="p-4 border-2 border-warning rounded-lg" style={{ background: 'var(--surface-hover)' }}>
+                <p className="text-sm" style={{ color: 'var(--warning)' }}>
+                  ⚠️ You must change your password before continuing
+                </p>
+              </div>
+            )}
+          </div>
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="p-4 border-2 border-danger rounded-lg" style={{ background: 'var(--surface-hover)' }}>
+                <p className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>
+              </div>
+            )}
+
+            <div className="admin-form-group">
+              <label htmlFor="oldPassword" className="admin-label">
                 Current Password
               </label>
               <input
@@ -84,13 +86,14 @@ export default function ChangePasswordPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800"
+                className="admin-input"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+
+            <div className="admin-form-group">
+              <label htmlFor="newPassword" className="admin-label">
                 New Password
               </label>
               <input
@@ -99,14 +102,17 @@ export default function ChangePasswordPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800"
+                className="admin-input"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Must be at least 8 characters</p>
+              <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                Must be at least 8 characters
+              </p>
             </div>
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+
+            <div className="admin-form-group">
+              <label htmlFor="confirmPassword" className="admin-label">
                 Confirm New Password
               </label>
               <input
@@ -115,32 +121,32 @@ export default function ChangePasswordPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800"
+                className="admin-input"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            {!isRequired && (
+            <div className="flex gap-3 pt-4">
+              {!isRequired && (
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="btn flex-1"
+                >
+                  Cancel
+                </button>
+              )}
               <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                type="submit"
+                disabled={loading}
+                className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Cancel
+                {loading ? 'Changing...' : 'Change Password'}
               </button>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Changing...' : 'Change Password'}
-            </button>
-          </div>
-        </form>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

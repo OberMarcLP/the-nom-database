@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { User, LoginRequest, RegisterRequest, LoginResponse, login as apiLogin, register as apiRegister, logout as apiLogout, getCurrentUser } from '../services/api';
 
 interface AuthContextType {
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await apiLogin(credentials);
     localStorage.setItem('access_token', response.access_token);
     localStorage.setItem('refresh_token', response.refresh_token);
-    setUser(response.user);
+    setUser({ ...response.user });
     return response;
   };
 
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await apiRegister(data);
     localStorage.setItem('access_token', response.access_token);
     localStorage.setItem('refresh_token', response.refresh_token);
-    setUser(response.user);
+    setUser({ ...response.user });
     return response;
   };
 
@@ -66,8 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(updatedUser);
   };
 
+  const value = useMemo(
+    () => ({ user, loading, login, register, logout, updateUser }),
+    [user, loading]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -40,7 +40,8 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         navigate('/change-password', { state: { required: true } });
       } else {
         onClose();
-        navigate(from, { replace: true });
+        // Force page reload to ensure UI updates with new user context
+        window.location.href = from;
       }
     } catch (err: any) {
       setError(err.message || 'Failed to login');
@@ -73,7 +74,8 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         full_name: fullName || undefined,
       });
       onClose();
-      navigate('/');
+      // Force page reload to ensure UI updates with new user context
+      window.location.href = '/';
     } catch (err: any) {
       setError(err.message || 'Failed to register');
     } finally {

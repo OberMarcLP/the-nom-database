@@ -13,6 +13,7 @@ import { AlertDialog } from '../components/AlertDialog';
 import { RestaurantDetail } from './RestaurantDetail';
 import { UserBadge } from '../components/UserBadge';
 import { RestaurantMap } from '../components/RestaurantMap';
+import { usePermissions } from '../hooks/usePermissions';
 
 interface HomePageProps {
   filters: RestaurantFilters;
@@ -41,6 +42,12 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
   const deleteRestaurantMutation = useDeleteRestaurant();
   const convertSuggestionMutation = useConvertSuggestion();
   const deleteSuggestionMutation = useDeleteSuggestion();
+
+  // Check if user can moderate suggestions
+  const { hasAnyPermission, user } = usePermissions();
+
+  // Calculate permission directly - no need for state
+  const canModerateSuggestions = !!(user && hasAnyPermission(['suggestions.approve', 'suggestions.convert', 'suggestions.reject']));
 
   // Handle restaurant selection from global search
   useEffect(() => {
@@ -203,8 +210,8 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
                     setSelectedRestaurantId(restaurant.id);
                   }
                 }}
-                onReview={handleReviewSuggestion}
-                onReject={handleRejectSuggestion}
+                onReview={canModerateSuggestions ? handleReviewSuggestion : undefined}
+                onReject={canModerateSuggestions ? handleRejectSuggestion : undefined}
               />
             ))}
           </div>
@@ -320,7 +327,7 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
               </div>
             )}
 
-            {isAuthenticated && (
+            {canModerateSuggestions && (
               <div className="flex gap-2 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
                 <button
                   onClick={() => {
