@@ -12,6 +12,7 @@ import {
   Image,
   ChevronLeft,
   ChevronRight,
+  Tag,
 } from 'lucide-react';
 
 export function AdminDashboard() {
@@ -27,6 +28,7 @@ export function AdminDashboard() {
     { to: '/admin/users', icon: Users, label: 'Users' },
     { to: '/admin/roles', icon: Shield, label: 'Roles' },
     { to: '/admin/restaurants', icon: UtensilsCrossed, label: 'Restaurants' },
+    { to: '/admin/categories', icon: Tag, label: 'Categories & Types' },
     { to: '/admin/content', icon: Image, label: 'Content' },
     { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/admin/audit', icon: FileText, label: 'Audit Logs' },

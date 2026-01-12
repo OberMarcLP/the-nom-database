@@ -27,6 +27,7 @@ const AdminOverview = lazy(() => import('./pages/AdminOverview').then(m => ({ de
 const AdminUsers = lazy(() => import('./pages/AdminUsers').then(m => ({ default: m.AdminUsers })));
 const AdminRoles = lazy(() => import('./pages/AdminRoles').then(m => ({ default: m.AdminRoles })));
 const AdminRestaurants = lazy(() => import('./pages/AdminRestaurants').then(m => ({ default: m.AdminRestaurants })));
+const AdminCategoriesFoodTypes = lazy(() => import('./pages/AdminCategoriesFoodTypes').then(m => ({ default: m.AdminCategoriesFoodTypes })));
 const AdminContent = lazy(() => import('./pages/AdminContent').then(m => ({ default: m.AdminContent })));
 const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics').then(m => ({ default: m.AdminAnalytics })));
 const AdminAudit = lazy(() => import('./pages/AdminAudit').then(m => ({ default: m.AdminAudit })));
@@ -271,6 +272,7 @@ function AppContent() {
             <Route path="users" element={<AdminUsers />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
+            <Route path="categories" element={<AdminCategoriesFoodTypes />} />
             <Route path="content" element={<AdminContent />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="audit" element={<AdminAudit />} />
