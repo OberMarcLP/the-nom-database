@@ -74,8 +74,8 @@ export function AdminDashboard() {
         <div className="admin-sidebar-footer">
           {!sidebarCollapsed && (
             <div className="admin-build-info">
-              <div className="build-version">v1.0.0</div>
-              <div className="build-status">Production</div>
+              <div className="build-version">v{__APP_VERSION__}</div>
+              <div className="build-status">{import.meta.env.MODE === 'production' ? 'Production' : 'Development'}</div>
             </div>
           )}
         </div>
