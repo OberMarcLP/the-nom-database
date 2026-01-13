@@ -236,12 +236,14 @@ func AdminListPhotos(w http.ResponseWriter, r *http.Request) {
 		database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM review_photos").Scan(&reviewTotal)
 		total += reviewTotal
 
-		if photoType == "review" {
+		if photoType == "review" || photoType == "" {
 			query := `
-				SELECT rp.id, rp.rating_id, rp.user_id, rp.filename, rp.caption,
-				       rp.file_size, rp.created_at, u.username
+				SELECT rp.id, rp.rating_id, rp.user_id, rp.filename, rp.photo_url, rp.caption,
+				       rp.file_size, rp.created_at, u.username, r.restaurant_id, rest.name as restaurant_name
 				FROM review_photos rp
 				LEFT JOIN users u ON rp.user_id = u.id
+				LEFT JOIN ratings r ON rp.rating_id = r.id
+				LEFT JOIN restaurants rest ON r.restaurant_id = rest.id
 				ORDER BY rp.created_at DESC
 				LIMIT $1 OFFSET $2
 			`
@@ -257,13 +259,15 @@ func AdminListPhotos(w http.ResponseWriter, r *http.Request) {
 			for rows.Next() {
 				var id, ratingID int
 				var userID *int
-				var filename string
+				var restaurantID *int
+				var filename, photoURL string
 				var caption *string
 				var fileSize *int
 				var createdAt time.Time
 				var username *string
+				var restaurantName *string
 
-				err := rows.Scan(&id, &ratingID, &userID, &filename, &caption, &fileSize, &createdAt, &username)
+				err := rows.Scan(&id, &ratingID, &userID, &filename, &photoURL, &caption, &fileSize, &createdAt, &username, &restaurantID, &restaurantName)
 				if err != nil {
 					logger.Error("Failed to scan review photo: %v", err)
 					continue
@@ -273,7 +277,7 @@ func AdminListPhotos(w http.ResponseWriter, r *http.Request) {
 					"id":         id,
 					"type":       "review",
 					"rating_id":  ratingID,
-					"filename":   filename,
+					"filename":   photoURL, // Use photo_url as filename for consistency with frontend
 					"created_at": createdAt,
 				}
 
@@ -289,6 +293,12 @@ func AdminListPhotos(w http.ResponseWriter, r *http.Request) {
 				if fileSize != nil {
 					photo["file_size"] = *fileSize
 				}
+				if restaurantID != nil {
+					photo["restaurant_id"] = *restaurantID
+				}
+				if restaurantName != nil {
+					photo["restaurant_name"] = *restaurantName
+				}
 
 				photos = append(photos, photo)
 			}
@@ -301,7 +311,7 @@ func AdminListPhotos(w http.ResponseWriter, r *http.Request) {
 		database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM menu_photos").Scan(&menuTotal)
 		total += menuTotal
 
-		if photoType == "menu" {
+		if photoType == "menu" || photoType == "" {
 			query := `
 				SELECT mp.id, mp.restaurant_id, mp.user_id, mp.filename, mp.caption,
 				       mp.file_size, mp.created_at, r.name as restaurant_name, u.username

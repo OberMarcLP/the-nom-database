@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MapPin, Tag, Utensils, Edit, Trash2, Plus, Loader2, Phone, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Restaurant, voteOnReview, removeVote, uploadReviewPhoto } from '../services/api';
 import { useRatings, useCreateRating, useMenuPhotos, useUpdatePhotoCaption, useDeleteMenuPhoto } from '../hooks/useApi';
@@ -13,11 +13,15 @@ interface RestaurantDetailProps {
   restaurant: Restaurant;
   onEdit: () => void;
   onDelete: () => void;
+  highlightedRatingId?: number;
+  highlightedPhotoId?: number;
 }
 
-export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDetailProps) {
+export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRatingId, highlightedPhotoId }: RestaurantDetailProps) {
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'helpful' | 'rating'>('recent');
+  const ratingRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const photosRef = useRef<HTMLDivElement>(null);
 
   // Use React Query hooks
   const { data: ratings = [], isLoading: loading, refetch: refetchRatings } = useRatings(restaurant.id);
@@ -32,6 +36,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
       ...photo,
       source: 'menu' as const,
       reviewInfo: null,
+      originalId: photo.id, // Store original ID for matching
     })),
     ...ratings.flatMap(rating =>
       (rating.photos || []).map(photo => ({
@@ -46,6 +51,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
         created_at: photo.created_at,
         updated_at: photo.created_at,
         source: 'review' as const,
+        originalId: photo.id, // Store original ID for matching
         reviewInfo: {
           username: rating.user?.username || 'Anonymous',
           date: rating.created_at,
@@ -129,6 +135,30 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
     }
     return 0;
   });
+
+  // Scroll to highlighted rating
+  useEffect(() => {
+    if (highlightedRatingId && ratingRefs.current[highlightedRatingId]) {
+      setTimeout(() => {
+        ratingRefs.current[highlightedRatingId]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 300); // Delay to ensure modal is rendered
+    }
+  }, [highlightedRatingId, ratings]);
+
+  // Scroll to photos section when highlightedPhotoId is present
+  useEffect(() => {
+    if (highlightedPhotoId && photosRef.current) {
+      setTimeout(() => {
+        photosRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 300); // Delay to ensure modal is rendered
+    }
+  }, [highlightedPhotoId, photos]);
 
   return (
     <div className="space-y-6">
@@ -225,7 +255,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
       )}
 
       {!restaurant.is_suggestion && (
-        <div>
+        <div ref={photosRef}>
           <h3 className="font-semibold flex items-center gap-2 mb-4">
             <Camera className="w-5 h-5" />
             Photos ({allPhotos.length})
@@ -244,6 +274,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
               photos={allPhotos}
               onCaptionUpdate={handleCaptionUpdate}
               onDelete={handlePhotoDelete}
+              highlightedPhotoId={highlightedPhotoId}
             />
           )}
         </div>
@@ -294,7 +325,20 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete }: RestaurantDet
           ) : (
             <div className="space-y-4">
               {sortedRatings.map((rating) => (
-                <div key={rating.id} className="card">
+                <div
+                  key={rating.id}
+                  ref={(el) => (ratingRefs.current[rating.id] = el)}
+                  className={highlightedRatingId === rating.id ? 'card-glass-strong' : 'card'}
+                  style={{
+                    transition: 'all 0.3s ease',
+                    ...(highlightedRatingId === rating.id
+                      ? {
+                          padding: '20px',
+                          margin: '8px 0',
+                        }
+                      : {}),
+                  }}
+                >
                   <div className="grid grid-cols-3 gap-4 mb-3">
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Food</p>

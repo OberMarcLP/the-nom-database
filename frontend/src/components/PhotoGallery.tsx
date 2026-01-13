@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MenuPhoto } from '../services/api';
 import { Trash2, Edit2, Check, X, Star, User } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -8,6 +8,7 @@ import { PhotoLightbox } from './PhotoLightbox';
 
 interface ExtendedPhoto extends MenuPhoto {
   source?: 'menu' | 'review';
+  originalId?: number;
   reviewInfo?: {
     username: string;
     date: string;
@@ -23,15 +24,17 @@ interface PhotoGalleryProps {
   photos: ExtendedPhoto[];
   onCaptionUpdate: (id: number, caption: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
+  highlightedPhotoId?: number;
 }
 
-export function PhotoGallery({ photos, onCaptionUpdate, onDelete }: PhotoGalleryProps) {
+export function PhotoGallery({ photos, onCaptionUpdate, onDelete, highlightedPhotoId }: PhotoGalleryProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editCaption, setEditCaption] = useState('');
   const [deletingPhotoId, setDeletingPhotoId] = useState<number | null>(null);
   const [alertMessage, setAlertMessage] = useState('');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const photoRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   const handleStartEdit = (photo: MenuPhoto) => {
     setEditingId(photo.id);
@@ -90,6 +93,22 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete }: PhotoGallery
     setLightboxIndex((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
+  // Scroll to highlighted photo
+  useEffect(() => {
+    if (highlightedPhotoId) {
+      // Find the photo by originalId and get its actual id
+      const targetPhoto = photos.find(p => p.originalId === highlightedPhotoId || p.id === highlightedPhotoId);
+      if (targetPhoto && photoRefs.current[targetPhoto.id]) {
+        setTimeout(() => {
+          photoRefs.current[targetPhoto.id]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }, 400); // Delay to ensure modal and photos are rendered
+      }
+    }
+  }, [highlightedPhotoId, photos]);
+
   if (photos.length === 0) {
     return (
       <div className="text-center py-12 text-[var(--text-muted)] font-mono text-sm">
@@ -103,7 +122,12 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete }: PhotoGallery
       {photos.map((photo) => (
         <div
           key={photo.id}
-          className="relative overflow-hidden flex flex-col h-full border-2 border-[var(--border)] bg-[var(--surface)] rounded-lg"
+          ref={(el) => (photoRefs.current[photo.id] = el)}
+          className={`relative overflow-hidden flex flex-col h-full border-2 bg-[var(--surface)] rounded-lg transition-all ${
+            highlightedPhotoId === photo.originalId || highlightedPhotoId === photo.id
+              ? 'border-[var(--accent)] shadow-[0_0_20px_var(--accent-dim)] scale-[1.02]'
+              : 'border-[var(--border)]'
+          }`}
         >
           <div className="relative group flex-1 cursor-pointer" onClick={() => openLightbox(photos.indexOf(photo))}>
             <LazyImage

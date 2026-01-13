@@ -201,8 +201,6 @@ export function AdminRestaurants() {
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <a
                           href={`/restaurants/${restaurant.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="admin-btn-icon"
                           title="View Restaurant"
                         >

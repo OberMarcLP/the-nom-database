@@ -17,6 +17,7 @@ import { Avatar } from './components/Avatar';
 
 // Lazy load page components for code splitting
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
+const RestaurantPage = lazy(() => import('./pages/RestaurantPage').then(m => ({ default: m.RestaurantPage })));
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
 const ListsPage = lazy(() => import('./pages/ListsPage').then(m => ({ default: m.ListsPage })));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
@@ -394,6 +395,7 @@ function AppContent() {
               <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Routes>
                   <Route path="/" element={<HomePage key={user?.id || 'guest'} filters={filters} isAuthenticated={!!user} />} />
+                  <Route path="/restaurants/:id" element={<RestaurantPage />} />
                   <Route
                     path="/lists"
                     element={

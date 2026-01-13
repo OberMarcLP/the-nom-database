@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { Image, MessageSquare, Star, Trash2, Eye, Filter } from 'lucide-react';
+import { MessageSquare, Star, Trash2, Eye, Camera } from 'lucide-react';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 interface Rating {
   id: number;
@@ -13,6 +14,7 @@ interface Rating {
   ambiance_rating: number;
   comment?: string;
   created_at: string;
+  photos?: Photo[];
 }
 
 interface Photo {
@@ -50,30 +52,33 @@ interface PhotosResponse {
 }
 
 export function AdminContent() {
-  const [activeTab, setActiveTab] = useState<'ratings' | 'photos'>('ratings');
+  const [activeTab, setActiveTab] = useState<'content' | 'photos'>('content');
 
-  // Ratings state
+  // Content state (ratings with their photos)
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [ratingsPage, setRatingsPage] = useState(1);
   const [ratingsTotalPages, setRatingsTotalPages] = useState(0);
   const [ratingsTotal, setRatingsTotal] = useState(0);
   const [ratingsLoading, setRatingsLoading] = useState(true);
 
-  // Photos state
+  // Standalone photos state (menu photos only)
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photosPage, setPhotosPage] = useState(1);
   const [photosTotalPages, setPhotosTotalPages] = useState(0);
   const [photosTotal, setPhotosTotal] = useState(0);
   const [photosLoading, setPhotosLoading] = useState(true);
-  const [photoTypeFilter, setPhotoTypeFilter] = useState<'all' | 'menu' | 'review'>('all');
+
+  // Delete confirmation state
+  const [deleteRatingConfirm, setDeleteRatingConfirm] = useState<{ id: number; name: string; photoCount: number } | null>(null);
+  const [deletePhotoConfirm, setDeletePhotoConfirm] = useState<{ type: string; id: number } | null>(null);
 
   useEffect(() => {
-    if (activeTab === 'ratings') {
+    if (activeTab === 'content') {
       loadRatings();
     } else {
       loadPhotos();
     }
-  }, [activeTab, ratingsPage, photosPage, photoTypeFilter]);
+  }, [activeTab, ratingsPage, photosPage]);
 
   const loadRatings = async () => {
     try {
@@ -84,7 +89,22 @@ export function AdminContent() {
       });
 
       const response = await api.get<RatingsResponse>(`/admin/ratings?${params}`);
-      setRatings(response.ratings || []);
+
+      // Fetch review photos for each rating
+      const ratingsWithPhotos = await Promise.all(
+        (response.ratings || []).map(async (rating) => {
+          try {
+            const photosResponse = await api.get<PhotosResponse>(`/admin/photos?type=review`);
+            const ratingPhotos = photosResponse.photos.filter(p => p.rating_id === rating.id);
+            return { ...rating, photos: ratingPhotos };
+          } catch (error) {
+            console.error(`Failed to load photos for rating ${rating.id}:`, error);
+            return { ...rating, photos: [] };
+          }
+        })
+      );
+
+      setRatings(ratingsWithPhotos);
       setRatingsTotal(response.pagination.total);
       setRatingsTotalPages(response.pagination.totalPages);
     } catch (error) {
@@ -100,11 +120,8 @@ export function AdminContent() {
       const params = new URLSearchParams({
         page: photosPage.toString(),
         limit: '20',
+        type: 'menu', // Only load menu photos (standalone)
       });
-
-      if (photoTypeFilter !== 'all') {
-        params.append('type', photoTypeFilter);
-      }
 
       const response = await api.get<PhotosResponse>(`/admin/photos?${params}`);
       setPhotos(response.photos || []);
@@ -117,11 +134,15 @@ export function AdminContent() {
     }
   };
 
-  const handleDeleteRating = async (ratingId: number, restaurantName: string) => {
-    if (!confirm(`Delete rating for "${restaurantName}"? This action cannot be undone.`)) return;
+  const handleDeleteRating = (ratingId: number, restaurantName: string, photoCount: number) => {
+    setDeleteRatingConfirm({ id: ratingId, name: restaurantName, photoCount });
+  };
+
+  const confirmDeleteRating = async () => {
+    if (!deleteRatingConfirm) return;
 
     try {
-      await api.delete(`/admin/ratings/${ratingId}`);
+      await api.delete(`/admin/ratings/${deleteRatingConfirm.id}`);
       loadRatings();
     } catch (error) {
       console.error('Failed to delete rating:', error);
@@ -129,11 +150,15 @@ export function AdminContent() {
     }
   };
 
-  const handleDeletePhoto = async (photoType: string, photoId: number) => {
-    if (!confirm(`Delete this ${photoType} photo? This action cannot be undone.`)) return;
+  const handleDeletePhoto = (photoType: string, photoId: number) => {
+    setDeletePhotoConfirm({ type: photoType, id: photoId });
+  };
+
+  const confirmDeletePhoto = async () => {
+    if (!deletePhotoConfirm) return;
 
     try {
-      await api.delete(`/admin/photos/${photoType}/${photoId}`);
+      await api.delete(`/admin/photos/${deletePhotoConfirm.type}/${deletePhotoConfirm.id}`);
       loadPhotos();
     } catch (error) {
       console.error('Failed to delete photo:', error);
@@ -164,24 +189,24 @@ export function AdminContent() {
       <div className="admin-card" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '8px', padding: '16px', borderBottom: '1px solid var(--admin-border)' }}>
           <button
-            className={`admin-btn admin-btn-sm ${activeTab === 'ratings' ? '' : 'admin-btn-secondary'}`}
-            onClick={() => setActiveTab('ratings')}
+            className={`admin-btn admin-btn-sm ${activeTab === 'content' ? '' : 'admin-btn-secondary'}`}
+            onClick={() => setActiveTab('content')}
           >
             <MessageSquare size={14} />
-            Ratings ({ratingsTotal})
+            Ratings & Reviews ({ratingsTotal})
           </button>
           <button
             className={`admin-btn admin-btn-sm ${activeTab === 'photos' ? '' : 'admin-btn-secondary'}`}
             onClick={() => setActiveTab('photos')}
           >
-            <Image size={14} />
-            Photos ({photosTotal})
+            <Camera size={14} />
+            Menu Photos ({photosTotal})
           </button>
         </div>
       </div>
 
-      {/* Ratings Tab */}
-      {activeTab === 'ratings' && (
+      {/* Content Tab */}
+      {activeTab === 'content' && (
         <div className="admin-card">
           <div className="admin-card-header">
             <h2 className="admin-card-title">
@@ -200,78 +225,119 @@ export function AdminContent() {
             </div>
           ) : (
             <>
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Restaurant</th>
-                      <th>User</th>
-                      <th>Ratings</th>
-                      <th>Average</th>
-                      <th>Comment</th>
-                      <th>Date</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ratings.map(rating => (
-                      <tr key={rating.id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{rating.restaurant_name}</div>
-                        </td>
-                        <td>
-                          <div>{rating.username || 'Anonymous'}</div>
-                        </td>
-                        <td>
-                          <div style={{ fontSize: '12px', fontFamily: 'IBM Plex Mono, monospace' }}>
-                            <div>Food: <Star size={10} style={{ display: 'inline', color: 'var(--admin-warning)' }} /> {rating.food_rating}/5</div>
-                            <div>Service: <Star size={10} style={{ display: 'inline', color: 'var(--admin-warning)' }} /> {rating.service_rating}/5</div>
-                            <div>Ambiance: <Star size={10} style={{ display: 'inline', color: 'var(--admin-warning)' }} /> {rating.ambiance_rating}/5</div>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="admin-badge admin-badge-primary">
-                            {getAverageRating(rating)}
-                          </span>
-                        </td>
-                        <td style={{ maxWidth: '300px' }}>
-                          {rating.comment ? (
-                            <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>
-                              {rating.comment.length > 100
-                                ? `${rating.comment.substring(0, 100)}...`
-                                : rating.comment}
+              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {ratings.map(rating => (
+                  <div key={rating.id} className="admin-card" style={{ padding: '20px', border: '1px solid var(--admin-border)' }}>
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+                      <div>
+                        <h3 style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '16px', fontWeight: 600, marginBottom: '4px' }}>
+                          {rating.restaurant_name}
+                        </h3>
+                        <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)', fontFamily: 'IBM Plex Mono, monospace' }}>
+                          By {rating.username || 'Anonymous'} • {new Date(rating.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span className="admin-badge admin-badge-primary" style={{ fontSize: '16px', padding: '6px 12px' }}>
+                          ★ {getAverageRating(rating)}
+                        </span>
+                        <a
+                          href={`/restaurants/${rating.restaurant_id}?rating=${rating.id}`}
+                          className="admin-btn-icon"
+                          title="View Rating"
+                        >
+                          <Eye size={16} />
+                        </a>
+                        <button
+                          className="admin-btn-icon admin-btn-danger"
+                          onClick={() => handleDeleteRating(rating.id, rating.restaurant_name, rating.photos?.length || 0)}
+                          title="Delete Rating"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Ratings */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                      <div>
+                        <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)', marginBottom: '4px', fontFamily: 'IBM Plex Mono, monospace' }}>
+                          FOOD
+                        </div>
+                        <div style={{ display: 'flex', gap: '2px' }}>
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={14} style={{ fill: i < rating.food_rating ? 'var(--admin-warning)' : 'none', color: i < rating.food_rating ? 'var(--admin-warning)' : 'var(--admin-text-muted)' }} />
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)', marginBottom: '4px', fontFamily: 'IBM Plex Mono, monospace' }}>
+                          SERVICE
+                        </div>
+                        <div style={{ display: 'flex', gap: '2px' }}>
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={14} style={{ fill: i < rating.service_rating ? 'var(--admin-warning)' : 'none', color: i < rating.service_rating ? 'var(--admin-warning)' : 'var(--admin-text-muted)' }} />
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)', marginBottom: '4px', fontFamily: 'IBM Plex Mono, monospace' }}>
+                          AMBIANCE
+                        </div>
+                        <div style={{ display: 'flex', gap: '2px' }}>
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={14} style={{ fill: i < rating.ambiance_rating ? 'var(--admin-warning)' : 'none', color: i < rating.ambiance_rating ? 'var(--admin-warning)' : 'var(--admin-text-muted)' }} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Comment */}
+                    {rating.comment && (
+                      <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--admin-surface-hover)', borderRadius: '4px', borderLeft: '3px solid var(--admin-primary)' }}>
+                        <div style={{ fontSize: '13px', lineHeight: '1.6' }}>
+                          {rating.comment}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Photos */}
+                    {rating.photos && rating.photos.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)', marginBottom: '8px', fontFamily: 'IBM Plex Mono, monospace', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Camera size={12} />
+                          ATTACHED PHOTOS ({rating.photos.length})
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '8px' }}>
+                          {rating.photos.map(photo => (
+                            <div key={photo.id} style={{ position: 'relative', aspectRatio: '1', overflow: 'hidden', borderRadius: '4px', border: '1px solid var(--admin-border)' }}>
+                              <img
+                                src={photo.filename.startsWith('/') || photo.filename.startsWith('http') ? photo.filename : `/api/uploads/${photo.filename}`}
+                                alt={photo.caption || 'Review photo'}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => {
+                                  // Fallback to placeholder on error
+                                  e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23141414" width="100" height="100"/%3E%3Ctext fill="%23888" x="50%" y="50%" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+                                }}
+                              />
+                              <div style={{ position: 'absolute', top: '4px', right: '4px', display: 'flex', gap: '4px' }}>
+                                <a
+                                  href={`/restaurants/${rating.restaurant_id}?photo=${photo.id}`}
+                                  className="admin-btn-icon"
+                                  style={{ backgroundColor: 'rgba(0,0,0,0.7)', padding: '4px' }}
+                                  title="View Photo"
+                                >
+                                  <Eye size={12} />
+                                </a>
+                              </div>
                             </div>
-                          ) : (
-                            <span style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>No comment</span>
-                          )}
-                        </td>
-                        <td style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>
-                          {new Date(rating.created_at).toLocaleDateString()}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <a
-                              href={`/restaurants/${rating.restaurant_id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="admin-btn-icon"
-                              title="View Restaurant"
-                            >
-                              <Eye size={16} />
-                            </a>
-                            <button
-                              className="admin-btn-icon admin-btn-danger"
-                              onClick={() => handleDeleteRating(rating.id, rating.restaurant_name)}
-                              title="Delete Rating"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {ratingsTotalPages > 1 && (
@@ -300,56 +366,18 @@ export function AdminContent() {
         </div>
       )}
 
-      {/* Photos Tab */}
+      {/* Menu Photos Tab */}
       {activeTab === 'photos' && (
-        <>
-          <div className="admin-card" style={{ marginBottom: '20px' }}>
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">
-                <Filter size={20} />
-                Filter Photos
-              </h2>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', padding: '20px' }}>
-              <button
-                className={`admin-btn admin-btn-sm ${photoTypeFilter === 'all' ? '' : 'admin-btn-secondary'}`}
-                onClick={() => {
-                  setPhotoTypeFilter('all');
-                  setPhotosPage(1);
-                }}
-              >
-                All Photos
-              </button>
-              <button
-                className={`admin-btn admin-btn-sm ${photoTypeFilter === 'menu' ? '' : 'admin-btn-secondary'}`}
-                onClick={() => {
-                  setPhotoTypeFilter('menu');
-                  setPhotosPage(1);
-                }}
-              >
-                <Image size={14} />
-                Menu Photos
-              </button>
-              <button
-                className={`admin-btn admin-btn-sm ${photoTypeFilter === 'review' ? '' : 'admin-btn-secondary'}`}
-                onClick={() => {
-                  setPhotoTypeFilter('review');
-                  setPhotosPage(1);
-                }}
-              >
-                <MessageSquare size={14} />
-                Review Photos
-              </button>
-            </div>
+        <div className="admin-card">
+          <div className="admin-card-header">
+            <h2 className="admin-card-title">
+              <Camera size={20} />
+              Menu Photos
+            </h2>
+            <p style={{ fontSize: '12px', color: 'var(--admin-text-muted)', marginTop: '4px' }}>
+              Standalone menu photos uploaded to restaurants (review photos are shown with their ratings in the Content tab)
+            </p>
           </div>
-
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">
-                <Image size={20} />
-                User Photos
-              </h2>
-            </div>
 
             {photosLoading ? (
               <div className="admin-loading">
@@ -414,11 +442,10 @@ export function AdminContent() {
                           <td>
                             <div style={{ display: 'flex', gap: '8px' }}>
                               <a
-                                href={`/uploads/${photo.filename}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href={photo.restaurant_id ? `/restaurants/${photo.restaurant_id}?photo=${photo.id}` : `/api/uploads/${photo.filename}`}
                                 className="admin-btn-icon"
                                 title="View Photo"
+                                {...(photo.restaurant_id ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
                               >
                                 <Eye size={16} />
                               </a>
@@ -460,9 +487,36 @@ export function AdminContent() {
                 )}
               </>
             )}
-          </div>
-        </>
+        </div>
       )}
+
+      {/* Delete Rating Confirmation */}
+      <ConfirmDialog
+        isOpen={deleteRatingConfirm !== null}
+        onClose={() => setDeleteRatingConfirm(null)}
+        onConfirm={confirmDeleteRating}
+        title="Delete Rating"
+        message={
+          deleteRatingConfirm?.photoCount && deleteRatingConfirm.photoCount > 0
+            ? `Delete rating for "${deleteRatingConfirm?.name}" and ${deleteRatingConfirm.photoCount} attached photo(s)? This action cannot be undone.`
+            : `Delete rating for "${deleteRatingConfirm?.name}"? This action cannot be undone.`
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+      />
+
+      {/* Delete Photo Confirmation */}
+      <ConfirmDialog
+        isOpen={deletePhotoConfirm !== null}
+        onClose={() => setDeletePhotoConfirm(null)}
+        onConfirm={confirmDeletePhoto}
+        title="Delete Photo"
+        message={`Delete this ${deletePhotoConfirm?.type} photo? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+      />
     </div>
   );
 }

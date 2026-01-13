@@ -38,6 +38,29 @@ func getFoodTypesForRestaurant(ctx context.Context, restaurantID int) ([]models.
 	return foodTypes, nil
 }
 
+func getFoodTypesForSuggestion(ctx context.Context, suggestionID int) ([]models.FoodType, error) {
+	rows, err := database.GetPool().Query(ctx,
+		`SELECT ft.id, ft.name, ft.created_at, ft.updated_at
+		FROM food_types ft
+		JOIN suggestion_food_types sft ON ft.id = sft.food_type_id
+		WHERE sft.suggestion_id = $1
+		ORDER BY ft.name`, suggestionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var foodTypes []models.FoodType
+	for rows.Next() {
+		var ft models.FoodType
+		if err := rows.Scan(&ft.ID, &ft.Name, &ft.CreatedAt, &ft.UpdatedAt); err != nil {
+			return nil, err
+		}
+		foodTypes = append(foodTypes, ft)
+	}
+	return foodTypes, nil
+}
+
 func getFoodTypesForRestaurantsBatch(ctx context.Context, restaurantIDs []int) (map[int][]models.FoodType, error) {
 	if len(restaurantIDs) == 0 {
 		return make(map[int][]models.FoodType), nil
@@ -112,29 +135,6 @@ func getFoodTypesForSuggestionsBatch(ctx context.Context, suggestionIDs []int) (
 		result[suggestionID] = append(result[suggestionID], ft)
 	}
 	return result, nil
-}
-
-func getFoodTypesForSuggestion(ctx context.Context, suggestionID int) ([]models.FoodType, error) {
-	rows, err := database.GetPool().Query(ctx,
-		`SELECT ft.id, ft.name, ft.created_at, ft.updated_at
-		FROM food_types ft
-		JOIN suggestion_food_types sft ON ft.id = sft.food_type_id
-		WHERE sft.suggestion_id = $1
-		ORDER BY ft.name`, suggestionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var foodTypes []models.FoodType
-	for rows.Next() {
-		var ft models.FoodType
-		if err := rows.Scan(&ft.ID, &ft.Name, &ft.CreatedAt, &ft.UpdatedAt); err != nil {
-			return nil, err
-		}
-		foodTypes = append(foodTypes, ft)
-	}
-	return foodTypes, nil
 }
 
 func setFoodTypesForRestaurant(ctx context.Context, restaurantID int, foodTypeIDs []int) error {
@@ -610,23 +610,47 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
+
+	// Try both restaurants and suggestions tables using UNION
 	query := `
-		SELECT
-			r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
-			r.google_place_id, r.category_id, r.user_id as created_by, NULL::integer as updated_by, r.created_at, r.updated_at,
-			c.id, c.name,
-			COALESCE(AVG(rt.food_rating), 0) as avg_food,
-			COALESCE(AVG(rt.service_rating), 0) as avg_service,
-			COALESCE(AVG(rt.ambiance_rating), 0) as avg_ambiance,
-			COUNT(rt.id) as rating_count,
-			cu.id, cu.username, cu.full_name, cu.avatar_url,
-			NULL::integer as uu_id, NULL::text as uu_username, NULL::text as uu_full_name, NULL::text as uu_avatar_url
-		FROM restaurants r
-		LEFT JOIN categories c ON r.category_id = c.id
-		LEFT JOIN ratings rt ON r.id = rt.restaurant_id
-		LEFT JOIN users cu ON r.user_id = cu.id
-		WHERE r.id = $1
-		GROUP BY r.id, c.id, cu.id
+		SELECT * FROM (
+			SELECT
+				r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
+				r.google_place_id, r.category_id, r.user_id as created_by, NULL::integer as updated_by, r.created_at, r.updated_at,
+				c.id, c.name,
+				COALESCE(AVG(rt.food_rating), 0) as avg_food,
+				COALESCE(AVG(rt.service_rating), 0) as avg_service,
+				COALESCE(AVG(rt.ambiance_rating), 0) as avg_ambiance,
+				COUNT(rt.id) as rating_count,
+				false as is_suggestion,
+				cu.id, cu.username, cu.full_name, cu.avatar_url,
+				NULL::integer as uu_id, NULL::text as uu_username, NULL::text as uu_full_name, NULL::text as uu_avatar_url
+			FROM restaurants r
+			LEFT JOIN categories c ON r.category_id = c.id
+			LEFT JOIN ratings rt ON r.id = rt.restaurant_id
+			LEFT JOIN users cu ON r.user_id = cu.id
+			WHERE r.id = $1
+			GROUP BY r.id, c.id, cu.id
+
+			UNION ALL
+
+			SELECT
+				s.id, s.name, NULL::text as description, s.address, s.phone, s.website, s.latitude, s.longitude,
+				s.google_place_id, s.suggested_category_id as category_id, NULL::integer as created_by, NULL::integer as updated_by, s.created_at, s.updated_at,
+				c.id, c.name,
+				0.0 as avg_food,
+				0.0 as avg_service,
+				0.0 as avg_ambiance,
+				0 as rating_count,
+				true as is_suggestion,
+				u.id, u.username, u.full_name, u.avatar_url,
+				NULL::integer as uu_id, NULL::text as uu_username, NULL::text as uu_full_name, NULL::text as uu_avatar_url
+			FROM restaurant_suggestions s
+			LEFT JOIN categories c ON s.suggested_category_id = c.id
+			LEFT JOIN users u ON s.user_id = u.id
+			WHERE s.id = $1
+		) combined
+		LIMIT 1
 	`
 
 	var rest models.Restaurant
@@ -634,6 +658,7 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 	var catName *string
 	var avgFood, avgService, avgAmbiance float64
 	var ratingCount int
+	var isSuggestion bool
 	var cuID, uuID *int
 	var cuUsername, cuFullName, cuAvatarURL *string
 	var uuUsername, uuFullName, uuAvatarURL *string
@@ -643,6 +668,7 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 		&catID, &catName,
 		&avgFood, &avgService, &avgAmbiance, &ratingCount,
+		&isSuggestion,
 		&cuID, &cuUsername, &cuFullName, &cuAvatarURL,
 		&uuID, &uuUsername, &uuFullName, &uuAvatarURL,
 	)
@@ -650,6 +676,8 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Restaurant not found", http.StatusNotFound)
 		return
 	}
+
+	rest.IsSuggestion = isSuggestion
 
 	if catID != nil && catName != nil {
 		rest.Category = &models.Category{ID: *catID, Name: *catName}
@@ -673,8 +701,13 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Get food types
-	foodTypes, err := getFoodTypesForRestaurant(ctx, rest.ID)
+	// Get food types (check both restaurants and suggestions tables based on isSuggestion flag)
+	var foodTypes []models.FoodType
+	if isSuggestion {
+		foodTypes, err = getFoodTypesForSuggestion(ctx, rest.ID)
+	} else {
+		foodTypes, err = getFoodTypesForRestaurant(ctx, rest.ID)
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
