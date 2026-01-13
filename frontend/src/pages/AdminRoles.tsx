@@ -22,6 +22,26 @@ export function AdminRoles() {
     loadPermissions();
   }, []);
 
+  // Handle ESC key to close modals
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (confirmDelete) {
+          setConfirmDelete(null);
+        } else if (showPermissionsModal) {
+          setShowPermissionsModal(false);
+        } else if (showEditModal) {
+          setShowEditModal(false);
+        } else if (showCreateModal) {
+          setShowCreateModal(false);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showCreateModal, showEditModal, showPermissionsModal, confirmDelete]);
+
   const loadRoles = async () => {
     try {
       setLoading(true);
@@ -336,52 +356,34 @@ export function AdminRoles() {
 
       {/* Manage Permissions Modal */}
       {showPermissionsModal && selectedRole && (
-        <div className="admin-modal-overlay" onClick={() => setShowPermissionsModal(false)}>
-          <div className="admin-modal admin-modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={() => setShowPermissionsModal(false)}>
+          <div className="modal-glass admin-modal-lg" onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
-              <h2>Manage Permissions: {selectedRole.name}</h2>
+              <h2 className="admin-modal-title">Manage Permissions: {selectedRole.name}</h2>
               <button className="admin-modal-close" onClick={() => setShowPermissionsModal(false)}>
                 <X size={20} />
               </button>
             </div>
             <div className="admin-modal-body">
               {Object.entries(groupPermissionsByResource(permissions)).map(([resource, perms]) => (
-                <div key={resource} style={{ marginBottom: '24px' }}>
-                  <h3 style={{
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: 'var(--admin-accent)',
-                    marginBottom: '12px',
-                    letterSpacing: '0.5px'
-                  }}>
-                    {resource}
-                  </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+                <div key={resource} className="admin-permission-group">
+                  <h3 className="admin-permission-resource">{resource}</h3>
+                  <div className="admin-permission-grid">
                     {perms.map(perm => {
                       const hasPermission = selectedRole.permissions?.some(p => p.id === perm.id);
                       return (
-                        <div
+                        <button
                           key={perm.id}
                           onClick={() => hasPermission ? handleRemovePermission(perm.id) : handleAssignPermission(perm.id)}
-                          style={{
-                            padding: '8px 12px',
-                            background: hasPermission ? 'var(--admin-accent)' : 'var(--admin-bg-secondary)',
-                            border: `1px solid ${hasPermission ? 'var(--admin-accent)' : 'var(--admin-border)'}`,
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.2s ease',
-                            fontSize: '13px',
-                            fontFamily: 'IBM Plex Mono, monospace',
-                            color: hasPermission ? '#000' : 'var(--admin-text)'
-                          }}
+                          className={`admin-permission-toggle ${hasPermission ? 'admin-permission-active' : ''}`}
                         >
-                          {hasPermission ? <CheckCircle size={14} /> : <div style={{ width: '14px', height: '14px', border: '2px solid var(--admin-border)', borderRadius: '2px' }} />}
+                          {hasPermission ? (
+                            <CheckCircle size={14} />
+                          ) : (
+                            <div className="admin-permission-checkbox" />
+                          )}
                           {perm.action}
-                        </div>
+                        </button>
                       );
                     })}
                   </div>

@@ -23,6 +23,28 @@ export function AdminCategoriesFoodTypes() {
     loadFoodTypes();
   }, []);
 
+  // Handle ESC key to close modals and cancel editing
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (confirmDeleteCategory) {
+          setConfirmDeleteCategory(null);
+        } else if (confirmDeleteFoodType) {
+          setConfirmDeleteFoodType(null);
+        } else if (editingCategoryId !== null) {
+          setEditingCategoryId(null);
+          setEditCategoryName('');
+        } else if (editingFoodTypeId !== null) {
+          setEditingFoodTypeId(null);
+          setEditFoodTypeName('');
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [confirmDeleteCategory, confirmDeleteFoodType, editingCategoryId, editingFoodTypeId]);
+
   const loadCategories = async () => {
     try {
       const cats = await getCategories();

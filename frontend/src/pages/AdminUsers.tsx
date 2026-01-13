@@ -44,6 +44,28 @@ export function AdminUsers() {
     loadRoles();
   }, [page, search]);
 
+  // Handle ESC key to close modals
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (confirmDelete) {
+          setConfirmDelete(null);
+        } else if (showPasswordModal) {
+          setShowPasswordModal(false);
+        } else if (showRolesModal) {
+          setShowRolesModal(false);
+        } else if (showEditModal) {
+          setShowEditModal(false);
+        } else if (showCreateModal) {
+          setShowCreateModal(false);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showCreateModal, showEditModal, showRolesModal, showPasswordModal, confirmDelete]);
+
   const loadUsers = async () => {
     try {
       setLoading(true);

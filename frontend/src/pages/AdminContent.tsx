@@ -80,6 +80,22 @@ export function AdminContent() {
     }
   }, [activeTab, ratingsPage, photosPage]);
 
+  // Handle ESC key to close modals
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (deleteRatingConfirm) {
+          setDeleteRatingConfirm(null);
+        } else if (deletePhotoConfirm) {
+          setDeletePhotoConfirm(null);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [deleteRatingConfirm, deletePhotoConfirm]);
+
   const loadRatings = async () => {
     try {
       setRatingsLoading(true);

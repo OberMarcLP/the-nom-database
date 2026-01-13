@@ -59,6 +59,34 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
     }
   }, [location, navigate]);
 
+  // Handle ESC key to close modals
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (alertMessage) {
+          setAlertMessage('');
+        } else if (deletingRestaurant) {
+          setDeletingRestaurant(null);
+        } else if (rejectingRestaurant) {
+          setRejectingRestaurant(null);
+        } else if (reviewingSuggestion) {
+          setReviewingSuggestion(null);
+        } else if (editingRestaurant) {
+          setEditingRestaurant(null);
+        } else if (viewingSuggestion) {
+          setViewingSuggestion(null);
+        } else if (selectedRestaurantId !== null) {
+          setSelectedRestaurantId(null);
+        } else if (showAddSuggestionModal) {
+          setShowAddSuggestionModal(false);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showAddSuggestionModal, selectedRestaurantId, viewingSuggestion, editingRestaurant, reviewingSuggestion, rejectingRestaurant, deletingRestaurant, alertMessage]);
+
   const handleCreateSuggestion = async (data: CreateSuggestionData) => {
     createSuggestionMutation.mutate(data, {
       onSuccess: () => {

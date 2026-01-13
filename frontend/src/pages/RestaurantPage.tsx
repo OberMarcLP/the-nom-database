@@ -5,6 +5,7 @@ import { RestaurantDetail } from './RestaurantDetail';
 import { useState, useEffect } from 'react';
 import { Modal } from '../components/Modal';
 import { RestaurantForm } from '../components/RestaurantForm';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { deleteRestaurant, CreateRestaurantData } from '../services/api';
 
 export function RestaurantPage() {
@@ -15,6 +16,7 @@ export function RestaurantPage() {
   const highlightedRatingId = searchParams.get('rating') ? parseInt(searchParams.get('rating')!, 10) : undefined;
   const highlightedPhotoId = searchParams.get('photo') ? parseInt(searchParams.get('photo')!, 10) : undefined;
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: restaurant, isLoading, error, refetch } = useRestaurant(restaurantId);
   const updateRestaurantMutation = useUpdateRestaurant();
@@ -25,6 +27,22 @@ export function RestaurantPage() {
       navigate(-1); // Go back to previous page
     }
   }, [isLoading, error, restaurant, navigate]);
+
+  // Handle ESC key to close modals
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showDeleteConfirm) {
+          setShowDeleteConfirm(false);
+        } else if (showEditModal) {
+          setShowEditModal(false);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showEditModal, showDeleteConfirm]);
 
   const handleClose = () => {
     navigate(-1); // Go back to previous page (admin or home)
@@ -47,17 +65,21 @@ export function RestaurantPage() {
     );
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
     if (!restaurant) return;
 
-    if (window.confirm(`Are you sure you want to delete ${restaurant.name}?`)) {
-      try {
-        await deleteRestaurant(restaurant.id);
-        navigate('/');
-      } catch (error) {
-        console.error('Failed to delete restaurant:', error);
-        alert('Failed to delete restaurant. Please try again.');
-      }
+    try {
+      await deleteRestaurant(restaurant.id);
+      setShowDeleteConfirm(false);
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to delete restaurant:', error);
+      alert('Failed to delete restaurant. Please try again.');
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -101,6 +123,17 @@ export function RestaurantPage() {
           />
         )}
       </Modal>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Restaurant"
+        message={`Delete "${restaurant?.name}"? This will also delete all associated ratings and photos. This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+      />
     </>
   );
 }
