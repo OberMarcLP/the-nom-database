@@ -110,6 +110,7 @@ export interface ReviewPhoto {
 export interface Rating {
   id: number;
   restaurant_id: number;
+  restaurant?: Restaurant;
   food_rating: number;
   service_rating: number;
   ambiance_rating: number;

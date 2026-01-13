@@ -69,7 +69,7 @@ export default function UserProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600 dark:text-gray-400">Loading profile...</div>
+        <div style={{ color: 'var(--text-muted)' }}>Loading profile...</div>
       </div>
     );
   }
@@ -78,10 +78,13 @@ export default function UserProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">User not found</h2>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text)' }}>User not found</h2>
           <button
             onClick={() => navigate('/')}
-            className="text-blue-500 hover:text-blue-600 transition-colors"
+            className="transition-colors"
+            style={{ color: 'var(--accent)' }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
           >
             Go back home
           </button>
@@ -98,7 +101,10 @@ export default function UserProfilePage() {
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-6"
+          className="flex items-center gap-2 transition-colors mb-6"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -116,8 +122,11 @@ export default function UserProfilePage() {
                   className="w-24 h-24 rounded-full object-cover border-4 border-white/50 dark:border-white/20"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-md border-4 border-white/50 dark:border-white/20 flex items-center justify-center">
-                  <User className="w-12 h-12 text-blue-500" />
+                <div className="w-24 h-24 rounded-full flex items-center justify-center border-4" style={{
+                  background: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}>
+                  <User className="w-12 h-12" style={{ color: 'var(--accent)' }} />
                 </div>
               )}
             </div>
@@ -126,11 +135,11 @@ export default function UserProfilePage() {
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                  <h1 className="text-3xl font-bold mb-1" style={{ color: 'var(--text)' }}>
                     {user.full_name || user.username}
                   </h1>
-                  <p className="text-gray-600 dark:text-gray-400">@{user.username}</p>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  <p style={{ color: 'var(--text-muted)' }}>@{user.username}</p>
+                  <div className="flex items-center gap-2 mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
                     <Calendar className="w-4 h-4" />
                     Joined {new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </div>
@@ -148,59 +157,59 @@ export default function UserProfilePage() {
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                <div className="bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-xl p-4 border border-white/30 dark:border-white/10">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-1">
+                <div className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-1" style={{ color: 'var(--text-muted)' }}>
                     <MessageSquare className="w-4 h-4" />
                     <span className="text-sm">Reviews</span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_reviews}</p>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{stats.total_reviews}</p>
                 </div>
 
-                <div className="bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-xl p-4 border border-white/30 dark:border-white/10">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-1">
+                <div className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-1" style={{ color: 'var(--text-muted)' }}>
                     <MapPin className="w-4 h-4" />
                     <span className="text-sm">Restaurants</span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_restaurants}</p>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{stats.total_restaurants}</p>
                 </div>
 
-                <div className="bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-xl p-4 border border-white/30 dark:border-white/10">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-1">
+                <div className="rounded-xl p-4 border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-1" style={{ color: 'var(--text-muted)' }}>
                     <List className="w-4 h-4" />
                     <span className="text-sm">Lists</span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_lists}</p>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{stats.total_lists}</p>
                 </div>
 
-                <div className="bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-xl p-4 border border-white/30 dark:border-white/10 col-span-2 md:col-span-3">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-2">
+                <div className="rounded-xl p-4 border col-span-2 md:col-span-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--text-muted)' }}>
                     <Star className="w-4 h-4" />
                     <span className="text-sm">Average Ratings</span>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Food</p>
+                      <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Food</p>
                       <div className="flex items-center gap-2">
                         <StarRating rating={stats.avg_food_rating} readonly size="sm" />
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
                           {stats.avg_food_rating.toFixed(1)}
                         </span>
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Service</p>
+                      <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Service</p>
                       <div className="flex items-center gap-2">
                         <StarRating rating={stats.avg_service_rating} readonly size="sm" />
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
                           {stats.avg_service_rating.toFixed(1)}
                         </span>
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ambiance</p>
+                      <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Ambiance</p>
                       <div className="flex items-center gap-2">
                         <StarRating rating={stats.avg_ambiance_rating} readonly size="sm" />
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
                           {stats.avg_ambiance_rating.toFixed(1)}
                         </span>
                       </div>
@@ -214,14 +223,15 @@ export default function UserProfilePage() {
 
         {/* Tabs */}
         <div className="card-glass mb-6 animate-slide-down" style={{ animationDelay: '0.1s' }}>
-          <div className="flex border-b border-white/20 dark:border-white/10">
+          <div className="flex border-b" style={{ borderColor: 'var(--border)' }}>
             <button
               onClick={() => setActiveTab('reviews')}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === 'reviews'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'text-[var(--accent)]'
+                  : 'border-transparent hover:text-[var(--text)]'
               }`}
+              style={activeTab === 'reviews' ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : { color: 'var(--text-muted)' }}
             >
               Reviews ({stats.total_reviews})
             </button>
@@ -229,9 +239,10 @@ export default function UserProfilePage() {
               onClick={() => setActiveTab('lists')}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === 'lists'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'text-[var(--accent)]'
+                  : 'border-transparent hover:text-[var(--text)]'
               }`}
+              style={activeTab === 'lists' ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : { color: 'var(--text-muted)' }}
             >
               Lists ({stats.total_lists})
             </button>
@@ -239,9 +250,10 @@ export default function UserProfilePage() {
               onClick={() => setActiveTab('about')}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === 'about'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'text-[var(--accent)]'
+                  : 'border-transparent hover:text-[var(--text)]'
               }`}
+              style={activeTab === 'about' ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : { color: 'var(--text-muted)' }}
             >
               About
             </button>
@@ -254,8 +266,8 @@ export default function UserProfilePage() {
             <div className="space-y-4">
               {reviews.length === 0 ? (
                 <div className="card-glass p-12 text-center">
-                  <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 dark:text-gray-400">No reviews yet</p>
+                  <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
+                  <p style={{ color: 'var(--text-muted)' }}>No reviews yet</p>
                 </div>
               ) : (
                 reviews.map((review) => (
@@ -264,11 +276,20 @@ export default function UserProfilePage() {
                       <div className="flex-1">
                         <h3
                           onClick={() => navigate(`/restaurants/${review.restaurant_id}`)}
-                          className="text-lg font-semibold text-gray-900 dark:text-white mb-1 cursor-pointer hover:text-blue-500 transition-colors"
+                          className="text-lg font-semibold mb-1 cursor-pointer transition-colors"
+                          style={{ color: 'var(--text)' }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text)'}
                         >
-                          Restaurant #{review.restaurant_id}
+                          {review.restaurant?.name || `Restaurant #${review.restaurant_id}`}
                         </h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                          {review.restaurant?.address && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {review.restaurant.address}
+                            </span>
+                          )}
                           <span>{new Date(review.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
@@ -276,32 +297,60 @@ export default function UserProfilePage() {
 
                     <div className="grid grid-cols-3 gap-4 mb-3">
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Food</p>
+                        <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Food</p>
                         <StarRating rating={review.food_rating} readonly size="sm" />
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Service</p>
+                        <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Service</p>
                         <StarRating rating={review.service_rating} readonly size="sm" />
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ambiance</p>
+                        <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Ambiance</p>
                         <StarRating rating={review.ambiance_rating} readonly size="sm" />
                       </div>
                     </div>
 
                     {review.comment && (
-                      <p className="text-gray-700 dark:text-gray-300 mb-3">{review.comment}</p>
+                      <p className="mb-3" style={{ color: 'var(--text)' }}>{review.comment}</p>
                     )}
 
                     {review.photos && review.photos.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 mt-3">
                         {review.photos.map((photo) => (
-                          <img
+                          <div
                             key={photo.id}
-                            src={photo.photo_url}
-                            alt={photo.caption || 'Review photo'}
-                            className="w-20 h-20 object-cover rounded-lg"
-                          />
+                            className="relative group cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(photo.photo_url, '_blank');
+                            }}
+                          >
+                            <img
+                              src={photo.photo_url}
+                              alt={photo.caption || 'Review photo'}
+                              className="w-24 h-24 object-cover rounded-lg border-2 transition-all"
+                              style={{ borderColor: 'var(--border)' }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--accent)';
+                                e.currentTarget.style.transform = 'scale(1.05)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border)';
+                                e.currentTarget.style.transform = 'scale(1)';
+                              }}
+                            />
+                            {photo.caption && (
+                              <div
+                                className="absolute bottom-0 left-0 right-0 px-2 py-1 text-xs rounded-b-lg"
+                                style={{
+                                  background: 'rgba(0, 0, 0, 0.7)',
+                                  color: 'var(--text)'
+                                }}
+                              >
+                                {photo.caption}
+                              </div>
+                            )}
+                          </div>
                         ))}
                       </div>
                     )}
@@ -315,16 +364,16 @@ export default function UserProfilePage() {
             <div className="space-y-4">
               {!isOwnProfile ? (
                 <div className="card-glass p-12 text-center">
-                  <Lock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 dark:text-gray-400">User lists are private</p>
+                  <Lock className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
+                  <p style={{ color: 'var(--text-muted)' }}>User lists are private</p>
                 </div>
               ) : lists.length === 0 ? (
                 <div className="card-glass p-12 text-center">
-                  <List className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">No lists yet</p>
+                  <List className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
+                  <p className="mb-4" style={{ color: 'var(--text-muted)' }}>No lists yet</p>
                   <button
                     onClick={() => navigate('/lists')}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                    className="btn-primary inline-flex items-center gap-2"
                   >
                     <List className="w-4 h-4" />
                     Create Your First List
@@ -336,20 +385,23 @@ export default function UserProfilePage() {
                     <div
                       key={list.id}
                       onClick={() => navigate(`/lists/${list.id}`)}
-                      className="card-glass p-6 hover:shadow-xl transition-all cursor-pointer group"
+                      className="card-glass p-6 hover:shadow-xl transition-all cursor-pointer"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-blue-500 transition-colors">
+                          <h3
+                            className="text-lg font-semibold mb-1 list-title"
+                            style={{ color: 'var(--text)' }}
+                          >
                             {list.name}
                           </h3>
                           {list.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                            <p className="text-sm line-clamp-2" style={{ color: 'var(--text-muted)' }}>
                               {list.description}
                             </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
                           {list.is_public ? (
                             <div title="Public"><Globe className="w-4 h-4" /></div>
                           ) : (
@@ -357,7 +409,7 @@ export default function UserProfilePage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
                         <span className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
                           {list.restaurant_count || 0} restaurant{list.restaurant_count !== 1 ? 's' : ''}
@@ -373,29 +425,29 @@ export default function UserProfilePage() {
 
           {activeTab === 'about' && (
             <div className="card-glass p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">About</h3>
-              <div className="space-y-3 text-gray-700 dark:text-gray-300">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text)' }}>About</h3>
+              <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <User className="w-5 h-5 text-gray-400" />
+                  <User className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Username</p>
-                    <p className="font-medium">{user.username}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Username</p>
+                    <p className="font-medium" style={{ color: 'var(--text)' }}>{user.username}</p>
                   </div>
                 </div>
                 {user.email && (
                   <div className="flex items-center gap-3">
                     <span className="text-xl">📧</span>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                      <p className="font-medium">{user.email}</p>
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Email</p>
+                      <p className="font-medium" style={{ color: 'var(--text)' }}>{user.email}</p>
                     </div>
                   </div>
                 )}
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <Calendar className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Member since</p>
-                    <p className="font-medium">
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Member since</p>
+                    <p className="font-medium" style={{ color: 'var(--text)' }}>
                       {new Date(user.created_at).toLocaleDateString('en-US', {
                         month: 'long',
                         day: 'numeric',

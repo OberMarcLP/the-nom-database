@@ -140,8 +140,28 @@ func GetUserReviews(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Attach restaurant info (limited)
+		// Attach restaurant and user info
+		rating.Restaurant = &restaurant
 		rating.User = &user
+
+		// Load photos for this rating
+		photoRows, err := database.GetPool().Query(ctx, `
+			SELECT id, rating_id, photo_url, caption, display_order, created_at
+			FROM review_photos
+			WHERE rating_id = $1
+			ORDER BY display_order, created_at`, rating.ID)
+		if err == nil {
+			defer photoRows.Close()
+			photos := []models.ReviewPhoto{}
+			for photoRows.Next() {
+				var photo models.ReviewPhoto
+				if err := photoRows.Scan(&photo.ID, &photo.RatingID, &photo.PhotoURL, &photo.Caption, &photo.DisplayOrder, &photo.CreatedAt); err == nil {
+					photos = append(photos, photo)
+				}
+			}
+			rating.Photos = photos
+		}
+
 		reviews = append(reviews, rating)
 	}
 

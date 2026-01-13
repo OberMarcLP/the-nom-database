@@ -57,6 +57,7 @@ type Restaurant struct {
 type Rating struct {
 	ID               int           `json:"id"`
 	RestaurantID     int           `json:"restaurant_id"`
+	Restaurant       *Restaurant   `json:"restaurant,omitempty"`
 	UserID           *int          `json:"user_id,omitempty"`
 	User             *UserSummary  `json:"user,omitempty"`
 	FoodRating       int           `json:"food_rating"`

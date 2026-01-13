@@ -1157,3 +1157,15 @@ body::before {
     font-size: 28px;
   }
 }
+
+/* =========================
+   USER PROFILE PAGE
+   ========================= */
+
+.list-title {
+  transition: color 0.2s ease;
+}
+
+.card-glass:hover .list-title {
+  color: var(--accent) !important;
+}
