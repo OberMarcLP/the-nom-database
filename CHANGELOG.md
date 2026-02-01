@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-02-01
+
+### Changed
+
+#### UI & styling
+- Added base `.card`, `.label`, and text/border utility classes using CSS variables
+- Aligned AdminUsers and RestaurantDetail/RestaurantCard to use CSS variables instead of Tailwind `dark:` modifiers
+- Removed deprecated `confirmClassName` from ConfirmDialog; use `isDangerous` for danger actions
+
+#### Security & robustness
+- Image uploads (menu photos, avatar) now validated by magic bytes in addition to Content-Type
+- Rate limiter: optional trusted proxy IP via `TRUST_PROXY`, graceful cleanup on shutdown
+- OIDC state store protected with mutex; cleanup goroutine shuts down gracefully
+- Database: `DB_PASSWORD` required in production; default admin gets secure random password when not set
+
+#### Bug fixes & performance
+- Added `rows.Err()` checks after row iteration in restaurants and lists handlers
+- Batch food-type inserts when creating restaurants; combined COUNT queries in admin analytics
+- Replaced bubble sort with `sort.Slice` in metrics percentile calculation
+- New `PUT /api/ratings/{id}` endpoint for editing reviews (ownership enforced)
+
+#### Restaurant list
+- Paginated list now ordered by newest first (new restaurants appear on first page)
+- Normal “All Restaurants” view uses same unpaginated API as admin (restaurants + suggestions in sync)
+- On 409 “already exists” from add suggestion, restaurant list is invalidated so it refreshes
+
 ## [1.0.0] - 2025-01-03
 
 ### Added
