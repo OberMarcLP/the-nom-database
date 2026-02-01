@@ -1,3 +1,11 @@
+---
+title: "API Reference"
+description: "REST API endpoints and usage"
+weight: 320
+icon: "code"
+toc: true
+---
+
 # API Documentation
 
 ## Overview
@@ -472,5 +480,4 @@ The API includes several security features:
 ## Support
 
 For API issues or questions:
-- GitHub Issues: https://github.com/your-username/the-nom-database/issues
-- Email: support@nomdb.com
+- GitHub Issues: https://github.com/obermarclp/the-nom-database/issues

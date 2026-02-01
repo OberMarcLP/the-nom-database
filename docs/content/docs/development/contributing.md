@@ -1,4 +1,12 @@
-## Contributing to The Nom Database
+---
+title: "Contributing"
+description: "How to contribute to The Nom Database"
+weight: 410
+icon: "code"
+toc: true
+---
+
+# Contributing to The Nom Database
 
 Thank you for your interest in contributing to The Nom Database! This document provides guidelines and instructions for contributing.
 
@@ -384,7 +392,7 @@ Once approved and CI passes:
 
 ## Release Process
 
-See [Git Workflow Guide](GIT_WORKFLOW.md) for detailed release process.
+See [Git Workflow Guide](/docs/development/git-workflow/) for detailed release process.
 
 **Quick overview:**
 1. Features merged to `develop`
@@ -398,9 +406,9 @@ See [Git Workflow Guide](GIT_WORKFLOW.md) for detailed release process.
 
 ### Resources
 
-- **Documentation**: [https://your-username.github.io/the-nom-database](https://your-username.github.io/the-nom-database)
-- **Git Workflow**: [GIT_WORKFLOW.md](GIT_WORKFLOW.md)
-- **API Docs**: [API.md](API.md)
+- **Documentation**: [https://obermarclp.github.io/the-nom-database](https://obermarclp.github.io/the-nom-database)
+- **Git Workflow**: [Git Workflow](/docs/development/git-workflow/)
+- **API Docs**: [API Reference](/docs/configuration/api/)
 
 ### Ask Questions
 
@@ -432,4 +440,4 @@ Your contributions make this project better for everyone. Thank you for taking t
 
 ---
 
-**Questions?** Open a [Discussion](https://github.com/your-username/the-nom-database/discussions) or reach out to maintainers.
+**Questions?** Open a [Discussion](https://github.com/obermarclp/the-nom-database/discussions) or reach out to maintainers.

@@ -1,10 +1,18 @@
+---
+title: "Deployment Summary"
+description: "Production deployment package overview"
+weight: 220
+icon: "description"
+toc: true
+---
+
 # Deployment Package Summary
 
 This document summarizes the complete production deployment package for The Nom Database.
 
 ## What's Been Created
 
-### 📁 Production Configuration Files
+### Production Configuration Files
 
 1. **docker-compose.prod.yml**
    - Production-ready Docker Compose configuration
@@ -32,7 +40,7 @@ This document summarizes the complete production deployment package for The Nom 
    - Static file caching (1 year)
    - Health check endpoint
 
-### 📜 Deployment Scripts
+### Deployment Scripts
 
 1. **scripts/deploy.sh**
    - Automated deployment script
@@ -58,9 +66,9 @@ This document summarizes the complete production deployment package for The Nom 
    - Automatic decompression
    - Connection cleanup
 
-### 📚 Documentation
+### Documentation
 
-1. **DEPLOYMENT.md** (Comprehensive Guide)
+1. **Deployment Guide** ([guide](/docs/deployment/guide/))
    - Step-by-step deployment instructions
    - Server setup and prerequisites
    - SSL/TLS certificate setup (Let's Encrypt + self-signed)
@@ -73,14 +81,14 @@ This document summarizes the complete production deployment package for The Nom 
    - Performance optimization
    - Disaster recovery procedures
 
-2. **QUICKSTART_PRODUCTION.md** (Fast Track)
+2. **Quick Start** ([quickstart-production](/docs/getting-started/quickstart-production/))
    - 5-minute deployment guide
    - Minimal steps to production
    - Quick command reference
    - Common troubleshooting
    - Essential security reminders
 
-3. **PRODUCTION_CHECKLIST.md** (Quality Assurance)
+3. **Production Checklist** ([production-checklist](/docs/deployment/production-checklist/))
    - Pre-deployment checklist
    - Configuration verification
    - Security hardening checklist
@@ -96,7 +104,7 @@ This document summarizes the complete production deployment package for The Nom 
    - Troubleshooting
    - Advanced usage patterns
 
-5. **AUTHENTICATION.md** (Already existed)
+5. **Authentication** ([authentication](/docs/configuration/authentication/))
    - OIDC/Authentik setup guide
    - Multi-mode authentication docs
    - API endpoint reference
@@ -138,7 +146,7 @@ This document summarizes the complete production deployment package for The Nom 
 
 ## Key Features
 
-### ✅ Security
+### Security
 
 - **SSL/TLS**: Modern cipher suites, HSTS enabled
 - **Rate Limiting**: API (10 req/s) and Auth (5 req/m)
@@ -148,7 +156,7 @@ This document summarizes the complete production deployment package for The Nom 
 - **Authentication**: Multi-mode (none/local/oauth/both)
 - **Password Hashing**: Argon2id with secure parameters
 
-### ✅ Performance
+### Performance
 
 - **Gzip Compression**: All text content
 - **Static Caching**: 1-year cache for immutable assets
@@ -156,7 +164,7 @@ This document summarizes the complete production deployment package for The Nom 
 - **Connection Pooling**: PostgreSQL connection pool
 - **Database Indexes**: Optimized queries
 
-### ✅ Reliability
+### Reliability
 
 - **Health Checks**: All services monitored
 - **Restart Policies**: Automatic recovery
@@ -165,7 +173,7 @@ This document summarizes the complete production deployment package for The Nom 
 - **Backup Retention**: 30-day history
 - **Disaster Recovery**: Tested restore procedures
 
-### ✅ Maintainability
+### Maintainability
 
 - **Infrastructure as Code**: All config in version control
 - **Automated Scripts**: Deployment, backup, restore
@@ -372,12 +380,12 @@ docker compose -f docker-compose.prod.yml restart nginx
 
 ## Support Resources
 
-- **Full Deployment Guide**: [DEPLOYMENT.md](DEPLOYMENT.md)
-- **Quick Start**: [QUICKSTART_PRODUCTION.md](QUICKSTART_PRODUCTION.md)
-- **Security Checklist**: [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)
-- **Authentication Setup**: [AUTHENTICATION.md](AUTHENTICATION.md)
-- **Script Documentation**: [scripts/README.md](scripts/README.md)
-- **Project Overview**: [README.md](README.md)
+- **Full Deployment Guide**: [Deployment Guide](/docs/deployment/guide/)
+- **Quick Start**: [Quick Start Production](/docs/getting-started/quickstart-production/)
+- **Security Checklist**: [Production Checklist](/docs/deployment/production-checklist/)
+- **Authentication Setup**: [Authentication](/docs/configuration/authentication/)
+- **Script Documentation**: See [scripts/README.md](https://github.com/obermarclp/the-nom-database/blob/main/scripts/README.md) in the repository
+- **Project Overview**: [README](https://github.com/obermarclp/the-nom-database#readme)
 
 ## License
 
@@ -385,4 +393,4 @@ See LICENSE file in repository.
 
 ---
 
-**Ready to deploy?** Start with [QUICKSTART_PRODUCTION.md](QUICKSTART_PRODUCTION.md) for the fastest path to production!
+**Ready to deploy?** Start with [Quick Start Production](/docs/getting-started/quickstart-production/) for the fastest path to production!

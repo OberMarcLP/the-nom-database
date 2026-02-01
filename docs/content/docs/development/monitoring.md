@@ -1,3 +1,11 @@
++++
+title = "Monitoring"
+description = "Logging and metrics"
+weight = 450
+icon = "monitor"
+toc = true
++++
+
 # Monitoring & Logging Guide
 
 ## Overview

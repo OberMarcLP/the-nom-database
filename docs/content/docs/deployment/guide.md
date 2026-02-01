@@ -1,3 +1,11 @@
+---
+title: "Deployment Guide"
+description: "Production deployment instructions"
+weight: 210
+icon: "rocket_launch"
+toc: true
+---
+
 # Production Deployment Guide
 
 This guide walks you through deploying The Nom Database to a production server.
@@ -65,7 +73,7 @@ cd /opt
 sudo mkdir -p nomdb
 sudo chown $USER:$USER nomdb
 cd nomdb
-git clone https://github.com/your-username/the-nom-database.git .
+git clone https://github.com/obermarclp/the-nom-database.git .
 ```
 
 ## Step 3: Configure Environment
@@ -482,8 +490,8 @@ Consider using CloudFlare or AWS CloudFront for:
 
 ## Support and Resources
 
-- Project Repository: https://github.com/your-username/the-nom-database
-- Documentation: See README.md and AUTHENTICATION.md
+- Project Repository: https://github.com/obermarclp/the-nom-database
+- Documentation: See [documentation](../) and [Authentication](../configuration/authentication/)
 - Issue Tracker: GitHub Issues
 
 ## License

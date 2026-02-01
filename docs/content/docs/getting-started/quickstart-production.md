@@ -1,3 +1,11 @@
+---
+title: "Production Quick Start"
+description: "Fast path to production deployment"
+weight: 110
+icon: "rocket_launch"
+toc: true
+---
+
 # Production Deployment Quick Start
 
 This guide provides the fastest path to getting The Nom Database running in production.
@@ -16,7 +24,7 @@ This guide provides the fastest path to getting The Nom Database running in prod
 cd /opt
 sudo mkdir -p nomdb && sudo chown $USER:$USER nomdb
 cd nomdb
-git clone https://github.com/your-username/the-nom-database.git .
+git clone https://github.com/obermarclp/the-nom-database.git .
 ```
 
 ### 2. Configure Environment
@@ -72,12 +80,12 @@ sed -i 's/yourdomain\.com/your-actual-domain.com/g' nginx/nginx.conf
 ```
 
 This script will:
-- ✅ Validate Docker installation
-- ✅ Check environment configuration
-- ✅ Verify SSL certificates
-- ✅ Build Docker images
-- ✅ Start all services
-- ✅ Wait for health checks
+- Validate Docker installation
+- Check environment configuration
+- Verify SSL certificates
+- Build Docker images
+- Start all services
+- Wait for health checks
 
 ### 6. Create Admin User
 
@@ -184,27 +192,26 @@ docker compose -f docker-compose.prod.yml exec db psql -U nomdb nomdb
 
 ## Next Steps
 
-- [ ] Review [DEPLOYMENT.md](DEPLOYMENT.md) for detailed configuration
-- [ ] Complete [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)
-- [ ] Set up monitoring and alerts
-- [ ] Configure CDN (optional)
-- [ ] Enable OIDC with Authentik (optional)
-- [ ] Test disaster recovery procedures
+- Review [Deployment Guide](../deployment/guide/) for detailed configuration
+- Complete [Production Checklist](../deployment/production-checklist/)
+- Set up monitoring and alerts
+- Configure CDN (optional)
+- Enable OIDC with Authentik (optional)
+- Test disaster recovery procedures
 
 ## Security Reminders
 
-- ✅ Change all default passwords
-- ✅ Use strong JWT secret (64+ random bytes)
-- ✅ Restrict Google Maps API key by domain
-- ✅ Keep `.env.production` secure (never commit to git)
-- ✅ Enable firewall (only ports 22, 80, 443)
-- ✅ Set `AUTH_MODE=local` or `both` (never `none` in production)
-- ✅ Keep Docker and system packages updated
+- Change all default passwords
+- Use strong JWT secret (64+ random bytes)
+- Restrict Google Maps API key by domain
+- Keep `.env.production` secure (never commit to git)
+- Enable firewall (only ports 22, 80, 443)
+- Set `AUTH_MODE=local` or `both` (never `none` in production)
+- Keep Docker and system packages updated
 
 ## Support
 
 For detailed documentation, see:
-- [DEPLOYMENT.md](DEPLOYMENT.md) - Full deployment guide
-- [AUTHENTICATION.md](AUTHENTICATION.md) - Auth setup with OIDC
-- [README.md](README.md) - General project documentation
-- [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) - Security checklist
+- [Deployment Guide](../deployment/guide/) - Full deployment guide
+- [Authentication](../configuration/authentication/) - Auth setup with OIDC
+- [Production Checklist](../deployment/production-checklist/) - Security checklist

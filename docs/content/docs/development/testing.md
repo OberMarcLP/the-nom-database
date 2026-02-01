@@ -1,3 +1,11 @@
++++
+title = "Testing"
+description = "Backend and frontend testing guide"
+weight = 440
+icon = "science"
+toc = true
++++
+
 # Testing Guide
 
 This project includes comprehensive automated tests for both the backend (Go) and frontend (React/TypeScript).

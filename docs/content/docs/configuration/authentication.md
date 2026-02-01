@@ -1,3 +1,11 @@
+---
+title: "Authentication"
+description: "Local, OIDC, and multi-mode auth setup"
+weight: 310
+icon: "lock"
+toc: true
+---
+
 # Authentication Implementation Guide
 
 ## Overview
@@ -223,15 +231,15 @@ Access tokens should be used for API requests. When they expire, use the refresh
 
 ### Implemented
 
-✅ **Password Hashing**: Argon2id with secure parameters
-✅ **JWT Tokens**: HS256 algorithm with secure secret
-✅ **Refresh Tokens**: Cryptographically secure random tokens
-✅ **Rate Limiting**: 100 requests/minute per IP
-✅ **Input Sanitization**: XSS protection
-✅ **CORS**: Restricted to allowed origins
-✅ **Security Headers**: XSS, clickjacking, MIME sniffing protection
-✅ **Session Management**: IP and User-Agent tracking
-✅ **Google Maps API Proxying**: API key not exposed to frontend
+- **Password Hashing**: Argon2id with secure parameters
+- **JWT Tokens**: HS256 algorithm with secure secret
+- **Refresh Tokens**: Cryptographically secure random tokens
+- **Rate Limiting**: 100 requests/minute per IP
+- **Input Sanitization**: XSS protection
+- **CORS**: Restricted to allowed origins
+- **Security Headers**: XSS, clickjacking, MIME sniffing protection
+- **Session Management**: IP and User-Agent tracking
+- **Google Maps API Proxying**: API key not exposed to frontend
 
 ### Best Practices
 

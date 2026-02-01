@@ -1,3 +1,11 @@
++++
+title = "Git Workflow"
+description = "Branching strategy and release process"
+weight = 420
+icon = "account_tree"
+toc = true
++++
+
 # Git Workflow and Release Process
 
 This document describes the branching strategy, development workflow, and release process for The Nom Database.
@@ -406,16 +414,16 @@ Docker images are automatically tagged based on git activity:
 
 ```bash
 # Production (use specific version)
-docker pull ghcr.io/your-username/the-nom-database/backend:v1.0.0
+docker pull ghcr.io/obermarclp/the-nom-database/backend:v1.0.0
 
 # Latest stable
-docker pull ghcr.io/your-username/the-nom-database/backend:latest
+docker pull ghcr.io/obermarclp/the-nom-database/backend:latest
 
 # Development
-docker pull ghcr.io/your-username/the-nom-database/backend:develop
+docker pull ghcr.io/obermarclp/the-nom-database/backend:develop
 
 # Specific commit
-docker pull ghcr.io/your-username/the-nom-database/backend:main-abc123
+docker pull ghcr.io/obermarclp/the-nom-database/backend:main-abc123
 ```
 
 ## Setting Up Branch Protection

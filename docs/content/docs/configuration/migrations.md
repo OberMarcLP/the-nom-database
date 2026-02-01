@@ -1,3 +1,11 @@
+---
+title: "Database Migrations"
+description: "Schema migrations with golang-migrate"
+weight: 330
+icon: "storage"
+toc: true
+---
+
 # Database Migrations Guide
 
 ## Overview

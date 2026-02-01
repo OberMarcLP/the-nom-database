@@ -1,3 +1,11 @@
++++
+title = "Optimizations"
+description = "Performance and security optimizations"
+weight = 460
+icon = "speed"
+toc = true
++++
+
 # The Nom Database - Optimization Report
 
 ## Overview

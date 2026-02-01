@@ -1,0 +1,31 @@
+baseURL = "https://obermarclp.github.io/the-nom-database/"
+languageCode = "en-us"
+title = "The Nom Database"
+
+# Ensure correct MIME types for assets (avoids text/plain when serving)
+[mediaTypes]
+[mediaTypes."text/css"]
+suffixes = ["css"]
+[mediaTypes."application/javascript"]
+suffixes = ["js"]
+
+[module]
+[[module.imports]]
+path = "github.com/colinwilson/lotusdocs"
+disable = false
+[[module.imports]]
+path = "github.com/gohugoio/hugo-mod-bootstrap-scss/v5"
+disable = false
+
+[markup.goldmark.renderer]
+unsafe = true
+
+[params]
+description = "Documentation for The Nom Database - a full-stack restaurant rating application"
+author = "The Nom Database"
+theme = "dark"
+[params.docs]
+title = "The Nom Database"
+darkMode = true
+[params.docs.social]
+github = "https://github.com/obermarclp/the-nom-database"

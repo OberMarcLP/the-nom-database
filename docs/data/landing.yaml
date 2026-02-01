@@ -1,0 +1,36 @@
+# Custom landing page for The Nom Database (overrides Lotus Docs defaults)
+# See https://lotusdocs.dev/docs/guides/landing-page/overview/
+
+hero:
+  enable: true
+  weight: 10
+  template: hero
+  badge:
+    text: "Documentation"
+    color: primary
+    pill: false
+    soft: true
+  title: "The Nom Database"
+  subtitle: "A full-stack **restaurant rating** application with **Google Maps**, flexible **authentication** (local/OIDC), and **Docker**."
+  ctaButton:
+    icon: rocket_launch
+    btnText: "Get Started"
+    # Relative URL works both locally (localhost:1313/docs/) and on GitHub Pages (.../the-nom-database/docs/)
+    url: "docs/"
+  cta2Button:
+    icon: code
+    btnText: "View on GitHub"
+    url: "https://github.com/obermarclp/the-nom-database"
+  info: "**Open Source** BSD 3-Clause Licensed."
+
+# Disable other default Lotus Docs landing sections so only our hero shows
+# Each section must have a "template" key for the theme's baseof range to work
+featureGrid:
+  enable: false
+  template: feature grid
+imageText:
+  enable: false
+  template: image text
+imageCompare:
+  enable: false
+  template: image compare

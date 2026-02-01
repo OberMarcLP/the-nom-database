@@ -1,4 +1,4 @@
-.PHONY: help all backend frontend db db-stop clean install test test-backend test-frontend test-coverage test-watch test-unit test-integration benchmark migrate-up migrate-down migrate-create migrate-version migrate-force
+.PHONY: help all backend frontend db db-stop clean install test test-backend test-frontend test-coverage test-watch test-unit test-integration benchmark migrate-up migrate-down migrate-create migrate-version migrate-force docs-preview
 
 # Load environment variables from .env
 ifneq (,$(wildcard ./.env))
@@ -101,3 +101,6 @@ migrate-force: ## Force migration version (usage: make migrate-force VERSION=4)
 	fi
 	@echo "Forcing migration version to $(VERSION)..."
 	@cd backend && go run cmd/migrate/main.go force $(VERSION)
+
+docs-preview: ## Run documentation site locally (Hugo + Lotus Docs)
+	@cd docs && hugo server -D -e production --baseURL http://localhost:1313/

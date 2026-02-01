@@ -27,18 +27,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
         with:
-          source: ./docs
-          destination: ./_site
+          submodules: recursive
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "latest"
+          extended: true
+
+      - name: Build with Hugo
+        run: hugo --source docs --minify
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/public
 
       - name: Deploy to GitHub Pages
         id: deployment

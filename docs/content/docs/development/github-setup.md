@@ -1,3 +1,11 @@
++++
+title = "GitHub Setup"
+description = "Repository setup, branch protection, Pages"
+weight = 430
+icon = "settings"
+toc = true
++++
+
 # GitHub Repository Setup Guide
 
 This guide walks you through setting up your GitHub repository with best practices, including branch protection, GitHub Pages, and automated Docker image publishing.
@@ -10,7 +18,7 @@ This guide walks you through setting up your GitHub repository with best practic
 # If you haven't already, create a new repository on GitHub
 # Then push your local code:
 
-git remote add origin https://github.com/your-username/the-nom-database.git
+git remote add origin https://github.com/obermarclp/the-nom-database.git
 git branch -M main
 git push -u origin main
 ```
@@ -103,15 +111,15 @@ git push -u origin develop
 
 After pushing to main:
 - Check **Actions** tab for "Deploy GitHub Pages" workflow
-- Visit: `https://your-username.github.io/the-nom-database`
+- Visit: `https://obermarclp.github.io/the-nom-database`
 
 ## GitHub Container Registry Setup
 
 ### Enable Packages
 
 GitHub Packages is automatically enabled. Docker images will be published to:
-- `ghcr.io/your-username/the-nom-database/backend`
-- `ghcr.io/your-username/the-nom-database/frontend`
+- `ghcr.io/obermarclp/the-nom-database/backend`
+- `ghcr.io/obermarclp/the-nom-database/frontend`
 
 ### Make Images Public (Recommended)
 
@@ -125,8 +133,8 @@ GitHub Packages is automatically enabled. Docker images will be published to:
 Once public, anyone can pull:
 
 ```bash
-docker pull ghcr.io/your-username/the-nom-database/backend:latest
-docker pull ghcr.io/your-username/the-nom-database/frontend:latest
+docker pull ghcr.io/obermarclp/the-nom-database/backend:latest
+docker pull ghcr.io/obermarclp/the-nom-database/frontend:latest
 ```
 
 ## Repository Settings
@@ -354,7 +362,7 @@ git push origin v1.0.0
 
 ### Release Page
 
-Visit: `https://github.com/your-username/the-nom-database/releases`
+Visit: `https://github.com/obermarclp/the-nom-database/releases`
 
 ## Webhooks (Optional)
 
@@ -415,7 +423,7 @@ Create `.github/CODEOWNERS`:
 
 ```
 # Default owners
-* @your-username
+* @obermarclp
 
 # Backend code
 /backend/ @backend-team
@@ -501,4 +509,4 @@ For repository setup questions:
 
 ---
 
-**Next Steps:** Once setup is complete, see [GIT_WORKFLOW.md](GIT_WORKFLOW.md) for daily development workflows.
+**Next Steps:** Once setup is complete, see [Git Workflow](/docs/development/git-workflow/) for daily development workflows.

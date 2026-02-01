@@ -1,3 +1,11 @@
+---
+title: "Production Checklist"
+description: "Pre- and post-deployment checklist"
+weight: 230
+icon: "checklist"
+toc: true
+---
+
 # Production Deployment Checklist
 
 Use this checklist to ensure your production deployment is secure and properly configured.

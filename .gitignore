@@ -10,6 +10,10 @@ vendor/
 dist/
 build/
 bin/
+docs/public/
+docs/_vendor/
+docs/.hugo_build.lock
+docs/resources/_gen/
 
 # IDE
 .idea/
