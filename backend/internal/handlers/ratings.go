@@ -196,6 +196,92 @@ func CreateRating(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(rt)
 }
 
+// UpdateRating godoc
+// @Summary Update a rating
+// @Description Update an existing rating (user can only update their own ratings)
+// @Tags Ratings
+// @Accept json
+// @Produce json
+// @Param id path int true "Rating ID"
+// @Param rating body object{food_rating=int,service_rating=int,ambiance_rating=int,comment=string} true "Updated rating data"
+// @Success 200 {object} models.Rating "Updated rating"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 403 {object} map[string]string "Forbidden - not your rating"
+// @Failure 404 {object} map[string]string "Rating not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /ratings/{id} [put]
+func UpdateRating(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
+		return
+	}
+
+	var req struct {
+		FoodRating     int    `json:"food_rating"`
+		ServiceRating  int    `json:"service_rating"`
+		AmbianceRating int    `json:"ambiance_rating"`
+		Comment        string `json:"comment"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.FoodRating < 1 || req.FoodRating > 5 ||
+		req.ServiceRating < 1 || req.ServiceRating > 5 ||
+		req.AmbianceRating < 1 || req.AmbianceRating > 5 {
+		http.Error(w, "Ratings must be between 1 and 5", http.StatusBadRequest)
+		return
+	}
+
+	// Get user from context
+	user, ok := GetUserFromContext(r)
+	if !ok || user == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if the rating exists and belongs to the user
+	var ratingUserID *int
+	err = database.GetPool().QueryRow(ctx,
+		"SELECT user_id FROM ratings WHERE id = $1", id).Scan(&ratingUserID)
+	if err != nil {
+		http.Error(w, "Rating not found", http.StatusNotFound)
+		return
+	}
+
+	// Check ownership (only allow editing own ratings, or admin)
+	if ratingUserID == nil || *ratingUserID != user.ID {
+		// Check if user is admin
+		if !user.IsAdmin {
+			http.Error(w, "You can only edit your own ratings", http.StatusForbidden)
+			return
+		}
+	}
+
+	// Update the rating
+	var rt models.Rating
+	err = database.GetPool().QueryRow(ctx,
+		`UPDATE ratings 
+		SET food_rating = $1, service_rating = $2, ambiance_rating = $3, comment = $4, updated_at = NOW()
+		WHERE id = $5
+		RETURNING id, restaurant_id, food_rating, service_rating, ambiance_rating, comment, user_id, created_at, updated_at, helpful_count, not_helpful_count`,
+		req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, id,
+	).Scan(&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating, &rt.Comment, &rt.UserID, &rt.CreatedAt, &rt.UpdatedAt, &rt.HelpfulCount, &rt.NotHelpfulCount)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(rt)
+}
+
 // DeleteRating godoc
 // @Summary Delete a rating
 // @Description Delete a rating by ID

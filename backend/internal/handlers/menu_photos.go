@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +23,43 @@ const (
 	uploadsDir       = "./uploads/menu_photos"
 	thumbnailsSubdir = "thumbnails"
 )
+
+// Image magic bytes for validation
+var imageMagicBytes = map[string][][]byte{
+	"image/jpeg": {
+		{0xFF, 0xD8, 0xFF}, // JPEG
+	},
+	"image/png": {
+		{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, // PNG
+	},
+	"image/webp": {
+		// WebP starts with RIFF....WEBP
+		{0x52, 0x49, 0x46, 0x46}, // RIFF header (WebP uses RIFF container)
+	},
+}
+
+// validateImageMagicBytes checks if the file content matches allowed image types
+// Returns the detected mime type and whether validation passed
+func validateImageMagicBytes(data []byte) (string, bool) {
+	for mimeType, signatures := range imageMagicBytes {
+		for _, sig := range signatures {
+			if len(data) >= len(sig) && bytes.HasPrefix(data, sig) {
+				// Special check for WebP - need to verify WEBP marker at offset 8
+				if mimeType == "image/webp" {
+					if len(data) >= 12 {
+						webpMarker := data[8:12]
+						if string(webpMarker) == "WEBP" {
+							return mimeType, true
+						}
+					}
+					continue
+				}
+				return mimeType, true
+			}
+		}
+	}
+	return "", false
+}
 
 func init() {
 	// Create uploads directory if it doesn't exist (fallback for local storage)
@@ -145,22 +181,31 @@ func UploadMenuPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate file type
-	contentType := header.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "image/") {
-		http.Error(w, "Only image files are allowed", http.StatusBadRequest)
+	// Validate file type by reading magic bytes (more secure than Content-Type header)
+	// Read the first 12 bytes for magic byte detection
+	magicBytes := make([]byte, 12)
+	n, err := file.Read(magicBytes)
+	if err != nil || n < 3 {
+		http.Error(w, "Failed to read file for validation", http.StatusBadRequest)
+		return
+	}
+	// Seek back to the beginning for processing
+	if _, err := file.Seek(0, 0); err != nil {
+		http.Error(w, "Failed to process file", http.StatusInternalServerError)
 		return
 	}
 
-	// Validate specific image types
-	validTypes := map[string]bool{
-		"image/jpeg": true,
-		"image/png":  true,
-		"image/webp": true,
-	}
-	if !validTypes[contentType] {
-		http.Error(w, "Only JPEG, PNG, and WebP images are allowed", http.StatusBadRequest)
+	// Validate magic bytes match allowed image types
+	detectedType, valid := validateImageMagicBytes(magicBytes[:n])
+	if !valid {
+		http.Error(w, "Invalid image file. Only JPEG, PNG, and WebP images are allowed", http.StatusBadRequest)
 		return
+	}
+
+	// Log if Content-Type doesn't match detected type (potential spoofing attempt)
+	contentType := header.Header.Get("Content-Type")
+	if contentType != detectedType {
+		logger.Warn("Content-Type mismatch: header=%s, detected=%s", contentType, detectedType)
 	}
 
 	// Process image (resize, compress, generate thumbnail)

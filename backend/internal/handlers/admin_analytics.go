@@ -26,16 +26,16 @@ func AdminGetStatistics(w http.ResponseWriter, r *http.Request) {
 
 	stats := make(map[string]interface{})
 
-	// Get user statistics
-	var totalUsers, activeUsers, verifiedUsers int
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&totalUsers)
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM users WHERE is_active = true").Scan(&activeUsers)
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM users WHERE email_verified = true").Scan(&verifiedUsers)
-
-	// Get user growth (last 30 days)
-	var newUsersLast30Days int
-	database.GetPool().QueryRow(ctx,
-		"SELECT COUNT(*) FROM users WHERE created_at > NOW() - INTERVAL '30 days'").Scan(&newUsersLast30Days)
+	// Get all user statistics in a single query
+	var totalUsers, activeUsers, verifiedUsers, newUsersLast30Days int
+	database.GetPool().QueryRow(ctx, `
+		SELECT 
+			COUNT(*),
+			COUNT(*) FILTER (WHERE is_active = true),
+			COUNT(*) FILTER (WHERE email_verified = true),
+			COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days')
+		FROM users
+	`).Scan(&totalUsers, &activeUsers, &verifiedUsers, &newUsersLast30Days)
 
 	stats["users"] = map[string]interface{}{
 		"total":              totalUsers,
@@ -44,12 +44,17 @@ func AdminGetStatistics(w http.ResponseWriter, r *http.Request) {
 		"new_last_30_days":   newUsersLast30Days,
 	}
 
-	// Get restaurant statistics
-	var totalRestaurants, pendingSuggestions, approvedSuggestions, rejectedSuggestions int
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM restaurants").Scan(&totalRestaurants)
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM restaurant_suggestions WHERE status = 'pending'").Scan(&pendingSuggestions)
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM restaurant_suggestions WHERE status = 'approved'").Scan(&approvedSuggestions)
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM restaurant_suggestions WHERE status = 'rejected'").Scan(&rejectedSuggestions)
+	// Get all restaurant and suggestion statistics in a single query
+	var totalRestaurants int
+	var pendingSuggestions, approvedSuggestions, rejectedSuggestions int
+	database.GetPool().QueryRow(ctx, `
+		SELECT 
+			(SELECT COUNT(*) FROM restaurants),
+			COUNT(*) FILTER (WHERE status = 'pending'),
+			COUNT(*) FILTER (WHERE status = 'approved'),
+			COUNT(*) FILTER (WHERE status = 'rejected')
+		FROM restaurant_suggestions
+	`).Scan(&totalRestaurants, &pendingSuggestions, &approvedSuggestions, &rejectedSuggestions)
 
 	stats["restaurants"] = map[string]interface{}{
 		"total":               totalRestaurants,
@@ -58,13 +63,17 @@ func AdminGetStatistics(w http.ResponseWriter, r *http.Request) {
 		"rejected_suggestions": rejectedSuggestions,
 	}
 
-	// Get rating statistics
+	// Get all rating statistics in a single query
 	var totalRatings int
 	var avgFoodRating, avgServiceRating, avgAmbianceRating float64
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM ratings").Scan(&totalRatings)
-	database.GetPool().QueryRow(ctx, "SELECT COALESCE(AVG(food_rating), 0) FROM ratings").Scan(&avgFoodRating)
-	database.GetPool().QueryRow(ctx, "SELECT COALESCE(AVG(service_rating), 0) FROM ratings").Scan(&avgServiceRating)
-	database.GetPool().QueryRow(ctx, "SELECT COALESCE(AVG(ambiance_rating), 0) FROM ratings").Scan(&avgAmbianceRating)
+	database.GetPool().QueryRow(ctx, `
+		SELECT 
+			COUNT(*),
+			COALESCE(AVG(food_rating), 0),
+			COALESCE(AVG(service_rating), 0),
+			COALESCE(AVG(ambiance_rating), 0)
+		FROM ratings
+	`).Scan(&totalRatings, &avgFoodRating, &avgServiceRating, &avgAmbianceRating)
 
 	stats["ratings"] = map[string]interface{}{
 		"total":           totalRatings,
@@ -73,11 +82,14 @@ func AdminGetStatistics(w http.ResponseWriter, r *http.Request) {
 		"avg_ambiance":    avgAmbianceRating,
 	}
 
-	// Get content statistics
+	// Get all content statistics in a single query
 	var totalMenuPhotos, totalReviewPhotos, totalLists int
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM menu_photos").Scan(&totalMenuPhotos)
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM review_photos").Scan(&totalReviewPhotos)
-	database.GetPool().QueryRow(ctx, "SELECT COUNT(*) FROM restaurant_lists").Scan(&totalLists)
+	database.GetPool().QueryRow(ctx, `
+		SELECT 
+			(SELECT COUNT(*) FROM menu_photos),
+			(SELECT COUNT(*) FROM review_photos),
+			(SELECT COUNT(*) FROM restaurant_lists)
+	`).Scan(&totalMenuPhotos, &totalReviewPhotos, &totalLists)
 
 	stats["content"] = map[string]interface{}{
 		"menu_photos":   totalMenuPhotos,

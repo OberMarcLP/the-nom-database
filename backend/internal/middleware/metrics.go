@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -137,18 +138,14 @@ func (m *Metrics) calculatePercentiles() (p50, p95, p99 time.Duration) {
 		return
 	}
 
-	// Simple percentile calculation (could be optimized with sorting)
+	// Copy and sort response times for percentile calculation
 	sorted := make([]time.Duration, len(m.ResponseTimes))
 	copy(sorted, m.ResponseTimes)
 
-	// Bubble sort (fine for small arrays)
-	for i := 0; i < len(sorted); i++ {
-		for j := i + 1; j < len(sorted); j++ {
-			if sorted[i] > sorted[j] {
-				sorted[i], sorted[j] = sorted[j], sorted[i]
-			}
-		}
-	}
+	// Use efficient O(n log n) sort
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i] < sorted[j]
+	})
 
 	p50Index := int(float64(len(sorted)) * 0.50)
 	p95Index := int(float64(len(sorted)) * 0.95)

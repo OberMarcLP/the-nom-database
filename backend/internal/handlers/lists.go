@@ -54,6 +54,11 @@ func GetUserLists(w http.ResponseWriter, r *http.Request) {
 		}
 		lists = append(lists, list)
 	}
+	if err := rows.Err(); err != nil {
+		log.Printf("ERROR: Rows iteration error: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(lists)

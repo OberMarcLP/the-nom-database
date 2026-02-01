@@ -291,22 +291,30 @@ func UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate file type
-	contentType := header.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "image/") {
-		http.Error(w, "Only image files are allowed", http.StatusBadRequest)
+	// Validate file type by reading magic bytes (more secure than Content-Type header)
+	magicBytes := make([]byte, 12)
+	n, err := file.Read(magicBytes)
+	if err != nil || n < 3 {
+		http.Error(w, "Failed to read file for validation", http.StatusBadRequest)
+		return
+	}
+	// Seek back to the beginning for processing
+	if _, err := file.Seek(0, 0); err != nil {
+		http.Error(w, "Failed to process file", http.StatusInternalServerError)
 		return
 	}
 
-	// Validate specific image types
-	validTypes := map[string]bool{
-		"image/jpeg": true,
-		"image/png":  true,
-		"image/webp": true,
-	}
-	if !validTypes[contentType] {
-		http.Error(w, "Only JPEG, PNG, and WebP images are allowed", http.StatusBadRequest)
+	// Validate magic bytes match allowed image types
+	detectedType, valid := validateImageMagicBytes(magicBytes[:n])
+	if !valid {
+		http.Error(w, "Invalid image file. Only JPEG, PNG, and WebP images are allowed", http.StatusBadRequest)
 		return
+	}
+
+	// Log if Content-Type doesn't match detected type (potential spoofing attempt)
+	contentType := header.Header.Get("Content-Type")
+	if contentType != detectedType {
+		logger.Warn("Content-Type mismatch in avatar upload: header=%s, detected=%s", contentType, detectedType)
 	}
 
 	// Process image (resize to square, compress)

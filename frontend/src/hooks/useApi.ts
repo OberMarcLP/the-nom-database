@@ -377,12 +377,19 @@ export const useCreateSuggestion = (
   const queryClient = useQueryClient();
 
   return useMutation({
+    ...options,
     mutationFn: api.createSuggestion,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suggestions'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['restaurants'], refetchType: 'active' });
     },
-    ...options,
+    onError: (error, variables, context, mutationArg) => {
+      // When restaurant already exists (409), refresh restaurant list so user can see it
+      if (error?.message?.includes('already exists')) {
+        queryClient.invalidateQueries({ queryKey: ['restaurants'], refetchType: 'active' });
+      }
+      options?.onError?.(error, variables, context, mutationArg);
+    },
   });
 };
 

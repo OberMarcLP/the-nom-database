@@ -211,6 +211,19 @@ body::before {
    CARDS
    ========================= */
 
+/* Base card class - alias for card-glass */
+.card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  border-color: var(--accent);
+}
+
 .card-glass, .admin-card {
   background: var(--surface);
   border: 2px solid var(--border);
@@ -352,6 +365,17 @@ body::before {
 
 .admin-form-group {
   margin-bottom: 20px;
+}
+
+/* Base label class for forms */
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 .admin-label {
@@ -737,6 +761,102 @@ body::before {
   border-bottom: none;
 }
 
+/* Admin table cell utilities */
+.admin-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.admin-user-name {
+  font-weight: 600;
+}
+
+.admin-user-fullname {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.admin-email-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-roles-cell {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.admin-date-cell {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.admin-actions-cell {
+  display: flex;
+  gap: 8px;
+}
+
+/* Admin checkbox label */
+.admin-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.admin-checkbox-label .admin-label {
+  margin: 0;
+}
+
+/* Admin badge with close button */
+.admin-badge-removable {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-badge-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.admin-badge-remove-btn:hover {
+  opacity: 1;
+}
+
+/* Admin grid list */
+.admin-grid-list {
+  display: grid;
+  gap: 8px;
+}
+
+/* Admin info text */
+.admin-info-text {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* Admin flex button */
+.admin-btn-between {
+  justify-content: space-between;
+}
+
 /* =========================
    ADMIN LAYOUT
    ========================= */
@@ -1093,6 +1213,36 @@ body::before {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Text utilities using CSS variables */
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-body {
+  color: var(--text);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-info {
+  color: var(--info);
+}
+
+/* Border utilities using CSS variables */
+.border-default {
+  border-color: var(--border);
 }
 
 /* =========================

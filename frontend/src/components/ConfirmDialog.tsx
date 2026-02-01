@@ -10,7 +10,6 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   isDangerous?: boolean;
-  confirmClassName?: string; // Deprecated: kept for backward compatibility
 }
 
 export function ConfirmDialog({
@@ -22,7 +21,6 @@ export function ConfirmDialog({
   confirmText = 'OK',
   cancelText = 'Cancel',
   isDangerous = false,
-  confirmClassName: _confirmClassName, // Deprecated - ignored
 }: ConfirmDialogProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {

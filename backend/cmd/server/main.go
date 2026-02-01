@@ -229,11 +229,12 @@ func main() {
 	ratingsProtected.Use(middleware.RequirePermission("ratings.create"))
 	ratingsProtected.HandleFunc("", handlers.CreateRating).Methods("POST")
 
-	// Delete ratings (ownership checked in handler)
-	ratingsDelete := api.PathPrefix("/ratings").Subrouter()
-	ratingsDelete.Use(middleware.AuthMiddleware)
-	ratingsDelete.Use(middleware.WithUserRoles)
-	ratingsDelete.HandleFunc("/{id}", handlers.DeleteRating).Methods("DELETE")
+	// Update and Delete ratings (ownership checked in handler)
+	ratingsModify := api.PathPrefix("/ratings").Subrouter()
+	ratingsModify.Use(middleware.AuthMiddleware)
+	ratingsModify.Use(middleware.WithUserRoles)
+	ratingsModify.HandleFunc("/{id}", handlers.UpdateRating).Methods("PUT")
+	ratingsModify.HandleFunc("/{id}", handlers.DeleteRating).Methods("DELETE")
 
 	// Vote on reviews (authenticated users only)
 	ratingsVote := api.PathPrefix("/ratings").Subrouter()

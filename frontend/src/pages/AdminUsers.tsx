@@ -284,18 +284,18 @@ export function AdminUsers() {
                 {users.map((user) => (
                   <tr key={user.id}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="admin-user-cell">
                         {user.avatar_url && (
                           <img
                             src={user.avatar_url}
                             alt={user.username}
-                            style={{ width: '32px', height: '32px', borderRadius: '50%' }}
+                            className="admin-user-avatar"
                           />
                         )}
                         <div>
-                          <div style={{ fontWeight: 600 }}>{user.username}</div>
+                          <div className="admin-user-name">{user.username}</div>
                           {user.full_name && (
-                            <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>
+                            <div className="admin-user-fullname">
                               {user.full_name}
                             </div>
                           )}
@@ -303,15 +303,15 @@ export function AdminUsers() {
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div className="admin-email-cell">
                         {user.email}
                         {user.email_verified && (
-                          <CheckCircle size={14} color="var(--admin-accent)" />
+                          <CheckCircle size={14} className="text-accent" />
                         )}
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      <div className="admin-roles-cell">
                         {user.roles?.map((role) => (
                           <span key={role.id} className="admin-badge admin-badge-info">
                             {role.name}
@@ -326,11 +326,11 @@ export function AdminUsers() {
                         <span className="admin-badge admin-badge-danger">Inactive</span>
                       )}
                     </td>
-                    <td style={{ fontSize: '13px', color: 'var(--admin-text-muted)' }}>
+                    <td className="admin-date-cell">
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div className="admin-actions-cell">
                         <button
                           className="admin-btn admin-btn-sm"
                           onClick={() => openEditModal(user)}
@@ -474,15 +474,15 @@ export function AdminUsers() {
                   <textarea name="bio" className="admin-textarea" rows={3} defaultValue={selectedUser.bio || ''} />
                 </div>
                 <div className="admin-form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <label className="admin-checkbox-label">
                     <input type="checkbox" name="is_active" defaultChecked={selectedUser.is_active} />
-                    <span className="admin-label" style={{ margin: 0 }}>Account Active</span>
+                    <span className="admin-label">Account Active</span>
                   </label>
                 </div>
                 <div className="admin-form-group">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <label className="admin-checkbox-label">
                     <input type="checkbox" name="email_verified" defaultChecked={selectedUser.email_verified} />
-                    <span className="admin-label" style={{ margin: 0 }}>Email Verified</span>
+                    <span className="admin-label">Email Verified</span>
                   </label>
                 </div>
               </div>
@@ -512,33 +512,32 @@ export function AdminUsers() {
             <div className="admin-modal-body">
               <div className="admin-form-group">
                 <label className="admin-label">Current Roles</label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                <div className="admin-roles-cell" style={{ marginBottom: '20px' }}>
                   {selectedUser.roles && selectedUser.roles.length > 0 ? (
                     selectedUser.roles.map((role) => (
-                      <div key={role.id} className="admin-badge admin-badge-info" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div key={role.id} className="admin-badge admin-badge-info admin-badge-removable">
                         {role.name}
                         <button
                           onClick={() => handleRemoveRole(role.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}
+                          className="admin-badge-remove-btn"
                         >
                           <XCircle size={14} />
                         </button>
                       </div>
                     ))
                   ) : (
-                    <span style={{ color: 'var(--admin-text-muted)', fontSize: '14px' }}>No roles assigned</span>
+                    <span className="text-muted">No roles assigned</span>
                   )}
                 </div>
               </div>
               <div className="admin-form-group">
                 <label className="admin-label">Add Role</label>
-                <div style={{ display: 'grid', gap: '8px' }}>
+                <div className="admin-grid-list">
                   {roles.filter(role => !selectedUser.roles?.find(r => r.id === role.id)).map((role) => (
                     <button
                       key={role.id}
-                      className="admin-btn"
+                      className="admin-btn admin-btn-between"
                       onClick={() => handleAssignRole(role.id)}
-                      style={{ justifyContent: 'space-between' }}
                     >
                       <span>{role.name}</span>
                       <Plus size={16} />
@@ -568,7 +567,7 @@ export function AdminUsers() {
             </div>
             <form onSubmit={handleResetPassword}>
               <div className="admin-modal-body">
-                <p style={{ color: 'var(--admin-text-muted)', marginBottom: '20px', fontSize: '14px' }}>
+                <p className="admin-info-text">
                   User will be required to change their password on next login.
                 </p>
                 <div className="admin-form-group">

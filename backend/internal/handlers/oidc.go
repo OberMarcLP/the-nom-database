@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -21,10 +22,12 @@ import (
 )
 
 var (
-	oidcProvider *oidc.Provider
-	oidcConfig   *oauth2.Config
-	oidcVerifier *oidc.IDTokenVerifier
-	oidcStateStore = make(map[string]time.Time) // In production, use Redis
+	oidcProvider       *oidc.Provider
+	oidcConfig         *oauth2.Config
+	oidcVerifier       *oidc.IDTokenVerifier
+	oidcStateStore     = make(map[string]time.Time) // In production, use Redis
+	oidcStateMu        sync.RWMutex                 // Mutex for thread-safe access to oidcStateStore
+	oidcCleanupStopCh  chan struct{}                // Channel to stop cleanup goroutine
 )
 
 // InitOIDC initializes OIDC provider (Authentik or any OIDC-compliant provider)
@@ -68,9 +71,17 @@ func InitOIDC() error {
 	logger.Debug("OIDC redirect URL: %s", redirectURL)
 
 	// Start cleanup task for state store
+	oidcCleanupStopCh = make(chan struct{})
 	go cleanupOIDCStates()
 
 	return nil
+}
+
+// StopOIDCCleanup stops the OIDC state cleanup goroutine gracefully
+func StopOIDCCleanup() {
+	if oidcCleanupStopCh != nil {
+		close(oidcCleanupStopCh)
+	}
 }
 
 // @Summary OIDC login
@@ -94,7 +105,9 @@ func OIDCLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Store state with expiry
+	oidcStateMu.Lock()
 	oidcStateStore[state] = time.Now().Add(10 * time.Minute)
+	oidcStateMu.Unlock()
 
 	// Redirect to OIDC provider
 	url := oidcConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
@@ -120,12 +133,15 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Verify state
 	state := r.URL.Query().Get("state")
+	oidcStateMu.Lock()
 	expiry, exists := oidcStateStore[state]
 	if !exists || time.Now().After(expiry) {
+		oidcStateMu.Unlock()
 		http.Error(w, "Invalid or expired state", http.StatusBadRequest)
 		return
 	}
 	delete(oidcStateStore, state)
+	oidcStateMu.Unlock()
 
 	// Get authorization code
 	code := r.URL.Query().Get("code")
@@ -390,12 +406,19 @@ func cleanupOIDCStates() {
 	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		now := time.Now()
-		for state, expiry := range oidcStateStore {
-			if now.After(expiry) {
-				delete(oidcStateStore, state)
+	for {
+		select {
+		case <-ticker.C:
+			now := time.Now()
+			oidcStateMu.Lock()
+			for state, expiry := range oidcStateStore {
+				if now.After(expiry) {
+					delete(oidcStateStore, state)
+				}
 			}
+			oidcStateMu.Unlock()
+		case <-oidcCleanupStopCh:
+			return
 		}
 	}
 }

@@ -27,7 +27,7 @@ export function RestaurantCard({ restaurant, onClick, onReview, onReject }: Rest
         </div>
 
       {restaurant.description && (
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
+        <p className="text-muted text-sm mb-3 line-clamp-2">
           {restaurant.description}
         </p>
       )}
@@ -48,12 +48,12 @@ export function RestaurantCard({ restaurant, onClick, onReview, onReject }: Rest
       </div>
 
       {(restaurant.address || restaurant.distance !== undefined) && (
-        <div className="flex items-start gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
+        <div className="flex items-start gap-2 text-sm text-muted mb-3">
           <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             {restaurant.address && <span className="line-clamp-2">{restaurant.address}</span>}
             {restaurant.distance !== undefined && (
-              <span className="text-blue-500 dark:text-blue-400 font-medium">
+              <span className="text-info font-medium">
                 {restaurant.address ? ' · ' : ''}{restaurant.distance.toFixed(1)} km away
               </span>
             )}
@@ -62,24 +62,24 @@ export function RestaurantCard({ restaurant, onClick, onReview, onReject }: Rest
       )}
 
         {!restaurant.is_suggestion && restaurant.avg_rating && (
-          <div className="flex items-center gap-2 pt-3 border-t border-white/20 dark:border-white/10">
+          <div className="flex items-center gap-2 pt-3 border-t border-default">
             <StarRating rating={Math.round(restaurant.avg_rating.overall)} readonly size="sm" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-muted">
               {restaurant.avg_rating.overall.toFixed(1)} ({restaurant.avg_rating.count} reviews)
             </span>
           </div>
         )}
 
         {restaurant.created_by_user && (
-          <div className="flex items-center gap-2 pt-2 mt-2 border-t border-white/20 dark:border-white/10">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Created by</span>
+          <div className="flex items-center gap-2 pt-2 mt-2 border-t border-default">
+            <span className="text-xs text-muted">Created by</span>
             <UserBadge user={restaurant.created_by_user} size="sm" />
           </div>
         )}
       </div>
 
       {restaurant.is_suggestion && onReview && onReject && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-white/20 dark:border-white/10">
+        <div className="flex gap-2 mt-3 pt-3 border-t border-default">
           <button
             onClick={(e) => {
               e.stopPropagation();

@@ -269,7 +269,7 @@ export function SuggestionsPage() {
         message="Are you sure you want to delete this suggestion?"
         confirmText="Delete"
         cancelText="Cancel"
-        confirmClassName="bg-red-600 hover:bg-red-700 text-white"
+        isDangerous
       />
 
       <AlertDialog

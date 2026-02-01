@@ -35,6 +35,9 @@ func getFoodTypesForRestaurant(ctx context.Context, restaurantID int) ([]models.
 		}
 		foodTypes = append(foodTypes, ft)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return foodTypes, nil
 }
 
@@ -57,6 +60,9 @@ func getFoodTypesForSuggestion(ctx context.Context, suggestionID int) ([]models.
 			return nil, err
 		}
 		foodTypes = append(foodTypes, ft)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return foodTypes, nil
 }
@@ -96,6 +102,9 @@ func getFoodTypesForRestaurantsBatch(ctx context.Context, restaurantIDs []int) (
 		}
 		result[restaurantID] = append(result[restaurantID], ft)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
@@ -134,6 +143,9 @@ func getFoodTypesForSuggestionsBatch(ctx context.Context, suggestionIDs []int) (
 		}
 		result[suggestionID] = append(result[suggestionID], ft)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
@@ -145,11 +157,19 @@ func setFoodTypesForRestaurant(ctx context.Context, restaurantID int, foodTypeID
 		return err
 	}
 
-	// Insert new food types
-	for _, ftID := range foodTypeIDs {
-		_, err := database.GetPool().Exec(ctx,
-			"INSERT INTO restaurant_food_types (restaurant_id, food_type_id) VALUES ($1, $2)",
-			restaurantID, ftID)
+	// Batch insert new food types
+	if len(foodTypeIDs) > 0 {
+		// Build batch insert query
+		valueStrings := make([]string, len(foodTypeIDs))
+		valueArgs := make([]interface{}, len(foodTypeIDs)*2)
+		for i, ftID := range foodTypeIDs {
+			valueStrings[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
+			valueArgs[i*2] = restaurantID
+			valueArgs[i*2+1] = ftID
+		}
+		query := fmt.Sprintf("INSERT INTO restaurant_food_types (restaurant_id, food_type_id) VALUES %s",
+			strings.Join(valueStrings, ", "))
+		_, err := database.GetPool().Exec(ctx, query, valueArgs...)
 		if err != nil {
 			return err
 		}

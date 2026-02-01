@@ -2,6 +2,8 @@ package database
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strconv"
@@ -41,7 +43,14 @@ func Connect() error {
 			user = "nomdb"
 		}
 		if password == "" {
+			// Check if we're in production mode
+			if os.Getenv("GO_ENV") == "production" || os.Getenv("ENV") == "production" {
+				logger.Error("❌ DB_PASSWORD is required in production mode")
+				return fmt.Errorf("DB_PASSWORD environment variable is required in production")
+			}
+			// Only use default password in development
 			password = "nomdb_secret"
+			logger.Warn("⚠️  Using default database password - DO NOT use in production!")
 		}
 		if dbname == "" {
 			dbname = "nomdb"
@@ -110,6 +119,15 @@ func Close() {
 	}
 }
 
+// generateSecurePassword creates a random password for initial admin setup
+func generateSecurePassword(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes)[:length], nil
+}
+
 // InitDefaultAdmin ensures the default admin user exists with password set
 func InitDefaultAdmin() error {
 	ctx := context.Background()
@@ -121,8 +139,19 @@ func InitDefaultAdmin() error {
 		`SELECT id, password_hash IS NOT NULL FROM users WHERE email = 'admin@nomdb.local' AND username = 'admin'`).
 		Scan(&userID, &hasPassword)
 
-	// Hash default password "admin"
-	passwordHash, err2 := auth.HashPassword("admin", nil)
+	// Check for admin password from environment or generate a secure one
+	adminPassword := os.Getenv("ADMIN_DEFAULT_PASSWORD")
+	if adminPassword == "" {
+		// Generate a random secure password
+		var genErr error
+		adminPassword, genErr = generateSecurePassword(16)
+		if genErr != nil {
+			return fmt.Errorf("failed to generate secure password: %w", genErr)
+		}
+	}
+
+	// Hash the password
+	passwordHash, err2 := auth.HashPassword(adminPassword, nil)
 	if err2 != nil {
 		return fmt.Errorf("failed to hash default password: %w", err2)
 	}
@@ -133,7 +162,9 @@ func InitDefaultAdmin() error {
 
 	if err == pgx.ErrNoRows {
 		// Admin user doesn't exist - create it
-		logger.Info("Creating default admin user (username: admin, password: admin)")
+		logger.Info("Creating default admin user (username: admin)")
+		logger.Warn("⚠️  Generated admin password: %s", adminPassword)
+		logger.Warn("⚠️  IMPORTANT: Save this password and change it immediately after first login!")
 
 		err = pool.QueryRow(ctx,
 			`INSERT INTO users (username, email, password_hash, full_name, avatar_url, is_active, is_admin, email_verified, password_must_change, provider)
@@ -179,8 +210,9 @@ func InitDefaultAdmin() error {
 		return fmt.Errorf("failed to set default admin password: %w", err)
 	}
 
-	logger.Info("🔑 Default admin user initialized (username: admin, password: admin)")
-	logger.Warn("⚠️  IMPORTANT: Change the default admin password on first login!")
+	logger.Info("🔑 Default admin user password reset")
+	logger.Warn("⚠️  Generated admin password: %s", adminPassword)
+	logger.Warn("⚠️  IMPORTANT: Save this password and change it immediately after first login!")
 
 	return nil
 }

@@ -53,9 +53,9 @@ func GetRestaurantsPaginated(w http.ResponseWriter, r *http.Request) {
 	var args []interface{}
 	argIndex := 1
 
-	// Cursor-based pagination - only get items after the last ID
+	// Cursor-based pagination - newest first (r.id DESC); next page = older items (r.id < lastID)
 	if lastID > 0 {
-		conditions = append(conditions, fmt.Sprintf("r.id > $%d", argIndex))
+		conditions = append(conditions, fmt.Sprintf("r.id < $%d", argIndex))
 		args = append(args, lastID)
 		argIndex++
 	}
@@ -121,7 +121,7 @@ func GetRestaurantsPaginated(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN ratings rt ON r.id = rt.restaurant_id
 		%s
 		GROUP BY r.id, c.id
-		ORDER BY r.id ASC
+		ORDER BY r.id DESC
 		LIMIT $%d
 	`, whereClause, argIndex)
 

@@ -175,40 +175,40 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
       </div>
 
       {restaurant.description && (
-        <p className="text-gray-600 dark:text-gray-400">{restaurant.description}</p>
+        <p className="text-muted">{restaurant.description}</p>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {restaurant.category && (
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
-            <Tag className="w-4 h-4" />
-            {restaurant.category.name}
-          </span>
-        )}
-        {restaurant.food_types?.map((ft) => (
-          <span key={ft.id} className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
-            <Utensils className="w-4 h-4" />
-            {ft.name}
-          </span>
-        ))}
-      </div>
+        <div className="flex flex-wrap gap-2">
+          {restaurant.category && (
+            <span className="badge-category">
+              <Tag className="w-4 h-4" />
+              {restaurant.category.name}
+            </span>
+          )}
+          {restaurant.food_types?.map((ft) => (
+            <span key={ft.id} className="badge-food-type">
+              <Utensils className="w-4 h-4" />
+              {ft.name}
+            </span>
+          ))}
+        </div>
 
       {restaurant.address && (
-        <div className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
+        <div className="flex items-start gap-2 text-muted">
           <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
           <span>{restaurant.address}</span>
         </div>
       )}
 
       {restaurant.phone && (
-        <a href={`tel:${restaurant.phone}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
+        <a href={`tel:${restaurant.phone}`} className="flex items-center gap-2 text-muted hover:text-accent transition-colors">
           <Phone className="w-5 h-5 flex-shrink-0" />
           <span>{restaurant.phone}</span>
         </a>
       )}
 
       {restaurant.website && (
-        <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
+        <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted hover:text-accent transition-colors">
           <Globe className="w-5 h-5 flex-shrink-0" />
           <span className="truncate">{restaurant.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
         </a>
@@ -219,24 +219,24 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
           <h3 className="font-semibold mb-3">Average Ratings</h3>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Food</p>
+              <p className="text-sm text-muted mb-1">Food</p>
               <p className="text-2xl font-bold">{restaurant.avg_rating.food.toFixed(1)}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Service</p>
+              <p className="text-sm text-muted mb-1">Service</p>
               <p className="text-2xl font-bold">{restaurant.avg_rating.service.toFixed(1)}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Ambiance</p>
+              <p className="text-sm text-muted mb-1">Ambiance</p>
               <p className="text-2xl font-bold">{restaurant.avg_rating.ambiance.toFixed(1)}</p>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Overall</p>
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+          <div className="mt-4 pt-4 border-t border-default text-center">
+            <p className="text-sm text-muted mb-1">Overall</p>
+            <p className="text-3xl font-bold text-accent">
               {restaurant.avg_rating.overall.toFixed(1)}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted">
               {restaurant.avg_rating.count} review{restaurant.avg_rating.count !== 1 ? 's' : ''}
             </p>
           </div>
@@ -266,7 +266,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
               <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
             </div>
           ) : allPhotos.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="text-muted text-center py-8">
               No photos yet. Add photos when you write a review!
             </p>
           ) : (
@@ -301,7 +301,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
 
           {ratings.length > 0 && (
             <div className="mb-4 flex items-center gap-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400">Sort by:</label>
+              <label className="text-sm text-muted">Sort by:</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'recent' | 'helpful' | 'rating')}
@@ -319,7 +319,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
               <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
             </div>
           ) : ratings.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="text-muted text-center py-8">
               No reviews yet. Be the first to review!
             </p>
           ) : (
@@ -341,30 +341,30 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
                 >
                   <div className="grid grid-cols-3 gap-4 mb-3">
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Food</p>
+                      <p className="text-xs text-muted mb-1">Food</p>
                       <StarRating rating={rating.food_rating} readonly size="sm" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Service</p>
+                      <p className="text-xs text-muted mb-1">Service</p>
                       <StarRating rating={rating.service_rating} readonly size="sm" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ambiance</p>
+                      <p className="text-xs text-muted mb-1">Ambiance</p>
                       <StarRating rating={rating.ambiance_rating} readonly size="sm" />
                     </div>
                   </div>
                   {rating.comment && (
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{rating.comment}</p>
+                    <p className="text-muted text-sm mb-3">{rating.comment}</p>
                   )}
 
                   {/* Voting buttons */}
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-default">
                     <button
                       onClick={() => handleVote(rating.id, 'helpful', rating.user_vote)}
                       className={`flex items-center gap-1 text-xs transition-colors ${
                         rating.user_vote === 'helpful'
-                          ? 'text-blue-600 dark:text-blue-400 font-medium'
-                          : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
+                          ? 'text-info font-medium'
+                          : 'text-muted hover:text-info'
                       }`}
                     >
                       <ThumbsUp className="w-4 h-4" />
@@ -374,15 +374,15 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
                       onClick={() => handleVote(rating.id, 'not_helpful', rating.user_vote)}
                       className={`flex items-center gap-1 text-xs transition-colors ${
                         rating.user_vote === 'not_helpful'
-                          ? 'text-red-600 dark:text-red-400 font-medium'
-                          : 'text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+                          ? 'text-danger font-medium'
+                          : 'text-muted hover:text-danger'
                       }`}
                     >
                       <ThumbsDown className="w-4 h-4" />
                       <span>{rating.not_helpful_count || 0}</span>
                     </button>
                     <div className="flex-1" />
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-muted">
                       {new Date(rating.created_at).toLocaleDateString()}
                     </p>
                     {rating.user && (

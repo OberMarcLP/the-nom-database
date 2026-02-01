@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"net"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +20,7 @@ type IPRateLimiter struct {
 	mu       *sync.RWMutex
 	r        rate.Limit
 	b        int
+	stopCh   chan struct{} // Channel to stop cleanup goroutine
 }
 
 // NewIPRateLimiter creates a new IP-based rate limiter
@@ -29,6 +33,7 @@ func NewIPRateLimiter(r rate.Limit, b int) *IPRateLimiter {
 		mu:       &sync.RWMutex{},
 		r:        r,
 		b:        b,
+		stopCh:   make(chan struct{}),
 	}
 }
 
@@ -90,31 +95,68 @@ func RateLimitMiddleware(limiter *IPRateLimiter) func(http.Handler) http.Handler
 	}
 }
 
+// trustProxyHeaders indicates whether to trust X-Forwarded-For headers
+// Set TRUST_PROXY=true only when running behind a trusted reverse proxy
+var trustProxyHeaders = os.Getenv("TRUST_PROXY") == "true"
+
 // getIPAddress extracts the real IP address from the request
+// Only trusts proxy headers if TRUST_PROXY=true
 func getIPAddress(r *http.Request) string {
-	// Check X-Forwarded-For header (used by proxies/load balancers)
-	forwarded := r.Header.Get("X-Forwarded-For")
-	if forwarded != "" {
-		// Take the first IP if multiple are present
-		return forwarded
+	// Only trust proxy headers if explicitly enabled
+	if trustProxyHeaders {
+		// Check X-Forwarded-For header (format: "client, proxy1, proxy2, ...")
+		// Take the leftmost IP as the client IP
+		forwarded := r.Header.Get("X-Forwarded-For")
+		if forwarded != "" {
+			// Split by comma and get the first (leftmost) IP
+			ips := strings.Split(forwarded, ",")
+			if len(ips) > 0 {
+				clientIP := strings.TrimSpace(ips[0])
+				// Validate it's a proper IP
+				if isValidIP(clientIP) {
+					return clientIP
+				}
+			}
+		}
+
+		// Check X-Real-IP header
+		realIP := r.Header.Get("X-Real-IP")
+		if realIP != "" && isValidIP(realIP) {
+			return realIP
+		}
 	}
 
-	// Check X-Real-IP header
-	realIP := r.Header.Get("X-Real-IP")
-	if realIP != "" {
-		return realIP
+	// Fall back to RemoteAddr (strip port if present)
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		// RemoteAddr doesn't have a port
+		return r.RemoteAddr
 	}
+	return ip
+}
 
-	// Fall back to RemoteAddr
-	return r.RemoteAddr
+// isValidIP checks if the string is a valid IP address
+func isValidIP(ip string) bool {
+	return net.ParseIP(ip) != nil
 }
 
 // StartCleanupTask starts a background goroutine to clean up stale rate limiters
 func (i *IPRateLimiter) StartCleanupTask(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	go func() {
-		for range ticker.C {
-			i.CleanupStaleEntries()
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				i.CleanupStaleEntries()
+			case <-i.stopCh:
+				return
+			}
 		}
 	}()
+}
+
+// Stop stops the cleanup goroutine gracefully
+func (i *IPRateLimiter) Stop() {
+	close(i.stopCh)
 }

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Loader2, CheckCircle, XCircle, Tag, Utensils, MapPin, Phone, Globe } from 'lucide-react';
-import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters, PaginatedResponse } from '../services/api';
-import { useRestaurantsPaginated, useRestaurant, useUpdateRestaurant, useDeleteRestaurant, useCreateSuggestion, useConvertSuggestion, useDeleteSuggestion } from '../hooks/useApi';
+import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters } from '../services/api';
+import { useRestaurants, useRestaurant, useUpdateRestaurant, useDeleteRestaurant, useCreateSuggestion, useConvertSuggestion, useDeleteSuggestion } from '../hooks/useApi';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { RestaurantForm } from '../components/RestaurantForm';
 import { SuggestionForm } from '../components/SuggestionForm';
@@ -32,18 +32,9 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
   const [deletingRestaurant, setDeletingRestaurant] = useState<Restaurant | null>(null);
   const [alertMessage, setAlertMessage] = useState<string>('');
 
-  // Use paginated infinite query for restaurants
-  const {
-    data,
-    isLoading: loading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-  } = useRestaurantsPaginated(filters);
-  const restaurants =
-    (data as { pages: PaginatedResponse<Restaurant>[] } | undefined)?.pages.flatMap(
-      (p: PaginatedResponse<Restaurant>) => p.data
-    ) ?? [];
+  // Use same unpaginated endpoint as admin so normal view shows all restaurants + suggestions
+  const { data: restaurantsData, isLoading: loading } = useRestaurants(filters);
+  const restaurants = restaurantsData ?? [];
   const { data: selectedRestaurant } = useRestaurant(selectedRestaurantId || 0, {
     enabled: selectedRestaurantId !== null && selectedRestaurantId > 0,
   });
@@ -104,7 +95,7 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
       },
       onError: (error: any) => {
         if (error.message && (error.message.includes('already exists') || error.message.includes('duplicate'))) {
-          setAlertMessage('This restaurant already exists in the database. Please search for it instead.');
+          setAlertMessage('This restaurant already exists in the database. The list will refresh so you can find it.');
         } else {
           setAlertMessage('Failed to create suggestion. Please try again.');
         }
@@ -254,25 +245,6 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
                 />
               ))}
             </div>
-            {hasNextPage && (
-              <div className="flex justify-center mt-8">
-                <button
-                  type="button"
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="btn btn-primary flex items-center gap-2"
-                >
-                  {isFetchingNextPage ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    'Load more'
-                  )}
-                </button>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -431,7 +403,7 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
         message={`Are you sure you want to reject "${rejectingRestaurant?.name}"?`}
         confirmText="Reject"
         cancelText="Cancel"
-        confirmClassName="bg-red-600 hover:bg-red-700 text-white"
+        isDangerous
       />
 
       <ConfirmDialog
@@ -442,7 +414,7 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
         message={`Are you sure you want to delete "${deletingRestaurant?.name}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
-        confirmClassName="bg-red-600 hover:bg-red-700 text-white"
+        isDangerous
       />
 
       <AlertDialog
