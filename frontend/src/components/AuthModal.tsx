@@ -26,6 +26,11 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
   const from = (location.state as any)?.from?.pathname || '/';
 
+  const handleOIDCLogin = () => {
+    // Redirect to backend OIDC login endpoint
+    window.location.href = 'http://localhost:8080/api/auth/oidc/login';
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -131,47 +136,68 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
           {/* Login Form */}
           {mode === 'login' && (
-            <form onSubmit={handleLoginSubmit} className="space-y-5">
-              <div className="admin-form-group">
-                <label htmlFor="email" className="admin-label">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="admin-input"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="admin-form-group">
-                <label htmlFor="password" className="admin-label">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="admin-input"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+            <>
+              {/* OIDC Login Button */}
               <button
-                type="submit"
-                disabled={loading}
-                className="admin-btn-primary w-full mt-2"
+                type="button"
+                onClick={handleOIDCLogin}
+                className="admin-btn-primary w-full mb-6"
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                Sign in with OIDC
               </button>
-            </form>
+
+              {/* Divider */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[var(--border)]"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-[var(--surface)] text-[var(--text-muted)]">Or continue with email</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleLoginSubmit} className="space-y-5">
+                <div className="admin-form-group">
+                  <label htmlFor="email" className="admin-label">
+                    Email address
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className="admin-input"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label htmlFor="password" className="admin-label">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    className="admin-input"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="admin-btn-primary w-full mt-2"
+                >
+                  {loading ? 'Signing in...' : 'Sign in'}
+                </button>
+              </form>
+            </>
           )}
 
           {/* Register Form */}

@@ -14,6 +14,13 @@ export default function ChangePasswordPage() {
   const { user, updateUser } = useAuth();
 
   const isRequired = (location.state as any)?.required === true;
+  const isOIDCUser = user?.provider === 'oidc';
+
+  // Redirect OIDC users away from this page
+  if (isOIDCUser) {
+    navigate('/', { replace: true });
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

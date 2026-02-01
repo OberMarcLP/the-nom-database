@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { updateUserProfile } from '../services/api';
+import { useState, useEffect, useRef } from 'react';
+import { X, Camera } from 'lucide-react';
+import { updateUserProfile, uploadAvatar } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { Avatar } from './Avatar';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
   const [email, setEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -25,6 +28,44 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
       setError('');
     }
   }, [isOpen, user]);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be smaller than 5MB');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError('');
+      const response = await uploadAvatar(file);
+
+      // Update user with new avatar URL
+      if (user) {
+        const updatedUser = { ...user, avatar_url: response.avatar_url };
+        updateUser(updatedUser);
+        onSuccess();
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload avatar');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +100,8 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
 
   if (!isOpen) return null;
 
+  const isOIDCUser = user?.provider === 'oidc';
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-glass" onClick={(e) => e.stopPropagation()}>
@@ -73,6 +116,46 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
           <p className="text-sm text-[var(--text-muted)] mb-6">
             Update your profile information
           </p>
+
+          {/* Avatar Upload Section */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative group">
+              <Avatar
+                src={user?.avatar_url}
+                alt={user?.username}
+                size="xl"
+                fallbackText={user?.full_name || user?.username}
+                className="ring-4 ring-[var(--border)]"
+              />
+              <button
+                type="button"
+                onClick={handleAvatarClick}
+                disabled={uploading}
+                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                title="Upload new avatar"
+              >
+                <Camera className="w-8 h-8 text-white" />
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+            <p className="text-xs text-[var(--text-muted)] mt-3 text-center">
+              {uploading ? 'Uploading...' : 'Click avatar to upload new picture (max 5MB)'}
+            </p>
+          </div>
+
+          {isOIDCUser && (
+            <div className="mb-5 p-4 border-2 border-[var(--info)] bg-[var(--info)]/10 rounded">
+              <p className="text-sm text-[var(--info)] font-semibold">
+                Username cannot be changed for OIDC accounts
+              </p>
+            </div>
+          )}
 
           {error && (
             <div className="mb-5 p-4 border-2 border-[var(--danger)] bg-[var(--danger)]/10 rounded">
@@ -90,8 +173,10 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="admin-input"
+                className={`admin-input ${isOIDCUser ? 'opacity-50 cursor-not-allowed' : ''}`}
                 required
+                disabled={isOIDCUser}
+                title={isOIDCUser ? "Username cannot be changed for OIDC accounts" : ""}
               />
             </div>
 

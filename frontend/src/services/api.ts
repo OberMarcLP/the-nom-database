@@ -621,6 +621,27 @@ export const updateUserProfile = (data: { username?: string; full_name?: string;
     body: JSON.stringify(data),
   });
 
+export const uploadAvatar = async (file: File): Promise<{ avatar_url: string; message: string }> => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  const token = localStorage.getItem('access_token');
+  const response = await fetch(`${API_URL}/api/user/avatar`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || 'Failed to upload avatar');
+  }
+
+  return response.json();
+};
+
 
 // Generic API client for admin and other features
 export const api = {

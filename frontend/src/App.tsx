@@ -21,6 +21,7 @@ const RestaurantPage = lazy(() => import('./pages/RestaurantPage').then(m => ({ 
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
 const ListsPage = lazy(() => import('./pages/ListsPage').then(m => ({ default: m.ListsPage })));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
+const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
@@ -396,6 +397,7 @@ function AppContent() {
                 <Routes>
                   <Route path="/" element={<HomePage key={user?.id || 'guest'} filters={filters} isAuthenticated={!!user} />} />
                   <Route path="/restaurants/:id" element={<RestaurantPage />} />
+                  <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route
                     path="/lists"
                     element={

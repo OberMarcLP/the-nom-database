@@ -323,7 +323,9 @@ func main() {
 	// Update profile (authenticated)
 	userProtected := api.PathPrefix("/user").Subrouter()
 	userProtected.Use(middleware.AuthMiddleware)
+	userProtected.Use(middleware.WithUserRoles)
 	userProtected.HandleFunc("/profile", handlers.UpdateUserProfile).Methods("PUT")
+	userProtected.HandleFunc("/avatar", handlers.UploadAvatar).Methods("POST")
 
 	// Admin Routes (requires admin permissions)
 	adminRoutes := api.PathPrefix("/admin").Subrouter()

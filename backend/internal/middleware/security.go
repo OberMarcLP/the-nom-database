@@ -65,11 +65,11 @@ func ValidateContentTypeMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Check for photo upload endpoint (multipart/form-data)
-		if strings.Contains(r.URL.Path, "/photos") && r.Method == "POST" {
+		// Check for photo/avatar upload endpoints (multipart/form-data)
+		if (strings.Contains(r.URL.Path, "/photos") || strings.Contains(r.URL.Path, "/avatar")) && r.Method == "POST" {
 			contentType := r.Header.Get("Content-Type")
 			if !strings.HasPrefix(contentType, "multipart/form-data") {
-				http.Error(w, "Invalid Content-Type for photo upload", http.StatusUnsupportedMediaType)
+				http.Error(w, "Invalid Content-Type for file upload", http.StatusUnsupportedMediaType)
 				return
 			}
 			next.ServeHTTP(w, r)

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,6 +16,7 @@ import (
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
+	"github.com/nomdb/backend/internal/services"
 	"golang.org/x/oauth2"
 )
 
@@ -172,6 +172,10 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Log all claims for debugging
+	logger.Info("OIDC Claims: email=%s, sub=%s, name=%s, picture=%s, preferred_username=%s, email_verified=%v",
+		claims.Email, claims.Sub, claims.Name, claims.Picture, claims.PreferredUsername, claims.EmailVerified)
+
 	// Validate required claims
 	if claims.Email == "" || claims.Sub == "" {
 		http.Error(w, "Missing required user information (email or sub)", http.StatusBadRequest)
@@ -179,12 +183,14 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find or create user
+	logger.Error("DEBUG: About to call findOrCreateOIDCUser with email=%s, sub=%s", claims.Email, claims.Sub)
 	user, err := findOrCreateOIDCUser(ctx, &claims)
 	if err != nil {
 		logger.Error("Failed to find/create user: %v", err)
 		http.Error(w, "Failed to process user", http.StatusInternalServerError)
 		return
 	}
+	logger.Error("DEBUG: findOrCreateOIDCUser returned successfully, userID=%d", user.ID)
 
 	// Update last login
 	_, err = database.GetPool().Exec(ctx, "UPDATE users SET last_login_at = $1 WHERE id = $2", time.Now(), user.ID)
@@ -207,10 +213,13 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("User logged in via OIDC: %s (ID: %d)", user.Email, user.ID)
 
-	// In a real app, you might redirect to frontend with tokens in URL params or cookies
-	// For now, return JSON
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	// Redirect to frontend with tokens
+	// Encode tokens as URL parameters
+	redirectURL := fmt.Sprintf("http://localhost:3000/auth/callback?access_token=%s&refresh_token=%s",
+		response.AccessToken,
+		response.RefreshToken)
+
+	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
 // Helper functions
@@ -234,16 +243,21 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 }) (*models.User, error) {
 	provider := "oidc"
 
+	logger.Error("DEBUG: findOrCreateOIDCUser ENTERED - email=%s, sub=%s", claims.Email, claims.Sub)
+
 	// Try to find existing user by provider ID
 	var user models.User
+	logger.Error("DEBUG: About to query for existing user with provider=%s, sub=%s", provider, claims.Sub)
 	err := database.GetPool().QueryRow(ctx,
-		`SELECT id, email, username, provider, provider_id, full_name, avatar_url,
-		is_active, is_admin, email_verified, last_login_at, created_at, updated_at
+		`SELECT id, email, username, password_hash, provider, provider_id, full_name, avatar_url,
+		is_active, is_admin, email_verified, password_must_change, last_login_at, created_at, updated_at
 		FROM users WHERE provider = $1 AND provider_id = $2`,
 		provider, claims.Sub).Scan(
-		&user.ID, &user.Email, &user.Username, &user.Provider, &user.ProviderID,
+		&user.ID, &user.Email, &user.Username, &user.PasswordHash, &user.Provider, &user.ProviderID,
 		&user.FullName, &user.AvatarURL, &user.IsActive, &user.IsAdmin,
-		&user.EmailVerified, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
+		&user.EmailVerified, &user.PasswordMustChange, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
+
+	logger.Error("DEBUG: Query completed, err=%v, err==nil=%v, errors.Is(err, sql.ErrNoRows)=%v", err, err == nil, errors.Is(err, sql.ErrNoRows))
 
 	if err == nil {
 		// User exists, update info if changed
@@ -259,9 +273,13 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 		return &user, nil
 	}
 
-	if !errors.Is(err, sql.ErrNoRows) {
+	// Check if it's a "no rows" error (pgx returns pgx.ErrNoRows, not sql.ErrNoRows)
+	if err != nil && err.Error() != "no rows in result set" {
+		logger.Error("DEBUG: Returning error because it's not ErrNoRows: %v", err)
 		return nil, err
 	}
+
+	logger.Error("DEBUG: No existing user found (ErrNoRows), proceeding to create new user")
 
 	// User doesn't exist, create new one
 	// Generate username from email or preferred_username
@@ -270,30 +288,58 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 		username = generateUsernameFromEmail(claims.Email)
 	}
 
+	// Use Gravatar if OIDC provider doesn't provide a picture
+	avatarURL := claims.Picture
+	if avatarURL == "" {
+		gravatarService := services.NewGravatarService()
+		avatarURL = gravatarService.GetAvatarURL(claims.Email, 256)
+		logger.Info("Using Gravatar for user %s: %s", claims.Email, avatarURL)
+	}
+
 	var userID int
+	logger.Error("DEBUG findOrCreateOIDCUser: email=%s, username=%s, provider=%s, sub=%s", claims.Email, username, provider, claims.Sub)
+
+	// Try to insert with username, if it fails due to duplicate, add a random suffix
 	err = database.GetPool().QueryRow(ctx,
 		`INSERT INTO users (email, username, provider, provider_id, full_name, avatar_url, email_verified, password_hash, password_must_change)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, false)
 		RETURNING id`,
-		claims.Email, username, provider, claims.Sub, claims.Name, claims.Picture, claims.EmailVerified).Scan(&userID)
+		claims.Email, username, provider, claims.Sub, claims.Name, avatarURL, claims.EmailVerified).Scan(&userID)
+
+	// If username conflict, try with a random suffix
+	if err != nil && strings.Contains(err.Error(), "duplicate") && strings.Contains(err.Error(), "username") {
+		logger.Warn("Username %s already exists, trying with random suffix", username)
+		randomSuffix := fmt.Sprintf("%d", time.Now().Unix()%10000)
+		username = username + randomSuffix
+		err = database.GetPool().QueryRow(ctx,
+			`INSERT INTO users (email, username, provider, provider_id, full_name, avatar_url, email_verified, password_hash, password_must_change)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, false)
+			RETURNING id`,
+			claims.Email, username, provider, claims.Sub, claims.Name, avatarURL, claims.EmailVerified).Scan(&userID)
+	}
 
 	if err != nil {
+		logger.Error("Failed to insert OIDC user (userID=%d): %v", userID, err)
 		// Check if email already exists (user might have registered locally)
 		err2 := database.GetPool().QueryRow(ctx,
 			`SELECT id FROM users WHERE email = $1`, claims.Email).Scan(&userID)
 		if err2 == nil {
+			logger.Info("Linking OIDC to existing user account: %s", claims.Email)
 			// Link OIDC to existing account
 			_, err = database.GetPool().Exec(ctx,
 				`UPDATE users SET provider = $1, provider_id = $2, avatar_url = $3
 				WHERE id = $4`,
-				provider, claims.Sub, claims.Picture, userID)
+				provider, claims.Sub, avatarURL, userID)
 			if err != nil {
+				logger.Error("Failed to link OIDC to existing account: %v", err)
 				return nil, err
 			}
 		} else {
+			logger.Error("Failed to find existing user by email: %v", err2)
 			return nil, err
 		}
 	} else {
+		logger.Info("Created new OIDC user with ID %d", userID)
 		// New user created - assign default 'user' role
 		_, err = database.GetPool().Exec(ctx,
 			`INSERT INTO user_roles (user_id, role_id)
@@ -307,7 +353,18 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 	}
 
 	// Fetch created user
-	return getUserByID(ctx, userID)
+	if userID == 0 {
+		logger.Error("userID is 0, cannot fetch user")
+		return nil, fmt.Errorf("invalid user ID: 0")
+	}
+	logger.Info("Fetching user by ID: %d", userID)
+	fetchedUser, err := getUserByID(ctx, userID)
+	if err != nil {
+		logger.Error("Failed to fetch user by ID %d: %v", userID, err)
+		return nil, err
+	}
+	logger.Info("Successfully fetched OIDC user: %s (ID: %d)", fetchedUser.Email, fetchedUser.ID)
+	return fetchedUser, nil
 }
 
 func generateOIDCState() (string, error) {

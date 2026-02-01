@@ -1,15 +1,23 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/nomdb/backend/internal/database"
+	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
+	"github.com/nomdb/backend/internal/services"
 )
 
 // GetUserProfile returns a user's profile with stats
@@ -196,6 +204,11 @@ func UpdateUserProfile(w http.ResponseWriter, r *http.Request) {
 	argIndex := 1
 
 	if req.Username != nil {
+		// OIDC users cannot change username
+		if user.Provider == "oidc" {
+			http.Error(w, "OIDC users cannot change username", http.StatusBadRequest)
+			return
+		}
 		updates = append(updates, "username = $"+strconv.Itoa(argIndex))
 		args = append(args, *req.Username)
 		argIndex++
@@ -236,4 +249,144 @@ func UpdateUserProfile(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updatedUser)
+}
+
+const (
+	maxAvatarSize = 5 << 20 // 5MB
+)
+
+// @Summary Upload user avatar
+// @Description Upload a profile picture for the authenticated user (JPEG, PNG, or WebP, max 5MB)
+// @Tags User
+// @Accept multipart/form-data
+// @Produce json
+// @Param avatar formData file true "Avatar image file"
+// @Success 200 {object} map[string]string "Avatar URL"
+// @Failure 400 {object} map[string]string "Invalid request or file"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /user/avatar [post]
+// @Security BearerAuth
+func UploadAvatar(w http.ResponseWriter, r *http.Request) {
+	uploadsDir := "./uploads"
+
+	// Get authenticated user from context
+	user, ok := r.Context().Value(models.UserContextKey).(*models.User)
+	if !ok || user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse multipart form
+	r.Body = http.MaxBytesReader(w, r.Body, maxAvatarSize)
+	if err := r.ParseMultipartForm(maxAvatarSize); err != nil {
+		http.Error(w, "File too large", http.StatusBadRequest)
+		return
+	}
+
+	// Get file
+	file, header, err := r.FormFile("avatar")
+	if err != nil {
+		http.Error(w, "Failed to read file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Validate file size
+	if header.Size > maxAvatarSize {
+		http.Error(w, fmt.Sprintf("File too large. Maximum size is %d MB", maxAvatarSize/(1<<20)), http.StatusBadRequest)
+		return
+	}
+
+	// Validate file type
+	contentType := header.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "image/") {
+		http.Error(w, "Only image files are allowed", http.StatusBadRequest)
+		return
+	}
+
+	// Validate specific image types
+	validTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/png":  true,
+		"image/webp": true,
+	}
+	if !validTypes[contentType] {
+		http.Error(w, "Only JPEG, PNG, and WebP images are allowed", http.StatusBadRequest)
+		return
+	}
+
+	// Process image (resize to square, compress)
+	imageProcessor := services.NewImageProcessor()
+	processedImage, _, err := imageProcessor.ProcessUpload(file, header.Filename)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to process image: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Generate unique filename
+	filename := fmt.Sprintf("avatar_%d_%s.jpg", user.ID, uuid.New().String())
+
+	ctx := context.Background()
+	s3Service := services.GetS3Service()
+	var avatarURL string
+
+	if s3Service != nil {
+		// Upload to S3
+		s3Key := fmt.Sprintf("avatars/%s", filename)
+		_, err = s3Service.UploadFile(ctx, s3Key, bytes.NewReader(processedImage), "image/jpeg")
+		if err != nil {
+			logger.Error("Failed to upload avatar to S3: %v", err)
+			http.Error(w, "Failed to upload file", http.StatusInternalServerError)
+			return
+		}
+
+		// Generate presigned URL (valid for 1 year since avatars don't change often)
+		avatarURL, err = s3Service.GetPresignedURL(ctx, s3Key, 24*365*time.Hour)
+		if err != nil {
+			logger.Error("Failed to generate presigned URL: %v", err)
+			http.Error(w, "Failed to generate URL", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// Use local storage (for development)
+		logger.Warn("S3 not configured, using local storage for avatars")
+
+		// Ensure avatars directory exists
+		avatarsDir := filepath.Join(uploadsDir, "avatars")
+		if err := os.MkdirAll(avatarsDir, 0755); err != nil {
+			logger.Error("Failed to create avatars directory: %v", err)
+			http.Error(w, "Failed to save file", http.StatusInternalServerError)
+			return
+		}
+
+		// Save avatar to local storage
+		filePath := filepath.Join(avatarsDir, filename)
+		if err := os.WriteFile(filePath, processedImage, 0644); err != nil {
+			logger.Error("Failed to save avatar file: %v", err)
+			http.Error(w, "Failed to save file", http.StatusInternalServerError)
+			return
+		}
+
+		avatarURL = fmt.Sprintf("/api/uploads/avatars/%s", filename)
+		logger.Debug("Avatar saved to local storage: %s", filePath)
+	}
+
+	// Update user's avatar_url in database
+	_, err = database.GetPool().Exec(ctx,
+		`UPDATE users SET avatar_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+		avatarURL, user.ID)
+	if err != nil {
+		logger.Error("Failed to update user avatar: %v", err)
+		http.Error(w, "Failed to update avatar", http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("User %d uploaded new avatar: %s", user.ID, avatarURL)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"avatar_url": avatarURL,
+		"message":    "Avatar uploaded successfully",
+	})
 }
