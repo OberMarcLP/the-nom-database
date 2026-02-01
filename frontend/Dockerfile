@@ -5,7 +5,7 @@ WORKDIR /app
 # Copy package files first for better layer caching
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (use "npm ci" when package-lock.json is committed for reproducible installs)
 RUN npm install
 
 # Copy source code

@@ -45,7 +45,8 @@ func setFoodTypesForSuggestion(ctx context.Context, suggestionID int, foodTypeID
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /suggestions [get]
 func GetSuggestions(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	statusFilter := r.URL.Query().Get("status")
 
 	var query string
@@ -156,7 +157,8 @@ func GetSuggestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	query := `
 		SELECT
 			s.id, s.name, s.address, s.phone, s.website, s.latitude, s.longitude,
@@ -238,7 +240,8 @@ func CreateSuggestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Get user from context
 	user, ok := GetUserFromContext(r)
@@ -355,7 +358,8 @@ func UpdateSuggestionStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	var sug models.RestaurantSuggestion
 	err = database.GetPool().QueryRow(ctx,
@@ -409,7 +413,8 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Get user from context
 	user, ok := GetUserFromContext(r)
@@ -525,7 +530,8 @@ func ApproveSuggestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Get user from context
 	user, ok := GetUserFromContext(r)
@@ -605,7 +611,8 @@ func RejectSuggestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Update suggestion status to rejected
 	result, err := database.GetPool().Exec(ctx,
@@ -639,6 +646,9 @@ func RejectSuggestion(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /suggestions/{id} [delete]
 func DeleteSuggestion(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -646,7 +656,7 @@ func DeleteSuggestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.GetPool().Exec(context.Background(),
+	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM restaurant_suggestions WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

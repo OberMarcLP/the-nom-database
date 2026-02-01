@@ -19,6 +19,31 @@ import (
 	"github.com/nomdb/backend/internal/services"
 )
 
+// getReviewPhotosByRatingIDs fetches all review photos for the given rating IDs in one query.
+func getReviewPhotosByRatingIDs(ctx context.Context, ratingIDs []int) (map[int][]models.ReviewPhoto, error) {
+	if len(ratingIDs) == 0 {
+		return map[int][]models.ReviewPhoto{}, nil
+	}
+	rows, err := database.GetPool().Query(ctx,
+		`SELECT id, rating_id, photo_url, caption, display_order, created_at
+		 FROM review_photos
+		 WHERE rating_id = ANY($1)
+		 ORDER BY rating_id, display_order, created_at`, ratingIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := make(map[int][]models.ReviewPhoto)
+	for rows.Next() {
+		var photo models.ReviewPhoto
+		if err := rows.Scan(&photo.ID, &photo.RatingID, &photo.PhotoURL, &photo.Caption, &photo.DisplayOrder, &photo.CreatedAt); err != nil {
+			return nil, err
+		}
+		result[photo.RatingID] = append(result[photo.RatingID], photo)
+	}
+	return result, rows.Err()
+}
+
 // GetRatings godoc
 // @Summary Get ratings for a restaurant
 // @Description Get all ratings for a specific restaurant
@@ -31,6 +56,9 @@ import (
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /restaurants/{restaurantId}/ratings [get]
 func GetRatings(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	restaurantID, err := strconv.Atoi(vars["restaurantId"])
 	if err != nil {
@@ -44,7 +72,7 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 		currentUserID = &user.ID
 	}
 
-	rows, err := database.GetPool().Query(context.Background(),
+	rows, err := database.GetPool().Query(ctx,
 		`SELECT r.id, r.restaurant_id, r.food_rating, r.service_rating, r.ambiance_rating,
 			r.comment, r.user_id, r.created_at, r.updated_at, r.helpful_count, r.not_helpful_count,
 			u.id, u.username, u.full_name, u.avatar_url,
@@ -61,6 +89,7 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	ratings := []models.Rating{}
+	ratingIDs := []int{}
 	for rows.Next() {
 		var rt models.Rating
 		var userID *int
@@ -84,25 +113,17 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// Fetch review photos for this rating
-		photoRows, err := database.GetPool().Query(context.Background(),
-			`SELECT id, rating_id, photo_url, caption, display_order, created_at
-			FROM review_photos
-			WHERE rating_id = $1
-			ORDER BY display_order, created_at`, rt.ID)
-		if err == nil {
-			defer photoRows.Close()
-			photos := []models.ReviewPhoto{}
-			for photoRows.Next() {
-				var photo models.ReviewPhoto
-				if err := photoRows.Scan(&photo.ID, &photo.RatingID, &photo.PhotoURL, &photo.Caption, &photo.DisplayOrder, &photo.CreatedAt); err == nil {
-					photos = append(photos, photo)
-				}
-			}
-			rt.Photos = photos
-		}
-
+		ratingIDs = append(ratingIDs, rt.ID)
 		ratings = append(ratings, rt)
+	}
+
+	photosByRating, err := getReviewPhotosByRatingIDs(ctx, ratingIDs)
+	if err != nil {
+		http.Error(w, "Failed to fetch review photos", http.StatusInternalServerError)
+		return
+	}
+	for i := range ratings {
+		ratings[i].Photos = photosByRating[ratings[i].ID]
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -121,6 +142,9 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /ratings [post]
 func CreateRating(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	var req models.CreateRatingRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -141,7 +165,7 @@ func CreateRating(w http.ResponseWriter, r *http.Request) {
 
 	// Check if restaurant exists
 	var exists bool
-	err := database.GetPool().QueryRow(context.Background(),
+	err := database.GetPool().QueryRow(ctx,
 		"SELECT EXISTS(SELECT 1 FROM restaurants WHERE id = $1)", req.RestaurantID).Scan(&exists)
 	if err != nil || !exists {
 		http.Error(w, "Restaurant not found", http.StatusNotFound)
@@ -156,7 +180,7 @@ func CreateRating(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var rt models.Rating
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		`INSERT INTO ratings (restaurant_id, food_rating, service_rating, ambiance_rating, comment, user_id)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, restaurant_id, food_rating, service_rating, ambiance_rating, comment, user_id, created_at, updated_at, helpful_count, not_helpful_count`,
@@ -185,6 +209,9 @@ func CreateRating(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /ratings/{id} [delete]
 func DeleteRating(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -192,7 +219,7 @@ func DeleteRating(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.GetPool().Exec(context.Background(),
+	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM ratings WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -222,6 +249,9 @@ func DeleteRating(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /ratings/{id}/vote [post]
 func VoteOnReview(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	ratingID, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -251,7 +281,7 @@ func VoteOnReview(w http.ResponseWriter, r *http.Request) {
 
 	// Check if rating exists
 	var exists bool
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT EXISTS(SELECT 1 FROM ratings WHERE id = $1)", ratingID).Scan(&exists)
 	if err != nil || !exists {
 		http.Error(w, "Rating not found", http.StatusNotFound)
@@ -259,7 +289,7 @@ func VoteOnReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Upsert vote (insert or update if exists)
-	_, err = database.GetPool().Exec(context.Background(),
+	_, err = database.GetPool().Exec(ctx,
 		`INSERT INTO review_votes (rating_id, user_id, vote_type)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (rating_id, user_id)
@@ -274,7 +304,7 @@ func VoteOnReview(w http.ResponseWriter, r *http.Request) {
 
 	// Return updated rating with vote counts
 	var rt models.Rating
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		`SELECT id, restaurant_id, food_rating, service_rating, ambiance_rating,
 			comment, user_id, created_at, updated_at, helpful_count, not_helpful_count
 		FROM ratings WHERE id = $1`, ratingID).Scan(
@@ -305,6 +335,9 @@ func VoteOnReview(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /ratings/{id}/vote [delete]
 func RemoveVote(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	ratingID, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -320,7 +353,7 @@ func RemoveVote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete vote
-	_, err = database.GetPool().Exec(context.Background(),
+	_, err = database.GetPool().Exec(ctx,
 		"DELETE FROM review_votes WHERE rating_id = $1 AND user_id = $2",
 		ratingID, user.ID)
 	if err != nil {
@@ -330,7 +363,7 @@ func RemoveVote(w http.ResponseWriter, r *http.Request) {
 
 	// Return updated rating
 	var rt models.Rating
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		`SELECT id, restaurant_id, food_rating, service_rating, ambiance_rating,
 			comment, user_id, created_at, updated_at, helpful_count, not_helpful_count
 		FROM ratings WHERE id = $1`, ratingID).Scan(
@@ -360,6 +393,9 @@ func RemoveVote(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /ratings/{id}/photos [post]
 func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	ratingID, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -376,7 +412,7 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 
 	// Verify the rating belongs to this user
 	var ownerID int
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT user_id FROM ratings WHERE id = $1", ratingID).Scan(&ownerID)
 	if err != nil {
 		http.Error(w, "Rating not found", http.StatusNotFound)
@@ -414,7 +450,6 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 	// Generate unique filename
 	filename := uuid.New().String() + ".jpg"
 
-	ctx := context.Background()
 	s3Service := services.GetS3Service()
 	var photoURL string
 	var s3Err error
@@ -452,7 +487,7 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 
 	// Get current max display_order for this rating
 	var maxOrder int
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT COALESCE(MAX(display_order), -1) FROM review_photos WHERE rating_id = $1", ratingID).Scan(&maxOrder)
 	if err != nil {
 		log.Printf("ERROR: Failed to get max display_order - ratingID=%d, error=%v", ratingID, err)
@@ -462,7 +497,7 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 
 	// Insert photo record
 	var photo models.ReviewPhoto
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		`INSERT INTO review_photos (rating_id, user_id, filename, photo_url, caption, display_order)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, rating_id, photo_url, caption, display_order, created_at`,
@@ -493,6 +528,9 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /review-photos/{id} [delete]
 func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	photoID, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -510,7 +548,7 @@ func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
 	// Verify the photo belongs to a rating owned by this user
 	var ownerID int
 	var photoURL string
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		`SELECT r.user_id, rp.photo_url FROM review_photos rp
 		JOIN ratings r ON rp.rating_id = r.id
 		WHERE rp.id = $1`, photoID).Scan(&ownerID, &photoURL)
@@ -524,7 +562,7 @@ func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete from database
-	result, err := database.GetPool().Exec(context.Background(),
+	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM review_photos WHERE id = $1", photoID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

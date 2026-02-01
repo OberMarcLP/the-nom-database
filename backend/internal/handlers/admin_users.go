@@ -73,7 +73,8 @@ func AdminListUsers(w http.ResponseWriter, r *http.Request) {
 	isActiveStr := r.URL.Query().Get("is_active")
 
 	offset := (page - 1) * limit
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Build query with filters
 	query := `
@@ -220,7 +221,8 @@ func AdminGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	var user models.User
 	var lastLogin *time.Time
 	var createdAt, updatedAt time.Time
@@ -323,7 +325,8 @@ func AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 	gravatarService := services.NewGravatarService()
 	avatarURL := gravatarService.GetAvatarURL(req.Email, 256)
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	var userID int
 	err = database.GetPool().QueryRow(ctx,
 		`INSERT INTO users (email, username, password_hash, full_name, avatar_url, email_verified, password_must_change)
@@ -410,7 +413,8 @@ func AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Build dynamic update query
 	updates := []string{}
@@ -553,7 +557,8 @@ func AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Check if user exists
 	var exists bool
@@ -605,7 +610,8 @@ func AdminAssignRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
 	// Insert user role
@@ -655,7 +661,8 @@ func AdminRemoveRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
 	_, err = database.GetPool().Exec(ctx,
@@ -717,7 +724,8 @@ func AdminResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	_, err = database.GetPool().Exec(ctx,
 		`UPDATE users SET password_hash = $1, password_must_change = true, updated_at = NOW()
 		WHERE id = $2`,

@@ -44,8 +44,9 @@ func InitOIDC() error {
 		redirectURL = "http://localhost:8080/api/auth/oidc/callback"
 	}
 
-	// Initialize OIDC provider
-	ctx := context.Background()
+	// Initialize OIDC provider (no request context in init)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	provider, err := oidc.NewProvider(ctx, issuerURL)
 	if err != nil {
 		return fmt.Errorf("failed to initialize OIDC provider: %w", err)
@@ -134,7 +135,8 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Exchange code for token
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	oauth2Token, err := oidcConfig.Exchange(ctx, code)
 	if err != nil {
 		logger.Error("Failed to exchange code: %v", err)

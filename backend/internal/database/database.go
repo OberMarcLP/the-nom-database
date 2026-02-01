@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -65,8 +66,14 @@ func Connect() error {
 		return fmt.Errorf("unable to parse database URL: %w", err)
 	}
 
-	// Optimize connection pool settings for performance
-	config.MaxConns = 25                              // Maximum number of connections
+	// Optimize connection pool settings for performance (DB_MAX_CONNS optional, default 25)
+	maxConns := 25
+	if v := os.Getenv("DB_MAX_CONNS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			maxConns = n
+		}
+	}
+	config.MaxConns = int32(maxConns)                 // Maximum number of connections
 	config.MinConns = 5                               // Minimum number of idle connections
 	config.MaxConnLifetime = time.Hour                // Max connection lifetime (1 hour)
 	config.MaxConnIdleTime = 30 * time.Minute         // Max idle time (30 minutes)

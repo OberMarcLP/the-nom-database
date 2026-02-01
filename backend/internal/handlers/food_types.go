@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -21,7 +20,10 @@ import (
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /food-types [get]
 func GetFoodTypes(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.GetPool().Query(context.Background(),
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
+	rows, err := database.GetPool().Query(ctx,
 		"SELECT id, name, created_at, updated_at FROM food_types ORDER BY name")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -40,6 +42,7 @@ func GetFoodTypes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	json.NewEncoder(w).Encode(foodTypes)
 }
 
@@ -55,6 +58,9 @@ func GetFoodTypes(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} map[string]string "Food type not found"
 // @Router /food-types/{id} [get]
 func GetFoodType(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -63,7 +69,7 @@ func GetFoodType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var ft models.FoodType
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT id, name, created_at, updated_at FROM food_types WHERE id = $1", id).
 		Scan(&ft.ID, &ft.Name, &ft.CreatedAt, &ft.UpdatedAt)
 	if err != nil {
@@ -72,6 +78,7 @@ func GetFoodType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	json.NewEncoder(w).Encode(ft)
 }
 
@@ -87,6 +94,9 @@ func GetFoodType(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /food-types [post]
 func CreateFoodType(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	var req models.CreateFoodTypeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -99,7 +109,7 @@ func CreateFoodType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var ft models.FoodType
-	err := database.GetPool().QueryRow(context.Background(),
+	err := database.GetPool().QueryRow(ctx,
 		"INSERT INTO food_types (name) VALUES ($1) RETURNING id, name, created_at, updated_at",
 		req.Name).Scan(&ft.ID, &ft.Name, &ft.CreatedAt, &ft.UpdatedAt)
 	if err != nil {
@@ -125,6 +135,9 @@ func CreateFoodType(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} map[string]string "Food type not found"
 // @Router /food-types/{id} [put]
 func UpdateFoodType(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -144,7 +157,7 @@ func UpdateFoodType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var ft models.FoodType
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"UPDATE food_types SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, created_at, updated_at",
 		req.Name, id).Scan(&ft.ID, &ft.Name, &ft.CreatedAt, &ft.UpdatedAt)
 	if err != nil {
@@ -169,6 +182,9 @@ func UpdateFoodType(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /food-types/{id} [delete]
 func DeleteFoodType(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -176,7 +192,7 @@ func DeleteFoodType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.GetPool().Exec(context.Background(),
+	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM food_types WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

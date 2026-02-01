@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -26,7 +25,8 @@ import (
 // @Security BearerAuth
 // @Router /admin/roles [get]
 func AdminListRoles(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	query := `
 		SELECT r.id, r.name, r.description, r.is_system, r.created_at, r.updated_at
@@ -109,7 +109,8 @@ func AdminGetRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	var role models.Role
 	var desc sql.NullString
 
@@ -196,7 +197,8 @@ func AdminCreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	var roleID int
 	err := database.GetPool().QueryRow(ctx,
 		`INSERT INTO roles (name, description, is_system)
@@ -272,7 +274,8 @@ func AdminUpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Check if role is system role
 	var isSystem bool
@@ -356,7 +359,8 @@ func AdminDeleteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Check if role is system role
 	var isSystem bool
@@ -419,7 +423,8 @@ func AdminAssignPermission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
 	// Insert role permission
@@ -469,7 +474,8 @@ func AdminRemovePermission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
 	_, err = database.GetPool().Exec(ctx,
@@ -500,7 +506,8 @@ func AdminRemovePermission(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/permissions [get]
 func AdminListPermissions(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	query := `
 		SELECT id, name, resource, action, description, created_at, updated_at

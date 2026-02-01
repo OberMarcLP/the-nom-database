@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -51,7 +50,8 @@ func GetMenuPhotos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	rows, err := database.GetPool().Query(ctx,
 		`SELECT id, restaurant_id, filename, original_filename, caption, file_size, mime_type, created_at, updated_at
 		FROM menu_photos
@@ -175,7 +175,8 @@ func UploadMenuPhoto(w http.ResponseWriter, r *http.Request) {
 	filename := uuid.New().String() + ".jpg"
 	thumbnailFilename := uuid.New().String() + "_thumb.jpg"
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	s3Service := services.GetS3Service()
 	var fileSize int64 = int64(len(fullImage))
 	var photoURL string
@@ -292,7 +293,8 @@ func UpdatePhotoCaption(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	var photo models.MenuPhoto
 	err = database.GetPool().QueryRow(ctx,
 		`UPDATE menu_photos SET caption = $1, updated_at = NOW()
@@ -333,7 +335,8 @@ func DeleteMenuPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Get filename before deleting from DB
 	var filename string

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -45,7 +44,8 @@ func AdminListRatings(w http.ResponseWriter, r *http.Request) {
 	userIDStr := r.URL.Query().Get("user_id")
 
 	offset := (page - 1) * limit
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Build query with filters
 	query := `
@@ -183,7 +183,8 @@ func AdminDeleteRating(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
 	_, err = database.GetPool().Exec(ctx, "DELETE FROM ratings WHERE id = $1", ratingID)
@@ -225,7 +226,8 @@ func AdminListPhotos(w http.ResponseWriter, r *http.Request) {
 
 	photoType := r.URL.Query().Get("type")
 	offset := (page - 1) * limit
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	var photos []map[string]interface{}
 	var total int
@@ -411,7 +413,8 @@ func AdminDeletePhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
 	// Get photo filename before deleting
@@ -486,7 +489,8 @@ func AdminUpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
 	// Build dynamic update query (simplified version - add more fields as needed)
@@ -548,7 +552,8 @@ func AdminDeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
 	_, err = database.GetPool().Exec(ctx, "DELETE FROM restaurants WHERE id = $1", restaurantID)

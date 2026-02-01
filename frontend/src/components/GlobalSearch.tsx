@@ -53,9 +53,12 @@ export function GlobalSearch({ categories, foodTypes, filters, onFiltersChange }
     return () => clearTimeout(searchDebounce);
   }, [query]);
 
-  const handleResultClick = () => {
-    // Navigate to home page - suggestions will be shown there too
-    navigate(`/`);
+  const handleResultClick = (restaurant: Restaurant) => {
+    if (restaurant.is_suggestion) {
+      navigate(`/`);
+    } else {
+      navigate(`/restaurants/${restaurant.id}`);
+    }
     setIsOpen(false);
     setQuery('');
   };
@@ -71,36 +74,39 @@ export function GlobalSearch({ categories, foodTypes, filters, onFiltersChange }
   return (
     <div ref={searchRef} className="relative w-full">
       <div className="flex gap-2 items-center mb-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors peer-focus:text-blue-500 w-5 h-5" />
+        <div className="relative flex-1 flex items-center gap-2 rounded-md border-2 border-[var(--border)] bg-[var(--bg)] focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_var(--accent-dim)] transition-all">
+          <Search className="w-5 h-5 flex-shrink-0 ml-3 text-[var(--text-muted)]" aria-hidden />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => query.length >= 2 && setIsOpen(true)}
             placeholder="Search restaurants and suggestions..."
-            className="input-glass w-full pl-11 pr-11 peer focus:shadow-lg focus:shadow-blue-500/20"
+            className="input-glass flex-1 min-w-0 !border-0 !p-3 focus:!shadow-none"
           />
           {query && (
             <button
+              type="button"
               onClick={handleClear}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="flex-shrink-0 p-2 mr-1 rounded text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+              aria-label="Clear search"
             >
               <X className="w-5 h-5" />
             </button>
           )}
         </div>
         <button
+          type="button"
           onClick={() => setShowFilters(!showFilters)}
-          className={`relative p-2 rounded-xl transition-all duration-300 ${
+          className={`relative p-2 rounded-md transition-all duration-200 border-2 ${
             showFilters
-              ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
+              ? 'border-[var(--accent)] bg-[var(--accent-dim)] text-[var(--accent)]'
               : 'btn-glass'
           }`}
         >
           <Filter className="w-5 h-5" />
           {hasActiveFilters && (
-            <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
           )}
         </button>
       </div>
@@ -115,23 +121,23 @@ export function GlobalSearch({ categories, foodTypes, filters, onFiltersChange }
       )}
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl border border-white/30 dark:border-white/10 rounded-2xl shadow-2xl shadow-black/20 max-h-96 overflow-y-auto animate-slide-down">
+        <div className="absolute z-50 w-full mt-3 card-glass rounded-lg border-2 border-[var(--border)] max-h-96 overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+            <div className="p-4 text-center text-[var(--text-muted)]">
               Searching...
             </div>
           ) : results.length > 0 ? (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            <ul className="divide-y divide-[var(--border)]">
               {results.map((restaurant, index) => (
                 <li
                   key={`${restaurant.is_suggestion ? 's' : 'r'}-${restaurant.is_suggestion ? restaurant.suggestion_id : restaurant.id}-${index}`}
-                  onClick={() => handleResultClick()}
-                  className="p-4 hover:bg-white/40 dark:hover:bg-white/10 cursor-pointer transition-all duration-200 hover:scale-[1.01]"
+                  onClick={() => handleResultClick(restaurant)}
+                  className="p-4 cursor-pointer transition-colors hover:bg-[var(--surface-hover)]"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                        <h3 className="font-semibold text-[var(--text)] truncate">
                           {restaurant.name}
                         </h3>
                         {restaurant.is_suggestion && (
@@ -142,22 +148,22 @@ export function GlobalSearch({ categories, foodTypes, filters, onFiltersChange }
                         )}
                       </div>
                       {restaurant.address && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
+                        <p className="text-sm text-[var(--text-muted)] truncate mt-1">
                           {restaurant.address}
                         </p>
                       )}
                       {restaurant.category && (
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        <p className="text-xs text-[var(--text-muted)] mt-1">
                           {restaurant.category.name}
                         </p>
                       )}
                     </div>
                     {!restaurant.is_suggestion && restaurant.avg_rating && (
                       <div className="text-right flex-shrink-0">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <div className="text-sm font-semibold text-[var(--text)]">
                           ★ {restaurant.avg_rating.overall.toFixed(1)}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-[var(--text-muted)]">
                           {restaurant.avg_rating.count} reviews
                         </div>
                       </div>
@@ -167,8 +173,8 @@ export function GlobalSearch({ categories, foodTypes, filters, onFiltersChange }
               ))}
             </ul>
           ) : query.length >= 2 ? (
-            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-              No results found for "{query}"
+            <div className="p-4 text-center text-[var(--text-muted)]">
+              No results found for &quot;{query}&quot;
             </div>
           ) : null}
         </div>

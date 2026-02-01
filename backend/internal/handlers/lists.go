@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -14,6 +13,9 @@ import (
 
 // GetUserLists returns all lists for the authenticated user
 func GetUserLists(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -31,7 +33,7 @@ func GetUserLists(w http.ResponseWriter, r *http.Request) {
 		ORDER BY l.updated_at DESC
 	`
 
-	rows, err := database.GetPool().Query(context.Background(), query, user.ID)
+	rows, err := database.GetPool().Query(ctx, query, user.ID)
 	if err != nil {
 		log.Printf("ERROR: Failed to fetch lists: %v", err)
 		http.Error(w, "Failed to fetch lists", http.StatusInternalServerError)
@@ -59,6 +61,9 @@ func GetUserLists(w http.ResponseWriter, r *http.Request) {
 
 // GetList returns a single list with its restaurants
 func GetList(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	listID, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -76,7 +81,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 		WHERE id = $1
 	`
 
-	err = database.GetPool().QueryRow(context.Background(), query, listID).Scan(
+	err = database.GetPool().QueryRow(ctx, query, listID).Scan(
 		&list.ID, &list.UserID, &list.Name, &list.Description, &list.IsPublic,
 		&list.CreatedAt, &list.UpdatedAt,
 	)
@@ -107,7 +112,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 		ORDER BY lr.added_at DESC
 	`
 
-	rows, err := database.GetPool().Query(context.Background(), restaurantsQuery, listID)
+	rows, err := database.GetPool().Query(ctx, restaurantsQuery, listID)
 	if err != nil {
 		log.Printf("ERROR: Failed to fetch list restaurants: %v", err)
 		http.Error(w, "Failed to fetch list restaurants", http.StatusInternalServerError)
@@ -158,6 +163,9 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 
 // CreateList creates a new restaurant list
 func CreateList(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -183,7 +191,7 @@ func CreateList(w http.ResponseWriter, r *http.Request) {
 
 	var list models.RestaurantList
 	err := database.GetPool().QueryRow(
-		context.Background(), query,
+		ctx, query,
 		user.ID, req.Name, req.Description, req.IsPublic,
 	).Scan(
 		&list.ID, &list.UserID, &list.Name, &list.Description, &list.IsPublic,
@@ -202,6 +210,9 @@ func CreateList(w http.ResponseWriter, r *http.Request) {
 
 // UpdateList updates an existing restaurant list
 func UpdateList(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -217,7 +228,7 @@ func UpdateList(w http.ResponseWriter, r *http.Request) {
 
 	// Verify ownership
 	var ownerID int
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT user_id FROM restaurant_lists WHERE id = $1", listID).Scan(&ownerID)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
@@ -245,7 +256,7 @@ func UpdateList(w http.ResponseWriter, r *http.Request) {
 
 	var list models.RestaurantList
 	err = database.GetPool().QueryRow(
-		context.Background(), query,
+		ctx, query,
 		req.Name, req.Description, req.IsPublic, listID,
 	).Scan(
 		&list.ID, &list.UserID, &list.Name, &list.Description, &list.IsPublic,
@@ -263,6 +274,9 @@ func UpdateList(w http.ResponseWriter, r *http.Request) {
 
 // DeleteList deletes a restaurant list
 func DeleteList(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -278,7 +292,7 @@ func DeleteList(w http.ResponseWriter, r *http.Request) {
 
 	// Verify ownership
 	var ownerID int
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT user_id FROM restaurant_lists WHERE id = $1", listID).Scan(&ownerID)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
@@ -289,7 +303,7 @@ func DeleteList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.GetPool().Exec(context.Background(),
+	_, err = database.GetPool().Exec(ctx,
 		"DELETE FROM restaurant_lists WHERE id = $1", listID)
 	if err != nil {
 		log.Printf("ERROR: Failed to delete list: %v", err)
@@ -302,6 +316,9 @@ func DeleteList(w http.ResponseWriter, r *http.Request) {
 
 // AddRestaurantToList adds a restaurant to a list
 func AddRestaurantToList(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -317,7 +334,7 @@ func AddRestaurantToList(w http.ResponseWriter, r *http.Request) {
 
 	// Verify ownership
 	var ownerID int
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT user_id FROM restaurant_lists WHERE id = $1", listID).Scan(&ownerID)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
@@ -343,7 +360,7 @@ func AddRestaurantToList(w http.ResponseWriter, r *http.Request) {
 
 	var lr models.ListRestaurant
 	err = database.GetPool().QueryRow(
-		context.Background(), query,
+		ctx, query,
 		listID, req.RestaurantID, req.Notes,
 	).Scan(&lr.ID, &lr.ListID, &lr.RestaurantID, &lr.Notes, &lr.AddedAt)
 	if err != nil {
@@ -359,6 +376,9 @@ func AddRestaurantToList(w http.ResponseWriter, r *http.Request) {
 
 // RemoveRestaurantFromList removes a restaurant from a list
 func RemoveRestaurantFromList(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -380,7 +400,7 @@ func RemoveRestaurantFromList(w http.ResponseWriter, r *http.Request) {
 
 	// Verify ownership
 	var ownerID int
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT user_id FROM restaurant_lists WHERE id = $1", listID).Scan(&ownerID)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
@@ -391,7 +411,7 @@ func RemoveRestaurantFromList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.GetPool().Exec(context.Background(),
+	_, err = database.GetPool().Exec(ctx,
 		"DELETE FROM restaurant_list_items WHERE list_id = $1 AND restaurant_id = $2",
 		listID, restaurantID)
 	if err != nil {
@@ -405,6 +425,9 @@ func RemoveRestaurantFromList(w http.ResponseWriter, r *http.Request) {
 
 // GetRestaurantLists returns all lists that contain a specific restaurant for the current user
 func GetRestaurantLists(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -427,7 +450,7 @@ func GetRestaurantLists(w http.ResponseWriter, r *http.Request) {
 		ORDER BY l.name
 	`
 
-	rows, err := database.GetPool().Query(context.Background(), query, user.ID, restaurantID)
+	rows, err := database.GetPool().Query(ctx, query, user.ID, restaurantID)
 	if err != nil {
 		log.Printf("ERROR: Failed to fetch restaurant lists: %v", err)
 		http.Error(w, "Failed to fetch lists", http.StatusInternalServerError)

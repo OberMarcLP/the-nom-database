@@ -93,7 +93,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	avatarURL := gravatarService.GetAvatarURL(req.Email, 256)
 
 	// Create user
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	var userID int
 	err = database.GetPool().QueryRow(ctx,
 		`INSERT INTO users (email, username, password_hash, provider, full_name, avatar_url, email_verified, password_must_change)
@@ -174,7 +175,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Fetch user
 	user, err := getUserByEmail(ctx, req.Email)
@@ -262,7 +264,8 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Fetch session
 	var session models.Session
@@ -357,7 +360,8 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.RefreshToken != "" {
-		ctx := context.Background()
+		ctx, cancel := RequestContext(r)
+		defer cancel()
 		_, err := database.GetPool().Exec(ctx, "DELETE FROM sessions WHERE refresh_token = $1", req.RefreshToken)
 		if err != nil {
 			logger.Warn("Failed to delete session: %v", err)
@@ -517,7 +521,8 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update password and clear password_must_change flag
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	_, err = database.GetPool().Exec(ctx,
 		`UPDATE users SET password_hash = $1, password_must_change = false, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
 		newPasswordHash, user.ID)

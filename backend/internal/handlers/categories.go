@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -22,7 +21,10 @@ import (
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /categories [get]
 func GetCategories(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.GetPool().Query(context.Background(),
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
+	rows, err := database.GetPool().Query(ctx,
 		"SELECT id, name, created_at, updated_at FROM categories ORDER BY name")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -41,6 +43,7 @@ func GetCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	if err := json.NewEncoder(w).Encode(categories); err != nil {
 		logger.Error("Failed to encode response: %v", err)
 	}
@@ -58,6 +61,9 @@ func GetCategories(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} map[string]string "Category not found"
 // @Router /categories/{id} [get]
 func GetCategory(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -66,7 +72,7 @@ func GetCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var c models.Category
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"SELECT id, name, created_at, updated_at FROM categories WHERE id = $1", id).
 		Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
@@ -75,6 +81,7 @@ func GetCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	if err := json.NewEncoder(w).Encode(c); err != nil {
 		logger.Error("Failed to encode response: %v", err)
 	}
@@ -92,6 +99,9 @@ func GetCategory(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /categories [post]
 func CreateCategory(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	var req models.CreateCategoryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -104,7 +114,7 @@ func CreateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var c models.Category
-	err := database.GetPool().QueryRow(context.Background(),
+	err := database.GetPool().QueryRow(ctx,
 		"INSERT INTO categories (name) VALUES ($1) RETURNING id, name, created_at, updated_at",
 		req.Name).Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
@@ -130,6 +140,9 @@ func CreateCategory(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} map[string]string "Category not found"
 // @Router /categories/{id} [put]
 func UpdateCategory(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -149,7 +162,7 @@ func UpdateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var c models.Category
-	err = database.GetPool().QueryRow(context.Background(),
+	err = database.GetPool().QueryRow(ctx,
 		"UPDATE categories SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name, created_at, updated_at",
 		req.Name, id).Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
@@ -174,6 +187,9 @@ func UpdateCategory(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /categories/{id} [delete]
 func DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -181,7 +197,7 @@ func DeleteCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.GetPool().Exec(context.Background(),
+	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM categories WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

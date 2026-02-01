@@ -1,10 +1,8 @@
 import { useState, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Loader2, LogIn, LogOut, UserPlus, Bookmark, Shield } from 'lucide-react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { usePermissions } from './hooks/usePermissions';
-import { GlobalSearch } from './components/GlobalSearch';
 import { useCategories, useFoodTypes } from './hooks/useApi';
 import { RestaurantFilters } from './services/api';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -13,7 +11,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
-import { Avatar } from './components/Avatar';
+import { AppNav } from './components/AppNav';
 
 // Lazy load page components for code splitting
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
@@ -56,86 +54,13 @@ const queryClient = new QueryClient({
   },
 });
 
-// User menu component
-interface UserMenuProps {
-  onLoginClick: () => void;
-  onRegisterClick: () => void;
-}
-
-function UserMenu({ onLoginClick, onRegisterClick }: UserMenuProps) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/');
-  };
-
-  const handleProfileClick = () => {
-    if (user) {
-      navigate(`/users/${user.id}`);
-    }
-  };
-
-  if (!user) {
-    return (
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onLoginClick}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md"
-        >
-          <LogIn className="w-4 h-4" />
-          <span className="text-sm">Login</span>
-        </button>
-        <button
-          onClick={onRegisterClick}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-md"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span className="text-sm">Register</span>
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={handleProfileClick}
-        className="flex items-center gap-2 px-2 py-1.5 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md"
-        title="View profile"
-      >
-        <Avatar
-          src={user.avatar_url}
-          alt={user.username}
-          size="sm"
-          fallbackText={user.full_name || user.username}
-        />
-        <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">
-          {user.username}
-        </span>
-      </button>
-      <button
-        onClick={handleLogout}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md"
-        title="Logout"
-      >
-        <LogOut className="w-4 h-4" />
-        <span className="text-sm hidden sm:inline">Logout</span>
-      </button>
-    </div>
-  );
-}
-
 function AppContent() {
   const { user } = useAuth();
-  const { isAdmin } = usePermissions();
   const [filters, setFilters] = useState<RestaurantFilters>({});
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
-  // Use React Query hooks instead of manual fetching
   const { data: categories = [] } = useCategories();
   const { data: foodTypes = [] } = useFoodTypes();
 
@@ -156,114 +81,15 @@ function AppContent() {
           {/* Admin routes - full width */}
           <Route path="/admin/*" element={
             <div className="min-h-screen">
-              <nav className="nav-glass sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="flex flex-col gap-3 py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-8">
-                        <span className="text-xl font-bold text-gradient">
-                          The Nom Database
-                        </span>
-                        <div className="hidden lg:flex gap-2">
-                          <NavLink
-                            to="/"
-                            className={({ isActive }) =>
-                              `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                                isActive
-                                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
-                                  : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                              }`
-                            }
-                          >
-                            <Home className="w-4 h-4" />
-                            <span>Restaurants</span>
-                          </NavLink>
-                          {user && (
-                            <>
-                              <NavLink
-                                to="/lists"
-                                className={({ isActive }) =>
-                                  `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                                    isActive
-                                      ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
-                                      : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                                  }`
-                                }
-                              >
-                                <Bookmark className="w-4 h-4" />
-                                <span>My Lists</span>
-                              </NavLink>
-                              {isAdmin() && (
-                                <NavLink
-                                  to="/admin"
-                                  className={({ isActive }) =>
-                                    `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                                      isActive
-                                        ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-md border border-red-500/30 shadow-lg shadow-red-500/20'
-                                        : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                                    }`
-                                  }
-                                >
-                                  <Shield className="w-4 h-4" />
-                                  <span>Admin</span>
-                                </NavLink>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <UserMenu onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} />
-                        
-                      </div>
-                    </div>
-
-                    {/* Global Search Bar */}
-                    <div className="w-full">
-                      <GlobalSearch
-                        categories={categories}
-                        foodTypes={foodTypes}
-                        filters={filters}
-                        onFiltersChange={setFilters}
-                      />
-                    </div>
-
-                    {/* Mobile Navigation */}
-                    <div className="flex lg:hidden gap-2 overflow-x-auto pb-1">
-                      <NavLink
-                        to="/"
-                        className={({ isActive }) =>
-                          `flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap ${
-                            isActive
-                              ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
-                              : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                          }`
-                        }
-                      >
-                        <Home className="w-4 h-4" />
-                        <span className="text-sm">Restaurants</span>
-                      </NavLink>
-                      {user && (
-                        <>
-                          <NavLink
-                            to="/lists"
-                            className={({ isActive }) =>
-                              `flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap ${
-                                isActive
-                                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
-                                  : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                              }`
-                            }
-                          >
-                            <Bookmark className="w-4 h-4" />
-                            <span className="text-sm">My Lists</span>
-                          </NavLink>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </nav>
+              <AppNav
+                variant="admin"
+                categories={categories}
+                foodTypes={foodTypes}
+                filters={filters}
+                onFiltersChange={setFilters}
+                onLoginClick={handleLoginClick}
+                onRegisterClick={handleRegisterClick}
+              />
 
               <ProtectedRoute>
                 <AdminDashboard />
@@ -284,118 +110,19 @@ function AppContent() {
           {/* Main app routes - with navigation and max-width */}
           <Route path="/*" element={
             <div className="min-h-screen">
-              <nav className="nav-glass sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="flex flex-col gap-3 py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-8">
-                        <span className="text-xl font-bold text-gradient">
-                          The Nom Database
-                        </span>
-                        <div className="hidden lg:flex gap-2">
-                          <NavLink
-                            to="/"
-                            className={({ isActive }) =>
-                              `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                                isActive
-                                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
-                                  : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                              }`
-                            }
-                          >
-                            <Home className="w-4 h-4" />
-                            <span>Restaurants</span>
-                          </NavLink>
-                          {user && (
-                            <>
-                              <NavLink
-                                to="/lists"
-                                className={({ isActive }) =>
-                                  `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                                    isActive
-                                      ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
-                                      : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                                  }`
-                                }
-                              >
-                                <Bookmark className="w-4 h-4" />
-                                <span>My Lists</span>
-                              </NavLink>
-                              {isAdmin() && (
-                                <NavLink
-                                  to="/admin"
-                                  className={({ isActive }) =>
-                                    `flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
-                                      isActive
-                                        ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-md border border-red-500/30 shadow-lg shadow-red-500/20'
-                                        : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                                    }`
-                                  }
-                                >
-                                  <Shield className="w-4 h-4" />
-                                  <span>Admin</span>
-                                </NavLink>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <UserMenu onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} />
-                        
-                      </div>
-                    </div>
-
-                    {/* Global Search Bar */}
-                    <div className="w-full">
-                      <GlobalSearch
-                        categories={categories}
-                        foodTypes={foodTypes}
-                        filters={filters}
-                        onFiltersChange={setFilters}
-                      />
-                    </div>
-
-                    {/* Mobile Navigation */}
-                    <div className="flex lg:hidden gap-2 overflow-x-auto pb-1">
-                      <NavLink
-                        to="/"
-                        className={({ isActive }) =>
-                          `flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap ${
-                            isActive
-                              ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
-                              : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                          }`
-                        }
-                      >
-                        <Home className="w-4 h-4" />
-                        <span className="text-sm">Restaurants</span>
-                      </NavLink>
-                      {user && (
-                        <>
-                          <NavLink
-                            to="/lists"
-                            className={({ isActive }) =>
-                              `flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap ${
-                                isActive
-                                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20'
-                                  : 'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md'
-                              }`
-                            }
-                          >
-                            <Bookmark className="w-4 h-4" />
-                            <span className="text-sm">My Lists</span>
-                          </NavLink>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </nav>
+              <AppNav
+                variant="main"
+                categories={categories}
+                foodTypes={foodTypes}
+                filters={filters}
+                onFiltersChange={setFilters}
+                onLoginClick={handleLoginClick}
+                onRegisterClick={handleRegisterClick}
+              />
 
               <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Routes>
-                  <Route path="/" element={<HomePage key={user?.id || 'guest'} filters={filters} isAuthenticated={!!user} />} />
+                  <Route path="/" element={<HomePage key={user?.id ?? 'guest'} filters={filters} isAuthenticated={!!user} />} />
                   <Route path="/restaurants/:id" element={<RestaurantPage />} />
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route
@@ -441,9 +168,9 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ToastProvider>
+            <ToastProvider>
             <AppContent />
-            <ReactQueryDevtools initialIsOpen={false} />
+            {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
           </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,6 +21,9 @@ import (
 
 // GetUserProfile returns a user's profile with stats
 func GetUserProfile(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	userIDStr := vars["id"]
 
@@ -30,8 +32,6 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
-
-	ctx := context.Background()
 
 	// Get user basic info
 	var user models.User
@@ -99,6 +99,9 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 
 // GetUserReviews returns all reviews by a user
 func GetUserReviews(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	userIDStr := vars["id"]
 
@@ -107,8 +110,6 @@ func GetUserReviews(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
-
-	ctx := context.Background()
 
 	query := `
 		SELECT
@@ -132,6 +133,7 @@ func GetUserReviews(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	reviews := []models.Rating{}
+	ratingIDs := []int{}
 	for rows.Next() {
 		var rating models.Rating
 		var restaurant models.Restaurant
@@ -148,29 +150,19 @@ func GetUserReviews(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Attach restaurant and user info
 		rating.Restaurant = &restaurant
 		rating.User = &user
-
-		// Load photos for this rating
-		photoRows, err := database.GetPool().Query(ctx, `
-			SELECT id, rating_id, photo_url, caption, display_order, created_at
-			FROM review_photos
-			WHERE rating_id = $1
-			ORDER BY display_order, created_at`, rating.ID)
-		if err == nil {
-			defer photoRows.Close()
-			photos := []models.ReviewPhoto{}
-			for photoRows.Next() {
-				var photo models.ReviewPhoto
-				if err := photoRows.Scan(&photo.ID, &photo.RatingID, &photo.PhotoURL, &photo.Caption, &photo.DisplayOrder, &photo.CreatedAt); err == nil {
-					photos = append(photos, photo)
-				}
-			}
-			rating.Photos = photos
-		}
-
+		ratingIDs = append(ratingIDs, rating.ID)
 		reviews = append(reviews, rating)
+	}
+
+	photosByRating, err := getReviewPhotosByRatingIDs(ctx, ratingIDs)
+	if err != nil {
+		http.Error(w, "Failed to fetch review photos", http.StatusInternalServerError)
+		return
+	}
+	for i := range reviews {
+		reviews[i].Photos = photosByRating[reviews[i].ID]
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -196,7 +188,8 @@ func UpdateUserProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Build dynamic update query
 	updates := []string{}
@@ -327,7 +320,8 @@ func UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	// Generate unique filename
 	filename := fmt.Sprintf("avatar_%d_%s.jpg", user.ID, uuid.New().String())
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	s3Service := services.GetS3Service()
 	var avatarURL string
 

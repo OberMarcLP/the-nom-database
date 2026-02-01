@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -22,7 +21,8 @@ import (
 // @Security BearerAuth
 // @Router /admin/stats [get]
 func AdminGetStatistics(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	stats := make(map[string]interface{})
 
@@ -113,7 +113,8 @@ func AdminGetUserGrowth(w http.ResponseWriter, r *http.Request) {
 		days = 30
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	query := `
 		SELECT DATE(created_at) as date, COUNT(*) as count
@@ -165,7 +166,8 @@ func AdminGetActiveUsers(w http.ResponseWriter, r *http.Request) {
 		limit = 10
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	query := `
 		SELECT u.id, u.username, u.email, u.avatar_url,
@@ -239,7 +241,8 @@ func AdminGetPopularRestaurants(w http.ResponseWriter, r *http.Request) {
 		limit = 10
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	query := `
 		SELECT r.id, r.name, r.address, c.name as category,
@@ -325,7 +328,8 @@ func AdminGetAuditLogs(w http.ResponseWriter, r *http.Request) {
 	resourceType := r.URL.Query().Get("resource_type")
 
 	offset := (page - 1) * limit
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Build query with filters
 	query := `

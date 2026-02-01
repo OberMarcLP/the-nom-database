@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -29,7 +28,8 @@ import (
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /restaurants/paginated [get]
 func GetRestaurantsPaginated(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Parse pagination parameters
 	pagination := ParsePaginationParams(r)
@@ -92,7 +92,7 @@ func GetRestaurantsPaginated(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Search query filter
+	// Search query filter (ILIKE works without migration 000008; use search_vector for full-text after running that migration)
 	if searchQuery != "" {
 		conditions = append(conditions, fmt.Sprintf("(r.name ILIKE $%d OR r.description ILIKE $%d)", argIndex, argIndex))
 		args = append(args, "%"+searchQuery+"%")
@@ -219,5 +219,6 @@ func GetRestaurantsPaginated(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "private, max-age=60")
 	json.NewEncoder(w).Encode(response)
 }

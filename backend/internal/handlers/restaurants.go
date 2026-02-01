@@ -172,7 +172,8 @@ func setFoodTypesForRestaurant(ctx context.Context, restaurantID int, foodTypeID
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /restaurants [get]
 func GetRestaurants(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Parse query parameters for filtering
 	queryParams := r.URL.Query()
@@ -609,7 +610,8 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	// Try both restaurants and suggestions tables using UNION
 	query := `
@@ -760,7 +762,8 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 		userID = &user.ID
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	var rest models.Restaurant
 	err := database.GetPool().QueryRow(ctx,
@@ -834,7 +837,8 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 
 	var rest models.Restaurant
 	err = database.GetPool().QueryRow(ctx,
@@ -890,6 +894,9 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /restaurants/{id} [delete]
 func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -897,7 +904,7 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.GetPool().Exec(context.Background(),
+	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM restaurants WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -930,7 +937,8 @@ func GlobalSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := RequestContext(r)
+	defer cancel()
 	searchPattern := "%" + strings.ToLower(query) + "%"
 
 	// Search restaurants

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Loader2, CheckCircle, XCircle, Tag, Utensils, MapPin, Phone, Globe } from 'lucide-react';
-import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters } from '../services/api';
-import { useRestaurants, useRestaurant, useUpdateRestaurant, useDeleteRestaurant, useCreateSuggestion, useConvertSuggestion, useDeleteSuggestion } from '../hooks/useApi';
+import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters, PaginatedResponse } from '../services/api';
+import { useRestaurantsPaginated, useRestaurant, useUpdateRestaurant, useDeleteRestaurant, useCreateSuggestion, useConvertSuggestion, useDeleteSuggestion } from '../hooks/useApi';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { RestaurantForm } from '../components/RestaurantForm';
 import { SuggestionForm } from '../components/SuggestionForm';
@@ -32,8 +32,18 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
   const [deletingRestaurant, setDeletingRestaurant] = useState<Restaurant | null>(null);
   const [alertMessage, setAlertMessage] = useState<string>('');
 
-  // Use React Query hooks
-  const { data: restaurants = [], isLoading: loading } = useRestaurants(filters);
+  // Use paginated infinite query for restaurants
+  const {
+    data,
+    isLoading: loading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useRestaurantsPaginated(filters);
+  const restaurants =
+    (data as { pages: PaginatedResponse<Restaurant>[] } | undefined)?.pages.flatMap(
+      (p: PaginatedResponse<Restaurant>) => p.data
+    ) ?? [];
   const { data: selectedRestaurant } = useRestaurant(selectedRestaurantId || 0, {
     enabled: selectedRestaurantId !== null && selectedRestaurantId > 0,
   });
@@ -226,23 +236,44 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {restaurants.map((restaurant) => (
-              <RestaurantCard
-                key={restaurant.id}
-                restaurant={restaurant}
-                onClick={() => {
-                  if (restaurant.is_suggestion) {
-                    setViewingSuggestion(restaurant);
-                  } else {
-                    setSelectedRestaurantId(restaurant.id);
-                  }
-                }}
-                onReview={canModerateSuggestions ? handleReviewSuggestion : undefined}
-                onReject={canModerateSuggestions ? handleRejectSuggestion : undefined}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {restaurants.map((restaurant: Restaurant) => (
+                <RestaurantCard
+                  key={restaurant.is_suggestion && restaurant.suggestion_id ? `suggestion-${restaurant.suggestion_id}` : restaurant.id}
+                  restaurant={restaurant}
+                  onClick={() => {
+                    if (restaurant.is_suggestion) {
+                      setViewingSuggestion(restaurant);
+                    } else {
+                      setSelectedRestaurantId(restaurant.id);
+                    }
+                  }}
+                  onReview={canModerateSuggestions ? handleReviewSuggestion : undefined}
+                  onReject={canModerateSuggestions ? handleRejectSuggestion : undefined}
+                />
+              ))}
+            </div>
+            {hasNextPage && (
+              <div className="flex justify-center mt-8">
+                <button
+                  type="button"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="btn btn-primary flex items-center gap-2"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Load more'
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
