@@ -28,6 +28,12 @@ Thumbs.db
 # Logs
 *.log
 
+# Compiled binaries & coverage artifacts
+backend/server
+backend/server.exe
+coverage.out
+coverage.html
+
 # Claude Code files
 CLAUDE.MD
 .claude/

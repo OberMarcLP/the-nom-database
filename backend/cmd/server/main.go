@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -460,7 +464,30 @@ func main() {
 	logger.Info("   ✓ CORS restrictions")
 	logger.Info("✅ Server ready to accept connections")
 
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		logger.Fatal("Server failed to start: %v", err)
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: handler,
+		// Slowloris protection; full read/write timeouts are omitted on purpose
+		// so large photo uploads on slow connections are not cut off.
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
+	// Graceful shutdown on SIGINT/SIGTERM so deferred cleanup (DB close) runs
+	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatal("Server failed to start: %v", err)
+		}
+	}()
+
+	<-shutdownCtx.Done()
+	logger.Info("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Error("Graceful shutdown failed: %v", err)
 	}
 }

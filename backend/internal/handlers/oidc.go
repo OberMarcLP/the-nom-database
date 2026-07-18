@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/jackc/pgx/v5"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
@@ -201,14 +202,14 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find or create user
-	logger.Error("DEBUG: About to call findOrCreateOIDCUser with email=%s, sub=%s", claims.Email, claims.Sub)
+	logger.Debug("DEBUG: About to call findOrCreateOIDCUser with email=%s, sub=%s", claims.Email, claims.Sub)
 	user, err := findOrCreateOIDCUser(ctx, &claims)
 	if err != nil {
 		logger.Error("Failed to find/create user: %v", err)
 		http.Error(w, "Failed to process user", http.StatusInternalServerError)
 		return
 	}
-	logger.Error("DEBUG: findOrCreateOIDCUser returned successfully, userID=%d", user.ID)
+	logger.Debug("DEBUG: findOrCreateOIDCUser returned successfully, userID=%d", user.ID)
 
 	// Update last login
 	_, err = database.GetPool().Exec(ctx, "UPDATE users SET last_login_at = $1 WHERE id = $2", time.Now(), user.ID)
@@ -232,8 +233,15 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 	logger.Info("User logged in via OIDC: %s (ID: %d)", user.Email, user.ID)
 
 	// Redirect to frontend with tokens
-	// Encode tokens as URL parameters
-	redirectURL := fmt.Sprintf("http://localhost:3000/auth/callback?access_token=%s&refresh_token=%s",
+	// NOTE: tokens in query params can leak into logs/history; replacing this
+	// with a one-time-code exchange is tracked in the review backlog. The
+	// target URL is configurable so OIDC works outside localhost.
+	frontendURL := strings.TrimRight(os.Getenv("FRONTEND_URL"), "/")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
+	}
+	redirectURL := fmt.Sprintf("%s/auth/callback?access_token=%s&refresh_token=%s",
+		frontendURL,
 		response.AccessToken,
 		response.RefreshToken)
 
@@ -261,11 +269,11 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 }) (*models.User, error) {
 	provider := "oidc"
 
-	logger.Error("DEBUG: findOrCreateOIDCUser ENTERED - email=%s, sub=%s", claims.Email, claims.Sub)
+	logger.Debug("DEBUG: findOrCreateOIDCUser ENTERED - email=%s, sub=%s", claims.Email, claims.Sub)
 
 	// Try to find existing user by provider ID
 	var user models.User
-	logger.Error("DEBUG: About to query for existing user with provider=%s, sub=%s", provider, claims.Sub)
+	logger.Debug("DEBUG: About to query for existing user with provider=%s, sub=%s", provider, claims.Sub)
 	err := database.GetPool().QueryRow(ctx,
 		`SELECT id, email, username, password_hash, provider, provider_id, full_name, avatar_url,
 		is_active, is_admin, email_verified, password_must_change, last_login_at, created_at, updated_at
@@ -275,7 +283,7 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 		&user.FullName, &user.AvatarURL, &user.IsActive, &user.IsAdmin,
 		&user.EmailVerified, &user.PasswordMustChange, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
 
-	logger.Error("DEBUG: Query completed, err=%v, err==nil=%v, errors.Is(err, sql.ErrNoRows)=%v", err, err == nil, errors.Is(err, sql.ErrNoRows))
+	logger.Debug("DEBUG: Query completed, err=%v, err==nil=%v, errors.Is(err, sql.ErrNoRows)=%v", err, err == nil, errors.Is(err, sql.ErrNoRows))
 
 	if err == nil {
 		// User exists, update info if changed
@@ -292,12 +300,12 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 	}
 
 	// Check if it's a "no rows" error (pgx returns pgx.ErrNoRows, not sql.ErrNoRows)
-	if err != nil && err.Error() != "no rows in result set" {
-		logger.Error("DEBUG: Returning error because it's not ErrNoRows: %v", err)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		logger.Debug("DEBUG: Returning error because it's not ErrNoRows: %v", err)
 		return nil, err
 	}
 
-	logger.Error("DEBUG: No existing user found (ErrNoRows), proceeding to create new user")
+	logger.Debug("DEBUG: No existing user found (ErrNoRows), proceeding to create new user")
 
 	// User doesn't exist, create new one
 	// Generate username from email or preferred_username

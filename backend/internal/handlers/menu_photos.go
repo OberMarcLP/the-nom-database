@@ -340,6 +340,28 @@ func UpdatePhotoCaption(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := RequestContext(r)
 	defer cancel()
+
+	// Only the uploader, the restaurant owner, or an admin may edit photos
+	user, ok := GetUserFromContext(r)
+	if !ok || user == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+	var uploaderID, restaurantOwnerID *int
+	if err := database.GetPool().QueryRow(ctx,
+		`SELECT mp.user_id, res.user_id FROM menu_photos mp
+		JOIN restaurants res ON res.id = mp.restaurant_id
+		WHERE mp.id = $1`, id).Scan(&uploaderID, &restaurantOwnerID); err != nil {
+		http.Error(w, "Photo not found", http.StatusNotFound)
+		return
+	}
+	if !user.IsAdmin &&
+		!(uploaderID != nil && *uploaderID == user.ID) &&
+		!(restaurantOwnerID != nil && *restaurantOwnerID == user.ID) {
+		http.Error(w, "You can only manage photos you uploaded or photos of your restaurants", http.StatusForbidden)
+		return
+	}
+
 	var photo models.MenuPhoto
 	err = database.GetPool().QueryRow(ctx,
 		`UPDATE menu_photos SET caption = $1, updated_at = NOW()
@@ -382,6 +404,27 @@ func DeleteMenuPhoto(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := RequestContext(r)
 	defer cancel()
+
+	// Only the uploader, the restaurant owner, or an admin may delete photos
+	user, ok := GetUserFromContext(r)
+	if !ok || user == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+	var uploaderID, restaurantOwnerID *int
+	if err := database.GetPool().QueryRow(ctx,
+		`SELECT mp.user_id, res.user_id FROM menu_photos mp
+		JOIN restaurants res ON res.id = mp.restaurant_id
+		WHERE mp.id = $1`, id).Scan(&uploaderID, &restaurantOwnerID); err != nil {
+		http.Error(w, "Photo not found", http.StatusNotFound)
+		return
+	}
+	if !user.IsAdmin &&
+		!(uploaderID != nil && *uploaderID == user.ID) &&
+		!(restaurantOwnerID != nil && *restaurantOwnerID == user.ID) {
+		http.Error(w, "You can only manage photos you uploaded or photos of your restaurants", http.StatusForbidden)
+		return
+	}
 
 	// Get filename before deleting from DB
 	var filename string

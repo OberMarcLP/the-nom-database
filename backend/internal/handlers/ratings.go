@@ -305,6 +305,30 @@ func DeleteRating(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get user from context
+	user, ok := GetUserFromContext(r)
+	if !ok || user == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if the rating exists and belongs to the user
+	var ratingUserID *int
+	err = database.GetPool().QueryRow(ctx,
+		"SELECT user_id FROM ratings WHERE id = $1", id).Scan(&ratingUserID)
+	if err != nil {
+		http.Error(w, "Rating not found", http.StatusNotFound)
+		return
+	}
+
+	// Check ownership (only allow deleting own ratings, or admin)
+	if ratingUserID == nil || *ratingUserID != user.ID {
+		if !user.IsAdmin {
+			http.Error(w, "You can only delete your own ratings", http.StatusForbidden)
+			return
+		}
+	}
+
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM ratings WHERE id = $1", id)
 	if err != nil {

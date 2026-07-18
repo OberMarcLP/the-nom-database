@@ -860,6 +860,23 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
+	// Only the creator or an admin may modify a restaurant
+	user, ok := GetUserFromContext(r)
+	if !ok || user == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+	var createdBy *int
+	if err := database.GetPool().QueryRow(ctx,
+		"SELECT user_id FROM restaurants WHERE id = $1", id).Scan(&createdBy); err != nil {
+		http.Error(w, "Restaurant not found", http.StatusNotFound)
+		return
+	}
+	if !user.IsAdmin && (createdBy == nil || *createdBy != user.ID) {
+		http.Error(w, "You can only edit restaurants you created", http.StatusForbidden)
+		return
+	}
+
 	var rest models.Restaurant
 	err = database.GetPool().QueryRow(ctx,
 		`UPDATE restaurants SET
@@ -921,6 +938,23 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
+		return
+	}
+
+	// Only the creator or an admin may delete a restaurant
+	user, ok := GetUserFromContext(r)
+	if !ok || user == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+	var createdBy *int
+	if err := database.GetPool().QueryRow(ctx,
+		"SELECT user_id FROM restaurants WHERE id = $1", id).Scan(&createdBy); err != nil {
+		http.Error(w, "Restaurant not found", http.StatusNotFound)
+		return
+	}
+	if !user.IsAdmin && (createdBy == nil || *createdBy != user.ID) {
+		http.Error(w, "You can only delete restaurants you created", http.StatusForbidden)
 		return
 	}
 
