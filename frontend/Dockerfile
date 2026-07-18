@@ -1,12 +1,12 @@
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files first for better layer caching
 COPY package*.json ./
 
-# Install dependencies (use "npm ci" when package-lock.json is committed for reproducible installs)
-RUN npm install
+# Reproducible install from committed package-lock.json
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -23,8 +23,8 @@ ENV NODE_ENV=production
 # Build the app with optimizations
 RUN npm run build
 
-# Production stage - minimal nginx image
-FROM nginx:alpine
+# Production stage - minimal nginx image (pinned)
+FROM nginx:1.30-alpine
 
 # Remove default nginx configuration
 RUN rm -rf /usr/share/nginx/html/*

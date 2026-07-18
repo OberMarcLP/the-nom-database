@@ -1,0 +1,6 @@
+server
+server.exe
+coverage.out
+coverage.html
+.env
+*.log

@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     services:
       postgres:
@@ -27,25 +35,28 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.24'
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
 
       - name: Install dependencies
         run: |
           cd backend
           go mod download
+
+      - name: Vet
+        run: |
+          cd backend
+          go vet ./...
+
+      - name: Vulnerability scan (govulncheck)
+        run: |
+          cd backend
+          go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
       - name: Run tests
         env:
@@ -54,52 +65,46 @@ jobs:
           GOOGLE_MAPS_API_KEY: test_key
         run: |
           cd backend
-          go test -v -race -coverprofile=coverage.out -covermode=atomic ./... || echo "Tests failed but continuing"
-        continue-on-error: true
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Upload coverage to Codecov
         if: hashFiles('backend/coverage.out') != ''
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
-          file: ./backend/coverage.out
+          files: ./backend/coverage.out
           flags: backend
-        continue-on-error: true
-
-      - name: Run linter
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: latest
-          working-directory: backend
+        # Coverage upload flakiness must not block CI
         continue-on-error: true
 
   test-frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: |
           cd frontend
-          npm install
+          npm ci
 
       - name: Run linter
         run: |
           cd frontend
-          npm run lint || echo "Linting failed but continuing"
-        continue-on-error: true
+          npm run lint
 
       - name: Run tests
         run: |
           cd frontend
-          npm test -- --run || echo "Tests failed but continuing"
-        continue-on-error: true
+          npm test -- --run
 
       - name: Build
         run: |
@@ -108,25 +113,35 @@ jobs:
 
   security-scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       security-events: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - name: Trivy scan (SARIF report)
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
-        continue-on-error: true
 
       - name: Upload Trivy results to GitHub Security
+        if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
-        continue-on-error: true
+
+      - name: Trivy gate (fail on fixable CRITICAL/HIGH)
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
