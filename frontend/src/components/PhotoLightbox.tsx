@@ -34,7 +34,7 @@ export function PhotoLightbox({ photos, currentIndex, onClose, onNext, onPreviou
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 admin-btn-icon bg-[var(--surface)] hover:bg-[var(--surface-hover)] z-10"
+        className="absolute top-4 right-4 admin-btn-icon bg-(--surface) hover:bg-(--surface-hover) z-10"
         title="Close (Esc)"
       >
         <X className="w-5 h-5" />
@@ -44,7 +44,7 @@ export function PhotoLightbox({ photos, currentIndex, onClose, onNext, onPreviou
       {photos.length > 1 && (
         <button
           onClick={onPrevious}
-          className="absolute left-4 top-1/2 -translate-y-1/2 admin-btn-icon bg-[var(--surface)] hover:bg-[var(--surface-hover)] z-10"
+          className="absolute left-4 top-1/2 -translate-y-1/2 admin-btn-icon bg-(--surface) hover:bg-(--surface-hover) z-10"
           title="Previous (←)"
         >
           <ChevronLeft className="w-6 h-6" />
@@ -55,7 +55,7 @@ export function PhotoLightbox({ photos, currentIndex, onClose, onNext, onPreviou
       {photos.length > 1 && (
         <button
           onClick={onNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 admin-btn-icon bg-[var(--surface)] hover:bg-[var(--surface-hover)] z-10"
+          className="absolute right-4 top-1/2 -translate-y-1/2 admin-btn-icon bg-(--surface) hover:bg-(--surface-hover) z-10"
           title="Next (→)"
         >
           <ChevronRight className="w-6 h-6" />

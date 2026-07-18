@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapPin, Tag, Utensils, Edit, Trash2, Plus, Loader2, Phone, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { Restaurant, voteOnReview, removeVote, uploadReviewPhoto } from '../services/api';
+import { Restaurant, voteOnReview, removeVote, uploadReviewPhoto, isSafeHttpUrl } from '../services/api';
 import { useRatings, useCreateRating, useMenuPhotos, useUpdatePhotoCaption, useDeleteMenuPhoto } from '../hooks/useApi';
 import { StarRating } from '../components/StarRating';
 import { RestaurantMap } from '../components/RestaurantMap';
@@ -195,21 +195,21 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
 
       {restaurant.address && (
         <div className="flex items-start gap-2 text-muted">
-          <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
+          <MapPin className="w-5 h-5 mt-0.5 shrink-0" />
           <span>{restaurant.address}</span>
         </div>
       )}
 
       {restaurant.phone && (
         <a href={`tel:${restaurant.phone}`} className="flex items-center gap-2 text-muted hover:text-accent transition-colors">
-          <Phone className="w-5 h-5 flex-shrink-0" />
+          <Phone className="w-5 h-5 shrink-0" />
           <span>{restaurant.phone}</span>
         </a>
       )}
 
-      {restaurant.website && (
+      {restaurant.website && isSafeHttpUrl(restaurant.website) && (
         <a href={restaurant.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-muted hover:text-accent transition-colors">
-          <Globe className="w-5 h-5 flex-shrink-0" />
+          <Globe className="w-5 h-5 shrink-0" />
           <span className="truncate">{restaurant.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
         </a>
       )}
@@ -327,7 +327,9 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
               {sortedRatings.map((rating) => (
                 <div
                   key={rating.id}
-                  ref={(el) => (ratingRefs.current[rating.id] = el)}
+                  ref={(el) => {
+                    ratingRefs.current[rating.id] = el;
+                  }}
                   className={highlightedRatingId === rating.id ? 'card-glass-strong' : 'card'}
                   style={{
                     transition: 'all 0.3s ease',

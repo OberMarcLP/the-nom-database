@@ -121,7 +121,7 @@ export function ListsPage() {
                         e.stopPropagation();
                         handleDelete(list.id);
                       }}
-                      className="p-1 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
+                      className="p-1 hover:bg-red-100 dark:hover:bg-red-900 rounded-sm transition-colors"
                       title="Delete list"
                     >
                       <Trash2 className="w-4 h-4 text-red-600" />
@@ -176,12 +176,12 @@ export function ListsPage() {
                             </h3>
                             {item.restaurant?.address && (
                               <p className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-1 mb-2">
-                                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                                 {item.restaurant.address}
                               </p>
                             )}
                             {item.notes && (
-                              <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
+                              <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-sm">
                                 <strong>Note:</strong> {item.notes}
                               </p>
                             )}

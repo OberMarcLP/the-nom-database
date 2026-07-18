@@ -47,24 +47,24 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <label className="admin-label">Username</label>
-                <div className="mt-1 text-sm text-[var(--text)]">{user.username}</div>
+                <div className="mt-1 text-sm text-(--text)">{user.username}</div>
               </div>
 
               <div>
                 <label className="admin-label">Email</label>
-                <div className="mt-1 text-sm text-[var(--text)]">{user.email}</div>
+                <div className="mt-1 text-sm text-(--text)">{user.email}</div>
               </div>
 
               {user.full_name && (
                 <div>
                   <label className="admin-label">Full Name</label>
-                  <div className="mt-1 text-sm text-[var(--text)]">{user.full_name}</div>
+                  <div className="mt-1 text-sm text-(--text)">{user.full_name}</div>
                 </div>
               )}
 
               <div>
                 <label className="admin-label">Provider</label>
-                <div className="mt-1 text-sm text-[var(--text)] capitalize">{user.provider}</div>
+                <div className="mt-1 text-sm text-(--text) capitalize">{user.provider}</div>
               </div>
 
               <div>
@@ -103,7 +103,7 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
               {user.last_login_at && (
                 <div>
                   <label className="admin-label">Last Login</label>
-                  <div className="mt-1 text-sm text-[var(--text)]">
+                  <div className="mt-1 text-sm text-(--text)">
                     {new Date(user.last_login_at).toLocaleString()}
                   </div>
                 </div>
@@ -111,14 +111,14 @@ export function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
 
               <div>
                 <label className="admin-label">Member Since</label>
-                <div className="mt-1 text-sm text-[var(--text)]">
+                <div className="mt-1 text-sm text-(--text)">
                   {new Date(user.created_at).toLocaleDateString()}
                 </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-6 border-t border-[var(--border)]">
+            <div className="flex gap-3 pt-6 border-t border-(--border)">
               {user.provider === 'local' && (
                 <button
                   onClick={handleChangePassword}

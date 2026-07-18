@@ -82,11 +82,11 @@ export type AppNavVariant = 'admin' | 'main';
 const navLinkBase =
   'flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300';
 const navLinkActive =
-  'bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20';
+  'bg-linear-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-500/30 shadow-lg shadow-blue-500/20';
 const navLinkInactive =
   'hover:bg-white/20 dark:hover:bg-white/10 hover:backdrop-blur-md hover:shadow-md';
 const adminNavLinkActive =
-  'bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-md border border-red-500/30 shadow-lg shadow-red-500/20';
+  'bg-linear-to-r from-red-500/20 to-orange-500/20 backdrop-blur-md border border-red-500/30 shadow-lg shadow-red-500/20';
 const mobileNavBase =
   'flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 whitespace-nowrap';
 

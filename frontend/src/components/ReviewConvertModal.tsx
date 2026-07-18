@@ -74,7 +74,7 @@ export function ReviewConvertModal({ isOpen, onClose, onSubmit, restaurantName }
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-[var(--text)]">
+          <h3 className="text-lg font-semibold text-(--text)">
             Your Review
           </h3>
 
@@ -113,7 +113,7 @@ export function ReviewConvertModal({ isOpen, onClose, onSubmit, restaurantName }
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
+        <div className="flex justify-end gap-3 pt-4 border-t border-(--border)">
           <button
             type="button"
             onClick={handleClose}

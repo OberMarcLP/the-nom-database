@@ -34,12 +34,12 @@ export function AlertDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
       <div
-        className="modal-overlay z-[9998]"
+        className="modal-overlay z-9998"
         onClick={onClose}
       />
-      <div className="modal-glass w-full max-w-md relative z-[9999]">
+      <div className="modal-glass w-full max-w-md relative z-9999">
         <div className="p-6">
           {title && (
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
@@ -50,7 +50,7 @@ export function AlertDialog({
               {title}
             </h3>
           )}
-          <p className="text-gray-600 dark:text-gray-300 mb-6 break-words">
+          <p className="text-gray-600 dark:text-gray-300 mb-6 wrap-break-word">
             {message}
           </p>
           <div className="flex justify-end">

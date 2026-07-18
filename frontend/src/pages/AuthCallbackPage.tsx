@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_URL } from '../services/api';
 
 export function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -18,7 +19,7 @@ export function AuthCallbackPage() {
       localStorage.setItem('refresh_token', refreshToken);
 
       // Fetch full user details
-      fetch('http://localhost:8080/api/auth/me', {
+      fetch(`${API_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -42,8 +43,8 @@ export function AuthCallbackPage() {
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="text-center">
-        <Loader2 className="w-12 h-12 animate-spin text-[var(--accent)] mx-auto mb-4" />
-        <p className="text-[var(--text-muted)]">Completing authentication...</p>
+        <Loader2 className="w-12 h-12 animate-spin text-(--accent) mx-auto mb-4" />
+        <p className="text-(--text-muted)">Completing authentication...</p>
       </div>
     </div>
   );

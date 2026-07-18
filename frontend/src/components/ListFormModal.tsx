@@ -44,7 +44,7 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
         </div>
 
         <div className="admin-modal-body">
-          <p className="text-sm text-[var(--text-muted)] mb-6">
+          <p className="text-sm text-(--text-muted) mb-6">
             Organize restaurants you want to try or your favorites
           </p>
 
@@ -85,9 +85,9 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
                 id="isPublic"
                 checked={isPublic}
                 onChange={(e) => setIsPublic(e.target.checked)}
-                className="w-4 h-4 rounded border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0"
+                className="w-4 h-4 rounded-sm border-(--border) bg-(--surface) text-(--accent) focus:ring-(--accent) focus:ring-offset-0"
               />
-              <label htmlFor="isPublic" className="text-sm text-[var(--text)]">
+              <label htmlFor="isPublic" className="text-sm text-(--text)">
                 Make this list public (others can view it)
               </label>
             </div>

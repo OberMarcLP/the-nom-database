@@ -47,7 +47,7 @@ export function PlaceSearch({ onSelect }: PlaceSearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search restaurant name..."
-            className="admin-input !pl-12"
+            className="admin-input pl-12!"
           />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         </div>

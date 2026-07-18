@@ -32,8 +32,8 @@ export function StarRating({
           <Star
             className={`${sizeClasses[size]} transition-all duration-200 ${
               star <= rating
-                ? 'fill-[var(--warning)] text-[var(--warning)]'
-                : 'fill-none text-[var(--border)]'
+                ? 'fill-(--warning) text-(--warning)'
+                : 'fill-none text-(--border)'
             }`}
             style={star <= rating ? { filter: 'drop-shadow(0 0 8px var(--warning))' } : undefined}
           />

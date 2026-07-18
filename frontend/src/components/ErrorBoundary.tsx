@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default fallback UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-red-50 to-orange-50 dark:from-gray-900 dark:to-gray-800 p-4">
           <div className="max-w-md w-full card p-8 text-center">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <summary className="cursor-pointer text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                   Error details
                 </summary>
-                <pre className="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-auto max-h-40">
+                <pre className="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-sm text-xs overflow-auto max-h-40">
                   {this.state.error.toString()}
                   {this.state.error.stack && `\n\n${this.state.error.stack}`}
                 </pre>

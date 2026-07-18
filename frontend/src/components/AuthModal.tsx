@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_URL } from '../services/api';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface AuthModalProps {
@@ -27,8 +28,8 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
   const from = (location.state as any)?.from?.pathname || '/';
 
   const handleOIDCLogin = () => {
-    // Redirect to backend OIDC login endpoint
-    window.location.href = 'http://localhost:8080/api/auth/oidc/login';
+    // Redirect to backend OIDC login endpoint (same-origin by default)
+    window.location.href = `${API_URL}/api/auth/oidc/login`;
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -103,13 +104,13 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         </div>
 
         <div className="admin-modal-body">
-          <p className="text-sm text-[var(--text-muted)] mb-6">
+          <p className="text-sm text-(--text-muted) mb-6">
             {mode === 'login' ? (
               <>
                 Or{' '}
                 <button
                   onClick={() => setMode('register')}
-                  className="text-[var(--accent)] hover:text-[var(--accent)] font-semibold"
+                  className="text-(--accent) hover:text-(--accent) font-semibold"
                 >
                   create a new account
                 </button>
@@ -119,7 +120,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
                 Or{' '}
                 <button
                   onClick={() => setMode('login')}
-                  className="text-[var(--accent)] hover:text-[var(--accent)] font-semibold"
+                  className="text-(--accent) hover:text-(--accent) font-semibold"
                 >
                   sign in to existing account
                 </button>
@@ -129,8 +130,8 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
           {/* Error message */}
           {error && (
-            <div className="mb-5 p-4 border-2 border-[var(--danger)] bg-[var(--danger)]/10 rounded">
-              <p className="text-sm text-[var(--danger)] font-semibold">{error}</p>
+            <div className="mb-5 p-4 border-2 border-(--danger) bg-(--danger)/10 rounded-sm">
+              <p className="text-sm text-(--danger) font-semibold">{error}</p>
             </div>
           )}
 
@@ -149,10 +150,10 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
               {/* Divider */}
               <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[var(--border)]"></div>
+                  <div className="w-full border-t border-(--border)"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[var(--surface)] text-[var(--text-muted)]">Or continue with email</span>
+                  <span className="px-2 bg-(--surface) text-(--text-muted)">Or continue with email</span>
                 </div>
               </div>
 
@@ -261,7 +262,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <p className="mt-1 text-xs text-[var(--text-muted)]">Must be at least 8 characters</p>
+                <p className="mt-1 text-xs text-(--text-muted)">Must be at least 8 characters</p>
               </div>
               <div className="admin-form-group">
                 <label htmlFor="register-confirm-password" className="admin-label">

@@ -54,7 +54,8 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
         phone: details.phone || '',
         website: details.website || '',
       }));
-    } catch (error) {
+    } catch {
+      // intentionally ignored - user-facing error handling tracked in review backlog
     } finally {
       setLoadingDetails(false);
     }
@@ -202,7 +203,7 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
                 type="checkbox"
                 checked={formData.food_type_ids.includes(ft.id)}
                 onChange={() => handleFoodTypeToggle(ft.id)}
-                className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                className="w-4 h-4 text-green-600 rounded-sm focus:ring-green-500"
               />
               <span className="text-sm">{ft.name}</span>
             </label>

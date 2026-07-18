@@ -32,7 +32,8 @@ export function SuggestionsPage() {
     try {
       const data = await getSuggestions(statusFilter);
       setSuggestions(data);
-    } catch (error) {
+    } catch {
+      // intentionally ignored - user-facing error handling tracked in review backlog
     } finally {
       setLoading(false);
     }
@@ -184,14 +185,14 @@ export function SuggestionsPage() {
 
                   <div className="flex flex-wrap gap-2 mb-2">
                     {suggestion.category && (
-                      <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs">
+                      <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-sm text-xs">
                         {suggestion.category.name}
                       </span>
                     )}
                     {suggestion.food_types?.map((ft) => (
                       <span
                         key={ft.id}
-                        className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs"
+                        className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-sm text-xs"
                       >
                         {ft.name}
                       </span>

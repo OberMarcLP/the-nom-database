@@ -117,7 +117,7 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
                     <img
                       src={URL.createObjectURL(photo.file)}
                       alt={`Preview ${index + 1}`}
-                      className="w-20 h-20 object-cover rounded flex-shrink-0"
+                      className="w-20 h-20 object-cover rounded-sm shrink-0"
                     />
                     <div className="flex-1 space-y-2">
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">

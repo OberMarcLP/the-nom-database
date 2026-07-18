@@ -19,7 +19,7 @@ export function RestaurantCard({ restaurant, onClick, onReview, onReject }: Rest
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="text-xl font-semibold flex-1">{restaurant.name}</h3>
           {restaurant.is_suggestion && (
-            <span className="badge-suggestion animate-pulse flex-shrink-0">
+            <span className="badge-suggestion animate-pulse shrink-0">
               <Lightbulb className="w-3 h-3" />
               Suggestion
             </span>
@@ -49,7 +49,7 @@ export function RestaurantCard({ restaurant, onClick, onReview, onReject }: Rest
 
       {(restaurant.address || restaurant.distance !== undefined) && (
         <div className="flex items-start gap-2 text-sm text-muted mb-3">
-          <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
           <div className="flex-1">
             {restaurant.address && <span className="line-clamp-2">{restaurant.address}</span>}
             {restaurant.distance !== undefined && (

@@ -111,7 +111,7 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete, highlightedPho
 
   if (photos.length === 0) {
     return (
-      <div className="text-center py-12 text-[var(--text-muted)] font-mono text-sm">
+      <div className="text-center py-12 text-(--text-muted) font-mono text-sm">
         NO PHOTOS UPLOADED YET
       </div>
     );
@@ -122,11 +122,13 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete, highlightedPho
       {photos.map((photo) => (
         <div
           key={photo.id}
-          ref={(el) => (photoRefs.current[photo.id] = el)}
-          className={`relative overflow-hidden flex flex-col h-full border-2 bg-[var(--surface)] rounded-lg transition-all ${
+          ref={(el) => {
+            photoRefs.current[photo.id] = el;
+          }}
+          className={`relative overflow-hidden flex flex-col h-full border-2 bg-(--surface) rounded-lg transition-all ${
             highlightedPhotoId === photo.originalId || highlightedPhotoId === photo.id
-              ? 'border-[var(--accent)] shadow-[0_0_20px_var(--accent-dim)] scale-[1.02]'
-              : 'border-[var(--border)]'
+              ? 'border-(--accent) shadow-[0_0_20px_var(--accent-dim)] scale-[1.02]'
+              : 'border-(--border)'
           }`}
         >
           <div className="relative group flex-1 cursor-pointer" onClick={() => openLightbox(photos.indexOf(photo))}>
@@ -154,7 +156,7 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete, highlightedPho
                   e.stopPropagation();
                   handleDelete(photo.id);
                 }}
-                className="admin-btn-icon bg-[var(--danger)] hover:bg-[var(--danger)]"
+                className="admin-btn-icon bg-(--danger) hover:bg-(--danger)"
                 title="Delete photo"
               >
                 <Trash2 className="w-4 h-4" />
@@ -163,13 +165,13 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete, highlightedPho
 
             {/* Overlay caption and info on the image */}
             {editingId !== photo.id && (
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end p-4">
+              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end p-4">
                 <h3 className="text-white font-bold text-base mb-2">{photo.caption}</h3>
 
                 {photo.source === 'review' && photo.reviewInfo ? (
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs">
-                      <User className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      <User className="w-3.5 h-3.5 text-(--accent)" />
                       <span className="text-white font-mono">{photo.reviewInfo.username}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
@@ -180,7 +182,7 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete, highlightedPho
                             key={i}
                             className={`w-3.5 h-3.5 ${
                               i < photo.reviewInfo!.ratings.food
-                                ? 'fill-[var(--accent)] text-[var(--accent)]'
+                                ? 'fill-(--accent) text-(--accent)'
                                 : 'text-white/20'
                             }`}
                           />
@@ -201,7 +203,7 @@ export function PhotoGallery({ photos, onCaptionUpdate, onDelete, highlightedPho
           </div>
 
           {editingId === photo.id && (
-            <div className="p-4 space-y-3 bg-[var(--surface)]">
+            <div className="p-4 space-y-3 bg-(--surface)">
               <input
                 type="text"
                 value={editCaption}

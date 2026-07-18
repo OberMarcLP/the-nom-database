@@ -53,7 +53,7 @@ export function LazyImage({ src, alt, className = '', onError }: LazyImageProps)
       {/* Loading skeleton */}
       {isLoading && (
         <div className={`absolute inset-0 ${className}`}>
-          <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+          <div className="w-full h-full bg-linear-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Loader2, CheckCircle, XCircle, Tag, Utensils, MapPin, Phone, Globe } from 'lucide-react';
-import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters } from '../services/api';
+import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters, isSafeHttpUrl } from '../services/api';
 import { useRestaurants, useRestaurant, useUpdateRestaurant, useDeleteRestaurant, useCreateSuggestion, useConvertSuggestion, useDeleteSuggestion } from '../hooks/useApi';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { RestaurantForm } from '../components/RestaurantForm';
@@ -321,21 +321,21 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
 
             {viewingSuggestion.address && (
               <div className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
-                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-5 h-5 mt-0.5 shrink-0" />
                 <span>{viewingSuggestion.address}</span>
               </div>
             )}
 
             {viewingSuggestion.phone && (
               <a href={`tel:${viewingSuggestion.phone}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
-                <Phone className="w-5 h-5 flex-shrink-0" />
+                <Phone className="w-5 h-5 shrink-0" />
                 <span>{viewingSuggestion.phone}</span>
               </a>
             )}
 
-            {viewingSuggestion.website && (
+            {viewingSuggestion.website && isSafeHttpUrl(viewingSuggestion.website) && (
               <a href={viewingSuggestion.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
-                <Globe className="w-5 h-5 flex-shrink-0" />
+                <Globe className="w-5 h-5 shrink-0" />
                 <span className="truncate">{viewingSuggestion.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
               </a>
             )}

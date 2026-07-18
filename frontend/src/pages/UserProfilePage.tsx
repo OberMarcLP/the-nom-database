@@ -114,7 +114,7 @@ export default function UserProfilePage() {
         <div className="card-glass p-8 mb-6 animate-slide-down">
           <div className="flex items-start gap-6">
             {/* Avatar */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {user.avatar_url ? (
                 <img
                   src={user.avatar_url}
@@ -228,8 +228,8 @@ export default function UserProfilePage() {
               onClick={() => setActiveTab('reviews')}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === 'reviews'
-                  ? 'text-[var(--accent)]'
-                  : 'border-transparent hover:text-[var(--text)]'
+                  ? 'text-(--accent)'
+                  : 'border-transparent hover:text-(--text)'
               }`}
               style={activeTab === 'reviews' ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : { color: 'var(--text-muted)' }}
             >
@@ -239,8 +239,8 @@ export default function UserProfilePage() {
               onClick={() => setActiveTab('lists')}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === 'lists'
-                  ? 'text-[var(--accent)]'
-                  : 'border-transparent hover:text-[var(--text)]'
+                  ? 'text-(--accent)'
+                  : 'border-transparent hover:text-(--text)'
               }`}
               style={activeTab === 'lists' ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : { color: 'var(--text-muted)' }}
             >
@@ -250,8 +250,8 @@ export default function UserProfilePage() {
               onClick={() => setActiveTab('about')}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === 'about'
-                  ? 'text-[var(--accent)]'
-                  : 'border-transparent hover:text-[var(--text)]'
+                  ? 'text-(--accent)'
+                  : 'border-transparent hover:text-(--text)'
               }`}
               style={activeTab === 'about' ? { borderColor: 'var(--accent)', color: 'var(--accent)' } : { color: 'var(--text-muted)' }}
             >

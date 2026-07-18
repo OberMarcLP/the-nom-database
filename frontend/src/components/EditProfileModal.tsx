@@ -113,7 +113,7 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
         </div>
 
         <div className="admin-modal-body">
-          <p className="text-sm text-[var(--text-muted)] mb-6">
+          <p className="text-sm text-(--text-muted) mb-6">
             Update your profile information
           </p>
 
@@ -125,7 +125,7 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
                 alt={user?.username}
                 size="xl"
                 fallbackText={user?.full_name || user?.username}
-                className="ring-4 ring-[var(--border)]"
+                className="ring-4 ring-(--border)"
               />
               <button
                 type="button"
@@ -144,22 +144,22 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
               onChange={handleAvatarUpload}
               className="hidden"
             />
-            <p className="text-xs text-[var(--text-muted)] mt-3 text-center">
+            <p className="text-xs text-(--text-muted) mt-3 text-center">
               {uploading ? 'Uploading...' : 'Click avatar to upload new picture (max 5MB)'}
             </p>
           </div>
 
           {isOIDCUser && (
-            <div className="mb-5 p-4 border-2 border-[var(--info)] bg-[var(--info)]/10 rounded">
-              <p className="text-sm text-[var(--info)] font-semibold">
+            <div className="mb-5 p-4 border-2 border-(--info) bg-(--info)/10 rounded-sm">
+              <p className="text-sm text-(--info) font-semibold">
                 Username cannot be changed for OIDC accounts
               </p>
             </div>
           )}
 
           {error && (
-            <div className="mb-5 p-4 border-2 border-[var(--danger)] bg-[var(--danger)]/10 rounded">
-              <p className="text-sm text-[var(--danger)] font-semibold">{error}</p>
+            <div className="mb-5 p-4 border-2 border-(--danger) bg-(--danger)/10 rounded-sm">
+              <p className="text-sm text-(--danger) font-semibold">{error}</p>
             </div>
           )}
 

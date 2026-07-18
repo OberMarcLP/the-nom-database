@@ -1,4 +1,14 @@
-const API_URL = import.meta.env.VITE_API_URL || '';
+export const API_URL = import.meta.env.VITE_API_URL || '';
+
+// Allow only web schemes in user-provided links (blocks javascript:, data: etc.)
+export function isSafeHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 export interface Category {
   id: number;

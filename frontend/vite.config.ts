@@ -30,14 +30,20 @@ export default defineConfig({
         drop_debugger: true,
       },
     },
-    // Code splitting configuration
+    // Code splitting configuration (function form - required by Vite 8/Rolldown)
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor libraries into separate chunks
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'maps-vendor': ['@react-google-maps/api', '@googlemaps/js-api-loader'],
-          'icons-vendor': ['lucide-react'],
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return;
+          if (/[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) {
+            return 'react-vendor';
+          }
+          if (id.includes('googlemaps') || id.includes('react-google-maps')) {
+            return 'maps-vendor';
+          }
+          if (id.includes('lucide')) {
+            return 'icons-vendor';
+          }
         },
       },
     },

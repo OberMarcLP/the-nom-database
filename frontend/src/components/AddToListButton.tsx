@@ -91,19 +91,19 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
             </div>
 
             <div className="admin-modal-body">
-              <p className="text-sm text-[var(--text-muted)] mb-6">
+              <p className="text-sm text-(--text-muted) mb-6">
                 Select lists to add this restaurant to
               </p>
 
               {loading ? (
-                <div className="text-center py-8 text-[var(--text-muted)]">
+                <div className="text-center py-8 text-(--text-muted)">
                   Loading lists...
                 </div>
               ) : (
                 <>
                   {lists.length === 0 && !showCreateForm ? (
                     <div className="text-center py-8">
-                      <p className="mb-4 text-[var(--text-muted)]">You don't have any lists yet.</p>
+                      <p className="mb-4 text-(--text-muted)">You don't have any lists yet.</p>
                       <button
                         onClick={() => setShowCreateForm(true)}
                         className="admin-btn-primary inline-flex items-center gap-2"
@@ -121,23 +121,23 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
                             onClick={() => handleToggleList(list.id, list.contains_restaurant)}
                             className={`w-full p-3 rounded border-2 transition-all text-left flex items-center justify-between ${
                               list.contains_restaurant
-                                ? 'border-[var(--accent)] bg-[var(--accent)]/10'
-                                : 'border-[var(--border)] hover:border-[var(--accent)]/50'
+                                ? 'border-(--accent) bg-(--accent)/10'
+                                : 'border-(--border) hover:border-(--accent)/50'
                             }`}
                           >
                             <div>
-                              <h3 className="font-semibold text-[var(--text)]">{list.name}</h3>
+                              <h3 className="font-semibold text-(--text)">{list.name}</h3>
                               {list.description && (
-                                <p className="text-sm text-[var(--text-muted)]">
+                                <p className="text-sm text-(--text-muted)">
                                   {list.description}
                                 </p>
                               )}
-                              <p className="text-xs text-[var(--text-muted)] mt-1">
+                              <p className="text-xs text-(--text-muted) mt-1">
                                 {list.restaurant_count || 0} restaurant{list.restaurant_count !== 1 ? 's' : ''}
                               </p>
                             </div>
                             {list.contains_restaurant && (
-                              <Check className="w-5 h-5 text-[var(--accent)] flex-shrink-0" />
+                              <Check className="w-5 h-5 text-(--accent) shrink-0" />
                             )}
                           </button>
                         ))}

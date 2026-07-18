@@ -35,22 +35,22 @@ const Toast = ({ toast, onClose }: ToastProps) => {
   };
 
   const icons = {
-    success: <CheckCircle className="w-5 h-5 text-[var(--success)]" />,
-    error: <AlertCircle className="w-5 h-5 text-[var(--danger)]" />,
-    warning: <AlertTriangle className="w-5 h-5 text-[var(--warning)]" />,
-    info: <Info className="w-5 h-5 text-[var(--info)]" />,
+    success: <CheckCircle className="w-5 h-5 text-(--success)" />,
+    error: <AlertCircle className="w-5 h-5 text-(--danger)" />,
+    warning: <AlertTriangle className="w-5 h-5 text-(--warning)" />,
+    info: <Info className="w-5 h-5 text-(--info)" />,
   };
 
   const bgColors = {
-    success: 'bg-[var(--success)]/10 border-[var(--success)]',
-    error: 'bg-[var(--danger)]/10 border-[var(--danger)]',
-    warning: 'bg-[var(--warning)]/10 border-[var(--warning)]',
-    info: 'bg-[var(--info)]/10 border-[var(--info)]',
+    success: 'bg-(--success)/10 border-(--success)',
+    error: 'bg-(--danger)/10 border-(--danger)',
+    warning: 'bg-(--warning)/10 border-(--warning)',
+    info: 'bg-(--info)/10 border-(--info)',
   };
 
   return (
     <div
-      className={`flex items-start gap-3 p-4 rounded border-2 shadow-lg bg-[var(--surface)] transition-all duration-300 ${
+      className={`flex items-start gap-3 p-4 rounded border-2 shadow-lg bg-(--surface) transition-all duration-300 ${
         bgColors[toast.type]
       } ${
         isExiting
@@ -58,17 +58,17 @@ const Toast = ({ toast, onClose }: ToastProps) => {
           : 'opacity-100 translate-x-0'
       }`}
     >
-      <div className="flex-shrink-0 mt-0.5">{icons[toast.type]}</div>
+      <div className="shrink-0 mt-0.5">{icons[toast.type]}</div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[var(--text)] break-words">
+        <p className="text-sm font-medium text-(--text) wrap-break-word">
           {toast.message}
         </p>
       </div>
 
       <button
         onClick={handleClose}
-        className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+        className="shrink-0 text-(--text-muted) hover:text-(--text) transition-colors"
       >
         <X className="w-4 h-4" />
       </button>

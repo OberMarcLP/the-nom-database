@@ -86,7 +86,7 @@ export function RestaurantPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+        <Loader2 className="w-8 h-8 animate-spin text-(--accent)" />
       </div>
     );
   }

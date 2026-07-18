@@ -11,13 +11,13 @@ describe('StarRating', () => {
 
   it('renders correct number of filled stars based on rating', () => {
     const { container } = render(<StarRating rating={4} />);
-    const filledStars = container.querySelectorAll('.fill-yellow-400');
+    const filledStars = container.querySelectorAll('[class*="fill-(--warning)"]');
     expect(filledStars).toHaveLength(4);
   });
 
   it('renders filled stars based on rating', () => {
     const { container } = render(<StarRating rating={3} />);
-    const filledStars = container.querySelectorAll('.text-yellow-400');
+    const filledStars = container.querySelectorAll('[class*="text-(--warning)"]');
     expect(filledStars.length).toBeGreaterThan(0);
   });
 
@@ -52,19 +52,19 @@ describe('StarRating', () => {
   it('handles half ratings correctly', () => {
     const { container } = render(<StarRating rating={3.5} />);
     // Should fill 4 stars (rounds up for visual)
-    const filledStars = container.querySelectorAll('.fill-yellow-400');
+    const filledStars = container.querySelectorAll('[class*="fill-(--warning)"]');
     expect(filledStars.length).toBeGreaterThanOrEqual(3);
   });
 
   it('handles zero rating', () => {
     const { container } = render(<StarRating rating={0} />);
-    const filledStars = container.querySelectorAll('.fill-yellow-400');
+    const filledStars = container.querySelectorAll('[class*="fill-(--warning)"]');
     expect(filledStars).toHaveLength(0);
   });
 
   it('handles maximum rating', () => {
     const { container } = render(<StarRating rating={5} />);
-    const filledStars = container.querySelectorAll('.fill-yellow-400');
+    const filledStars = container.querySelectorAll('[class*="fill-(--warning)"]');
     expect(filledStars).toHaveLength(5);
   });
 });
