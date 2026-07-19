@@ -36,7 +36,7 @@ const AdminSettings = lazy(() => import('./pages/AdminSettings').then(m => ({ de
 // Loading fallback component
 const PageLoader = () => (
   <div className="flex items-center justify-center h-64">
-    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+    <Loader2 className="w-8 h-8 animate-spin text-(--info)" />
   </div>
 );
 

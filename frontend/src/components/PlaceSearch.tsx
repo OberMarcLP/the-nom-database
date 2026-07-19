@@ -49,7 +49,7 @@ export function PlaceSearch({ onSelect }: PlaceSearchProps) {
             placeholder="Search restaurant name..."
             className="admin-input pl-12!"
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-(--text-muted)" />
         </div>
         <button
           onClick={handleSearch}
@@ -60,7 +60,7 @@ export function PlaceSearch({ onSelect }: PlaceSearchProps) {
         </button>
       </div>
 
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+      {error && <p className="text-(--danger) text-sm mt-2">{error}</p>}
 
       {results.length > 0 && (
         <div className="absolute z-10 w-full mt-2 rounded-lg shadow-lg border-2 max-h-80 overflow-y-auto" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>

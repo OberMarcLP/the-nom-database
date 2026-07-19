@@ -96,7 +96,7 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
           <label className="label">Search Google Maps</label>
           <PlaceSearch onSelect={handlePlaceSelect} />
           {loadingDetails && (
-            <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 mt-2 text-sm text-(--text-muted)">
               <Loader2 className="w-4 h-4 animate-spin" />
               Fetching restaurant details...
             </div>
@@ -193,7 +193,7 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
                 <button
                   type="button"
                   onClick={() => handleFoodTypeToggle(ft.id)}
-                  className="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5"
+                  className="hover:bg-(--surface-hover) rounded-full p-0.5"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -202,13 +202,13 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-3 border border-white/30 dark:border-white/10 rounded-xl bg-white/20 dark:bg-gray-700/20 backdrop-blur-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-3 border border-white/30 dark:border-white/10 rounded-xl bg-white/20 dark:bg-(--surface)/20">
           {foodTypes.map((ft) => (
             <label
               key={ft.id}
               className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-200 ${
                 formData.food_type_ids.includes(ft.id)
-                  ? 'bg-green-500/20 dark:bg-green-500/30 border border-green-500/40'
+                  ? 'bg-(--accent-dim) border border-(--success)'
                   : 'hover:bg-white/40 dark:hover:bg-white/10 border border-transparent'
               }`}
             >
@@ -216,7 +216,7 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
                 type="checkbox"
                 checked={formData.food_type_ids.includes(ft.id)}
                 onChange={() => handleFoodTypeToggle(ft.id)}
-                className="w-4 h-4 text-green-600 rounded-sm focus:ring-green-500"
+                className="w-4 h-4 text-(--success) rounded-sm focus:ring-(--success)"
               />
               <span className="text-sm">{ft.name}</span>
             </label>
@@ -225,7 +225,7 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
       </div>
 
       {formData.latitude && formData.longitude && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-(--text-muted)">
           Location: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
         </div>
       )}

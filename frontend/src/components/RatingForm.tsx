@@ -120,7 +120,7 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
                       className="w-20 h-20 object-cover rounded-sm shrink-0"
                     />
                     <div className="flex-1 space-y-2">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <p className="text-sm font-medium text-(--text)">
                         {photo.file.name}
                       </p>
                       <input
@@ -135,9 +135,9 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
                     <button
                       type="button"
                       onClick={() => removePhoto(index)}
-                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900 rounded-full transition-colors self-start"
+                      className="p-2 hover:bg-(--danger-dim) rounded-full transition-colors self-start"
                     >
-                      <X className="w-4 h-4 text-red-500" />
+                      <X className="w-4 h-4 text-(--danger)" />
                     </button>
                   </div>
                 </div>

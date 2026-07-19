@@ -77,13 +77,13 @@ export function ListsPage() {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-(--accent)"></div>
         </div>
       ) : lists.length === 0 ? (
         <div className="card text-center py-12">
-          <Bookmark className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+          <Bookmark className="w-16 h-16 mx-auto mb-4 text-(--text-muted)" />
           <h2 className="text-xl font-semibold mb-2">No Lists Yet</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-(--text-muted) mb-4">
             Create your first list to organize restaurants you want to try or your favorites!
           </p>
           <button
@@ -104,7 +104,7 @@ export function ListsPage() {
                 onClick={() => handleSelectList(list.id)}
                 className={`w-full card p-4 text-left transition-all ${
                   selectedList?.list.id === list.id
-                    ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    ? 'ring-2 ring-(--accent) bg-(--accent-dim)'
                     : 'hover:shadow-lg'
                 }`}
               >
@@ -112,28 +112,28 @@ export function ListsPage() {
                   <h3 className="font-semibold text-lg">{list.name}</h3>
                   <div className="flex items-center gap-1">
                     {list.is_public ? (
-                      <div title="Public"><Eye className="w-4 h-4 text-green-600" /></div>
+                      <div title="Public"><Eye className="w-4 h-4 text-(--success)" /></div>
                     ) : (
-                      <div title="Private"><EyeOff className="w-4 h-4 text-gray-400" /></div>
+                      <div title="Private"><EyeOff className="w-4 h-4 text-(--text-muted)" /></div>
                     )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(list.id);
                       }}
-                      className="p-1 hover:bg-red-100 dark:hover:bg-red-900 rounded-sm transition-colors"
+                      className="p-1 hover:bg-(--danger-dim) rounded-sm transition-colors"
                       title="Delete list"
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4 text-(--danger)" />
                     </button>
                   </div>
                 </div>
                 {list.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <p className="text-sm text-(--text-muted) mb-2">
                     {list.description}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 dark:text-gray-500">
+                <p className="text-xs text-(--text-muted)">
                   {list.restaurant_count || 0} restaurant{list.restaurant_count !== 1 ? 's' : ''}
                 </p>
               </button>
@@ -144,25 +144,25 @@ export function ListsPage() {
           <div className="lg:col-span-2">
             {loadingDetail ? (
               <div className="card text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-(--accent)"></div>
               </div>
             ) : selectedList ? (
               <div>
                 <div className="card p-6 mb-4">
                   <h2 className="text-2xl font-bold mb-2">{selectedList.list.name}</h2>
                   {selectedList.list.description && (
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="text-(--text-muted) mb-2">
                       {selectedList.list.description}
                     </p>
                   )}
-                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                  <p className="text-sm text-(--text-muted)">
                     {selectedList.list.is_public ? 'Public list' : 'Private list'} •{' '}
                     {selectedList.restaurants.length} restaurant{selectedList.restaurants.length !== 1 ? 's' : ''}
                   </p>
                 </div>
 
                 {selectedList.restaurants.length === 0 ? (
-                  <div className="card text-center py-8 text-gray-500 dark:text-gray-400">
+                  <div className="card text-center py-8 text-(--text-muted)">
                     This list is empty. Add restaurants from their detail pages!
                   </div>
                 ) : (
@@ -175,17 +175,17 @@ export function ListsPage() {
                               {item.restaurant?.name}
                             </h3>
                             {item.restaurant?.address && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-1 mb-2">
+                              <p className="text-sm text-(--text-muted) flex items-start gap-1 mb-2">
                                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                                 {item.restaurant.address}
                               </p>
                             )}
                             {item.notes && (
-                              <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-sm">
+                              <p className="text-sm text-(--text) mt-2 p-2 bg-(--warning)/10 rounded-sm">
                                 <strong>Note:</strong> {item.notes}
                               </p>
                             )}
-                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                            <p className="text-xs text-(--text-muted) mt-2">
                               Added {new Date(item.added_at).toLocaleDateString()}
                             </p>
                           </div>
@@ -196,8 +196,8 @@ export function ListsPage() {
                 )}
               </div>
             ) : (
-              <div className="card text-center py-12 text-gray-500 dark:text-gray-400">
-                <Bookmark className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-700" />
+              <div className="card text-center py-12 text-(--text-muted)">
+                <Bookmark className="w-16 h-16 mx-auto mb-4 text-(--text-muted) dark:text-(--text)" />
                 <p>Select a list to view its restaurants</p>
               </div>
             )}

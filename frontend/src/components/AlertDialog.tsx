@@ -42,7 +42,7 @@ export function AlertDialog({
       <div className="modal-glass w-full max-w-md relative z-9999">
         <div className="p-6">
           {title && (
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold mb-4 text-(--text) flex items-center gap-2">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
                 <circle cx="12" cy="12" r="3" fill="currentColor"/>
@@ -50,7 +50,7 @@ export function AlertDialog({
               {title}
             </h3>
           )}
-          <p className="text-gray-600 dark:text-gray-300 mb-6 wrap-break-word">
+          <p className="text-(--text-muted) mb-6 wrap-break-word">
             {message}
           </p>
           <div className="flex justify-end">

@@ -191,7 +191,7 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-(--info)" />
       </div>
     );
   }
@@ -213,11 +213,11 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
 
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-(--info)" />
           </div>
         ) : restaurants.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-(--text-muted) mb-4">
               {Object.keys(filters).length > 0 ? 'No restaurants match your filters.' : 'No restaurants yet.'}
             </p>
             {Object.keys(filters).length === 0 && isAuthenticated && (
@@ -291,8 +291,8 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
       >
         {viewingSuggestion && (
           <div className="space-y-6">
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            <div className="bg-(--warning)/10 border border-(--warning) rounded-lg p-4">
+              <p className="text-sm text-(--warning)">
                 This is a pending suggestion. Review and convert it to add it to the database.
               </p>
             </div>
@@ -306,13 +306,13 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
 
             <div className="flex flex-wrap gap-2">
               {viewingSuggestion.category && (
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-(--surface-hover) text-(--info) rounded-full">
                   <Tag className="w-4 h-4" />
                   {viewingSuggestion.category.name}
                 </span>
               )}
               {viewingSuggestion.food_types?.map((ft) => (
-                <span key={ft.id} className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
+                <span key={ft.id} className="inline-flex items-center gap-1 px-3 py-1.5 bg-(--surface-hover) text-(--success) rounded-full">
                   <Utensils className="w-4 h-4" />
                   {ft.name}
                 </span>
@@ -320,21 +320,21 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
             </div>
 
             {viewingSuggestion.address && (
-              <div className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
+              <div className="flex items-start gap-2 text-(--text-muted)">
                 <MapPin className="w-5 h-5 mt-0.5 shrink-0" />
                 <span>{viewingSuggestion.address}</span>
               </div>
             )}
 
             {viewingSuggestion.phone && (
-              <a href={`tel:${viewingSuggestion.phone}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
+              <a href={`tel:${viewingSuggestion.phone}`} className="flex items-center gap-2 text-(--text-muted) hover:text-(--accent) transition-colors">
                 <Phone className="w-5 h-5 shrink-0" />
                 <span>{viewingSuggestion.phone}</span>
               </a>
             )}
 
             {viewingSuggestion.website && isSafeHttpUrl(viewingSuggestion.website) && (
-              <a href={viewingSuggestion.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
+              <a href={viewingSuggestion.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-(--text-muted) hover:text-(--accent) transition-colors">
                 <Globe className="w-5 h-5 shrink-0" />
                 <span className="truncate">{viewingSuggestion.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
               </a>

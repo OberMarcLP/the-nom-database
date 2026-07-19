@@ -31,7 +31,7 @@ export function UserBadge({ user, size = 'md', showAvatar = true, className = ''
           fallbackText={user.full_name || user.username}
         />
       )}
-      <span className={`${textSize} text-gray-700 dark:text-gray-300`}>
+      <span className={`${textSize} text-(--text)`}>
         @{user.username}
       </span>
     </div>

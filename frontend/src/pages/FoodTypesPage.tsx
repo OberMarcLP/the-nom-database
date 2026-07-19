@@ -67,7 +67,7 @@ export function FoodTypesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-(--info)" />
       </div>
     );
   }
@@ -75,8 +75,8 @@ export function FoodTypesPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 rounded-xl bg-linear-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm">
-          <Utensils className="w-6 h-6 text-green-500" />
+        <div className="p-3 rounded-xl bg-linear-to-br from-(--accent-dim) to-emerald-500/20">
+          <Utensils className="w-6 h-6 text-(--success)" />
         </div>
         <h1 className="text-3xl font-bold text-gradient">Food Types</h1>
       </div>
@@ -98,7 +98,7 @@ export function FoodTypesPage() {
       </PermissionGuard>
 
       {foodTypes.length === 0 ? (
-        <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+        <p className="text-center text-(--text-muted) py-8">
           No food types yet. Add your first food type above.
         </p>
       ) : (
@@ -134,13 +134,13 @@ export function FoodTypesPage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => startEdit(foodType)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                        className="p-2 hover:bg-(--surface-hover) rounded-lg"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(foodType.id)}
-                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg"
+                        className="p-2 hover:bg-(--danger-dim) text-(--danger) rounded-lg"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

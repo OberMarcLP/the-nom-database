@@ -47,7 +47,7 @@ export function Avatar({ src, alt, size = 'md', fallbackText, className = '' }: 
 
   return (
     <div
-      className={`${sizeClass} rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-blue-500 to-purple-600 text-white font-semibold ${className}`}
+      className={`${sizeClass} rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-(--accent) to-(--info) text-white font-semibold ${className}`}
     >
       {src ? (
         <img

@@ -107,8 +107,8 @@ export function PhotoUpload({ onUpload }: PhotoUploadProps) {
           onDrop={handleDrop}
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
             dragActive
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+              ? 'border-(--accent) bg-(--accent-dim)'
+              : 'border-(--border) hover:border-(--text-muted)'
           }`}
         >
           <input
@@ -118,8 +118,8 @@ export function PhotoUpload({ onUpload }: PhotoUploadProps) {
             onChange={handleFileInput}
             className="hidden"
           />
-          <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-600 dark:text-gray-400 mb-2">
+          <Upload className="w-12 h-12 mx-auto mb-4 text-(--text-muted)" />
+          <p className="text-(--text-muted) mb-2">
             Drag and drop an image here, or
           </p>
           <button
@@ -129,7 +129,7 @@ export function PhotoUpload({ onUpload }: PhotoUploadProps) {
           >
             Choose File
           </button>
-          <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+          <p className="text-xs text-(--text-muted) mt-2">
             JPEG, PNG, or WebP (max 5MB)
           </p>
         </div>
@@ -144,7 +144,7 @@ export function PhotoUpload({ onUpload }: PhotoUploadProps) {
             <button
               type="button"
               onClick={handleClear}
-              className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full"
+              className="absolute top-2 right-2 p-2 bg-(--danger) hover:brightness-110 text-white rounded-full"
             >
               <X className="w-4 h-4" />
             </button>

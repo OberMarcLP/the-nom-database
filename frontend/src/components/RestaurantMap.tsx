@@ -23,16 +23,16 @@ export function RestaurantMap({ latitude, longitude, name }: RestaurantMapProps)
 
   if (loadError) {
     return (
-      <div className="w-full h-[300px] bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">Failed to load map</p>
+      <div className="w-full h-[300px] bg-(--surface-hover) rounded-lg flex items-center justify-center">
+        <p className="text-(--text-muted)">Failed to load map</p>
       </div>
     );
   }
 
   if (!isLoaded) {
     return (
-      <div className="w-full h-[300px] bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center animate-pulse">
-        <p className="text-gray-500 dark:text-gray-400">Loading map...</p>
+      <div className="w-full h-[300px] bg-(--surface-hover) rounded-lg flex items-center justify-center animate-pulse">
+        <p className="text-(--text-muted)">Loading map...</p>
       </div>
     );
   }

@@ -42,28 +42,28 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default fallback UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-red-50 to-orange-50 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-(--bg) to-(--surface-hover) p-4">
           <div className="max-w-md w-full card p-8 text-center">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+              <div className="w-16 h-16 rounded-full bg-(--danger-dim) flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-(--danger)" />
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold mb-2 text-(--text)">
               Oops! Something went wrong
             </h1>
 
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-(--text-muted) mb-6">
               We encountered an unexpected error. Don't worry, your data is safe.
             </p>
 
             {this.state.error && (
               <details className="mb-6 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                <summary className="cursor-pointer text-sm text-(--text-muted) hover:text-(--text) dark:hover:text-(--text-muted)">
                   Error details
                 </summary>
-                <pre className="mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-sm text-xs overflow-auto max-h-40">
+                <pre className="mt-2 p-3 bg-(--surface-hover) rounded-sm text-xs overflow-auto max-h-40">
                   {this.state.error.toString()}
                   {this.state.error.stack && `\n\n${this.state.error.stack}`}
                 </pre>

@@ -114,7 +114,7 @@ export function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-(--info)" />
       </div>
     );
   }
@@ -122,8 +122,8 @@ export function SettingsPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 rounded-xl bg-linear-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-sm">
-          <SettingsIcon className="w-6 h-6 text-purple-500" />
+        <div className="p-3 rounded-xl bg-linear-to-br from-(--accent-dim) to-(--accent-dim)">
+          <SettingsIcon className="w-6 h-6 text-(--accent)" />
         </div>
         <h1 className="text-3xl font-bold text-gradient">Settings</h1>
       </div>
@@ -132,8 +132,8 @@ export function SettingsPage() {
         {/* Categories Section */}
         <div className="card-glass p-6 space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
-              <Tag className="w-5 h-5 text-blue-500" />
+            <div className="p-2 rounded-lg bg-(--accent-dim)">
+              <Tag className="w-5 h-5 text-(--info)" />
             </div>
             <h2 className="text-xl font-bold">Categories</h2>
           </div>
@@ -153,7 +153,7 @@ export function SettingsPage() {
           </form>
 
           {categories.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+            <p className="text-center text-(--text-muted) py-8">
               No categories yet. Add your first category above.
             </p>
           ) : (
@@ -188,23 +188,23 @@ export function SettingsPage() {
                   ) : (
                     <>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                          <Tag className="w-4 h-4 text-blue-500" />
+                        <div className="w-8 h-8 rounded-full bg-(--accent-dim) flex items-center justify-center">
+                          <Tag className="w-4 h-4 text-(--info)" />
                         </div>
                         <span className="font-medium">{category.name}</span>
                       </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => startEditCategory(category)}
-                          className="p-2 rounded-lg btn-glass hover:bg-blue-500/20"
+                          className="p-2 rounded-lg btn-glass hover:bg-(--accent-dim)"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteCategory(category.id)}
-                          className="p-2 rounded-lg btn-glass hover:bg-red-500/20"
+                          className="p-2 rounded-lg btn-glass hover:bg-(--danger-dim)"
                         >
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                          <Trash2 className="w-4 h-4 text-(--danger)" />
                         </button>
                       </div>
                     </>
@@ -218,8 +218,8 @@ export function SettingsPage() {
         {/* Food Types Section */}
         <div className="card-glass p-6 space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-green-500/20 backdrop-blur-sm">
-              <Utensils className="w-5 h-5 text-green-500" />
+            <div className="p-2 rounded-lg bg-(--accent-dim)">
+              <Utensils className="w-5 h-5 text-(--success)" />
             </div>
             <h2 className="text-xl font-bold">Food Types</h2>
           </div>
@@ -239,7 +239,7 @@ export function SettingsPage() {
           </form>
 
           {foodTypes.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+            <p className="text-center text-(--text-muted) py-8">
               No food types yet. Add your first food type above.
             </p>
           ) : (
@@ -274,23 +274,23 @@ export function SettingsPage() {
                   ) : (
                     <>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                          <Utensils className="w-4 h-4 text-green-500" />
+                        <div className="w-8 h-8 rounded-full bg-(--accent-dim) flex items-center justify-center">
+                          <Utensils className="w-4 h-4 text-(--success)" />
                         </div>
                         <span className="font-medium">{foodType.name}</span>
                       </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => startEditFoodType(foodType)}
-                          className="p-2 rounded-lg btn-glass hover:bg-blue-500/20"
+                          className="p-2 rounded-lg btn-glass hover:bg-(--accent-dim)"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteFoodType(foodType.id)}
-                          className="p-2 rounded-lg btn-glass hover:bg-red-500/20"
+                          className="p-2 rounded-lg btn-glass hover:bg-(--danger-dim)"
                         >
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                          <Trash2 className="w-4 h-4 text-(--danger)" />
                         </button>
                       </div>
                     </>

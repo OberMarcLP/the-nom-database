@@ -94,7 +94,7 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
         <label className="admin-label">Search Google Maps</label>
         <PlaceSearch onSelect={handlePlaceSelect} />
         {loadingDetails && (
-          <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 mt-2 text-sm text-(--text-muted)">
             <Loader2 className="w-4 h-4 animate-spin" />
             Fetching restaurant details...
           </div>
@@ -174,13 +174,13 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
             {selectedFoodTypes.map(ft => (
               <span
                 key={ft.id}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm"
+                className="inline-flex items-center gap-1 px-3 py-1 bg-(--surface-hover) text-(--success) rounded-full text-sm"
               >
                 {ft.name}
                 <button
                   type="button"
                   onClick={() => handleFoodTypeToggle(ft.id)}
-                  className="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5"
+                  className="hover:bg-(--surface-hover) rounded-full p-0.5"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -189,21 +189,21 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-lg">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border border-(--border) rounded-lg">
           {foodTypes.map((ft) => (
             <label
               key={ft.id}
               className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
                 formData.food_type_ids.includes(ft.id)
-                  ? 'bg-green-100 dark:bg-green-900/50'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-(--accent-dim)'
+                  : 'hover:bg-(--surface-hover)'
               }`}
             >
               <input
                 type="checkbox"
                 checked={formData.food_type_ids.includes(ft.id)}
                 onChange={() => handleFoodTypeToggle(ft.id)}
-                className="w-4 h-4 text-green-600 rounded-sm focus:ring-green-500"
+                className="w-4 h-4 text-(--success) rounded-sm focus:ring-(--success)"
               />
               <span className="text-sm">{ft.name}</span>
             </label>
@@ -223,7 +223,7 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
       </div>
 
       {formData.latitude && formData.longitude && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-(--text-muted)">
           Location: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
         </div>
       )}

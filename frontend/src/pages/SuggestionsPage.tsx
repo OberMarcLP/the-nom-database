@@ -97,8 +97,8 @@ export function SuggestionsPage() {
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+      pending: 'bg-(--surface-hover) text-(--warning)',
+      rejected: 'bg-(--surface-hover) text-(--danger)',
     };
     return badges[status as keyof typeof badges] || '';
   };
@@ -114,7 +114,7 @@ export function SuggestionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-(--info)" />
       </div>
     );
   }
@@ -141,8 +141,8 @@ export function SuggestionsPage() {
             onClick={() => setStatusFilter(tab.value as StatusFilter)}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
               statusFilter === tab.value
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-(--info) text-white'
+                : 'bg-(--surface-hover) text-(--text) hover:bg-(--surface-hover)'
             }`}
           >
             {tab.label}
@@ -153,7 +153,7 @@ export function SuggestionsPage() {
       {/* Suggestions List */}
       {suggestions.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-(--text-muted) mb-4">
             {statusFilter ? `No ${statusFilter} suggestions.` : 'No suggestions yet.'}
           </p>
           {!statusFilter && (
@@ -167,7 +167,7 @@ export function SuggestionsPage() {
           {suggestions.map((suggestion) => (
             <div
               key={suggestion.id}
-              className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg transition-shadow bg-white dark:bg-gray-800"
+              className="border border-(--border) rounded-lg p-4 hover:shadow-lg transition-shadow bg-(--surface)"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -180,19 +180,19 @@ export function SuggestionsPage() {
                   </div>
 
                   {suggestion.address && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{suggestion.address}</p>
+                    <p className="text-sm text-(--text-muted) mb-2">{suggestion.address}</p>
                   )}
 
                   <div className="flex flex-wrap gap-2 mb-2">
                     {suggestion.category && (
-                      <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-sm text-xs">
+                      <span className="px-2 py-1 bg-(--surface-hover) text-(--accent) rounded-sm text-xs">
                         {suggestion.category.name}
                       </span>
                     )}
                     {suggestion.food_types?.map((ft) => (
                       <span
                         key={ft.id}
-                        className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-sm text-xs"
+                        className="px-2 py-1 bg-(--surface-hover) text-(--success) rounded-sm text-xs"
                       >
                         {ft.name}
                       </span>
@@ -200,11 +200,11 @@ export function SuggestionsPage() {
                   </div>
 
                   {suggestion.notes && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 italic">{suggestion.notes}</p>
+                    <p className="text-sm text-(--text-muted) italic">{suggestion.notes}</p>
                   )}
 
                   <div className="flex items-center justify-between mt-2">
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                    <p className="text-xs text-(--text-muted)">
                       Suggested {new Date(suggestion.created_at).toLocaleDateString()}
                     </p>
                     {suggestion.user && (
@@ -222,7 +222,7 @@ export function SuggestionsPage() {
                           setReviewingId(suggestion.id);
                           setReviewingName(suggestion.name);
                         }}
-                        className="btn btn-sm bg-green-500 hover:bg-green-600 text-white flex items-center gap-1"
+                        className="btn btn-sm bg-(--success) hover:brightness-110 text-white flex items-center gap-1"
                       >
                         <ListChecks className="w-4 h-4" />
                         Test & Review
@@ -233,7 +233,7 @@ export function SuggestionsPage() {
                   <PermissionGuard permission="suggestions.delete">
                     <button
                       onClick={() => handleDelete(suggestion.id)}
-                      className="btn btn-sm bg-gray-500 hover:bg-gray-600 text-white flex items-center gap-1"
+                      className="btn btn-sm bg-(--surface-hover)0 hover:bg-(--surface-hover) text-white flex items-center gap-1"
                     >
                       <Trash2 className="w-4 h-4" />
                       Delete

@@ -263,7 +263,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
 
           {loadingPhotos ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-(--info)" />
             </div>
           ) : allPhotos.length === 0 ? (
             <p className="text-muted text-center py-8">
@@ -316,7 +316,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
 
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-(--info)" />
             </div>
           ) : ratings.length === 0 ? (
             <p className="text-muted text-center py-8">
