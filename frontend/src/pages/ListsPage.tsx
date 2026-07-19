@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Plus, Bookmark, Trash2, Eye, EyeOff, MapPin } from 'lucide-react';
 import { getUserLists, deleteList, getList, RestaurantList, ListWithRestaurants } from '../services/api';
 import { ListFormModal } from '../components/ListFormModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast } from '../hooks/useToast';
 
 export function ListsPage() {
   const [lists, setLists] = useState<RestaurantList[]>([]);
@@ -9,6 +11,8 @@ export function ListsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedList, setSelectedList] = useState<ListWithRestaurants | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
+  const { showError } = useToast();
 
   useEffect(() => {
     loadLists();
@@ -26,18 +30,22 @@ export function ListsPage() {
     }
   };
 
-  const handleDelete = async (listId: number) => {
-    if (!confirm('Are you sure you want to delete this list?')) return;
+  const handleDelete = (listId: number, name: string) => {
+    setConfirmDelete({ id: listId, name });
+  };
+
+  const confirmDeleteList = async () => {
+    if (!confirmDelete) return;
 
     try {
-      await deleteList(listId);
+      await deleteList(confirmDelete.id);
       await loadLists();
-      if (selectedList?.list.id === listId) {
+      if (selectedList?.list.id === confirmDelete.id) {
         setSelectedList(null);
       }
     } catch (error) {
       console.error('Failed to delete list:', error);
-      alert('Failed to delete list');
+      showError('Failed to delete list');
     }
   };
 
@@ -53,7 +61,7 @@ export function ListsPage() {
       setSelectedList(data);
     } catch (error) {
       console.error('Failed to load list detail:', error);
-      alert('Failed to load list details');
+      showError('Failed to load list details');
     } finally {
       setLoadingDetail(false);
     }
@@ -119,7 +127,7 @@ export function ListsPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(list.id);
+                        handleDelete(list.id, list.name);
                       }}
                       className="p-1 hover:bg-(--danger-dim) rounded-sm transition-colors"
                       title="Delete list"
@@ -214,6 +222,16 @@ export function ListsPage() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={confirmDeleteList}
+        title="Delete List"
+        message={`Are you sure you want to delete "${confirmDelete?.name}"?`}
+        confirmText="Delete"
+        isDangerous
+      />
     </div>
   );
 }

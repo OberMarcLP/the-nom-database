@@ -8,6 +8,7 @@ import { RatingForm } from '../components/RatingForm';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { UserBadge } from '../components/UserBadge';
 import { AddToListButton } from '../components/AddToListButton';
+import { useToast } from '../hooks/useToast';
 
 interface RestaurantDetailProps {
   restaurant: Restaurant;
@@ -19,6 +20,7 @@ interface RestaurantDetailProps {
 
 export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRatingId, highlightedPhotoId }: RestaurantDetailProps) {
   const [showRatingForm, setShowRatingForm] = useState(false);
+  const { showError } = useToast();
   const [sortBy, setSortBy] = useState<'recent' | 'helpful' | 'rating'>('recent');
   const ratingRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const photosRef = useRef<HTMLDivElement>(null);
@@ -104,7 +106,7 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
               refetchRatings();
             } catch (error) {
               console.error('Failed to upload photos:', error);
-              alert(`Failed to upload photos: ${error}`);
+              showError(`Failed to upload photos: ${error}`);
             }
           }
           setShowRatingForm(false);

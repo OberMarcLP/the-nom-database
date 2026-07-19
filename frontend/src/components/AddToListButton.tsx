@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bookmark, Plus, Check, X } from 'lucide-react';
 import { getRestaurantLists, addRestaurantToList, removeRestaurantFromList, createList, ListWithStatus } from '../services/api';
+import { useToast } from '../hooks/useToast';
 
 interface AddToListButtonProps {
   restaurantId: number;
@@ -14,6 +15,7 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [creating, setCreating] = useState(false);
+  const { showError } = useToast();
 
   useEffect(() => {
     if (showModal) {
@@ -43,7 +45,7 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
       await loadLists();
     } catch (error) {
       console.error('Failed to toggle list:', error);
-      alert('Failed to update list');
+      showError('Failed to update list');
     }
   };
 
@@ -62,7 +64,7 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
       await loadLists();
     } catch (error) {
       console.error('Failed to create list:', error);
-      alert('Failed to create list');
+      showError('Failed to create list');
     } finally {
       setCreating(false);
     }

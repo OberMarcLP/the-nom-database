@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Loader2, Tag, Utensils, Settings as SettingsIcon } from 'lucide-react';
 import { Category, FoodType, getCategories, getFoodTypes, createCategory, updateCategory, deleteCategory, createFoodType, updateFoodType, deleteFoodType } from '../services/api';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 export function SettingsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -14,6 +15,9 @@ export function SettingsPage() {
   const [newFoodTypeName, setNewFoodTypeName] = useState('');
   const [editingFoodTypeId, setEditingFoodTypeId] = useState<number | null>(null);
   const [editFoodTypeName, setEditFoodTypeName] = useState('');
+
+  const [confirmDeleteCategory, setConfirmDeleteCategory] = useState<{ id: number; name: string } | null>(null);
+  const [confirmDeleteFoodType, setConfirmDeleteFoodType] = useState<{ id: number; name: string } | null>(null);
 
   const fetchData = async () => {
     try {
@@ -56,10 +60,10 @@ export function SettingsPage() {
     }
   };
 
-  const handleDeleteCategory = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+  const handleDeleteCategory = async () => {
+    if (!confirmDeleteCategory) return;
     try {
-      await deleteCategory(id);
+      await deleteCategory(confirmDeleteCategory.id);
       fetchData();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
@@ -96,10 +100,10 @@ export function SettingsPage() {
     }
   };
 
-  const handleDeleteFoodType = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this food type?')) return;
+  const handleDeleteFoodType = async () => {
+    if (!confirmDeleteFoodType) return;
     try {
-      await deleteFoodType(id);
+      await deleteFoodType(confirmDeleteFoodType.id);
       fetchData();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
@@ -201,7 +205,7 @@ export function SettingsPage() {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteCategory(category.id)}
+                          onClick={() => setConfirmDeleteCategory({ id: category.id, name: category.name })}
                           className="p-2 rounded-lg btn-glass hover:bg-(--danger-dim)"
                         >
                           <Trash2 className="w-4 h-4 text-(--danger)" />
@@ -287,7 +291,7 @@ export function SettingsPage() {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteFoodType(foodType.id)}
+                          onClick={() => setConfirmDeleteFoodType({ id: foodType.id, name: foodType.name })}
                           className="p-2 rounded-lg btn-glass hover:bg-(--danger-dim)"
                         >
                           <Trash2 className="w-4 h-4 text-(--danger)" />
@@ -301,6 +305,26 @@ export function SettingsPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteCategory !== null}
+        onClose={() => setConfirmDeleteCategory(null)}
+        onConfirm={handleDeleteCategory}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${confirmDeleteCategory?.name}"?`}
+        confirmText="Delete"
+        isDangerous
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDeleteFoodType !== null}
+        onClose={() => setConfirmDeleteFoodType(null)}
+        onConfirm={handleDeleteFoodType}
+        title="Delete Food Type"
+        message={`Are you sure you want to delete "${confirmDeleteFoodType?.name}"?`}
+        confirmText="Delete"
+        isDangerous
+      />
     </div>
   );
 }

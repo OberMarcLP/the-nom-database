@@ -448,8 +448,8 @@ export const deleteSuggestion = (id: number) =>
   fetchApi<void>(`/suggestions/${id}`, { method: 'DELETE' });
 
 // Global Search
-export const globalSearch = (query: string) =>
-  fetchApi<Restaurant[]>(`/search?q=${encodeURIComponent(query)}`);
+export const globalSearch = (query: string, signal?: AbortSignal) =>
+  fetchApi<Restaurant[]>(`/search?q=${encodeURIComponent(query)}`, { signal });
 
 // Menu Photos
 export interface MenuPhoto {

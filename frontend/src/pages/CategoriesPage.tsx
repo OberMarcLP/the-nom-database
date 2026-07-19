@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Loader2, Tag } from 'lucide-react';
 import { Category, getCategories, createCategory, updateCategory, deleteCategory } from '../services/api';
 import { PermissionGuard } from '../components/PermissionGuard';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -9,6 +10,7 @@ export function CategoriesPage() {
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
 
   const fetchCategories = async () => {
     try {
@@ -49,10 +51,10 @@ export function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
     try {
-      await deleteCategory(id);
+      await deleteCategory(confirmDelete.id);
       fetchCategories();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
@@ -139,7 +141,7 @@ export function CategoriesPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(category.id)}
+                        onClick={() => setConfirmDelete({ id: category.id, name: category.name })}
                         className="p-2 hover:bg-(--danger-dim) text-(--danger) rounded-lg"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -152,6 +154,16 @@ export function CategoriesPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${confirmDelete?.name}"?`}
+        confirmText="Delete"
+        isDangerous
+      />
     </div>
   );
 }

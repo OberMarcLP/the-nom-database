@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, Role, Permission } from '../services/api';
 import { Shield, Plus, Edit2, Trash2, X, CheckCircle } from 'lucide-react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast } from '../hooks/useToast';
 
 interface RoleWithPermissions extends Role {
   permissions: Permission[];
@@ -16,6 +17,7 @@ export function AdminRoles() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ roleId: number; roleName: string } | null>(null);
+  const { showError } = useToast();
 
   useEffect(() => {
     loadRoles();
@@ -76,7 +78,7 @@ export function AdminRoles() {
       loadRoles();
     } catch (error) {
       console.error('Failed to create role:', error);
-      alert('Failed to create role');
+      showError('Failed to create role');
     }
   };
 
@@ -96,7 +98,7 @@ export function AdminRoles() {
       loadRoles();
     } catch (error) {
       console.error('Failed to update role:', error);
-      alert('Failed to update role');
+      showError('Failed to update role');
     }
   };
 
@@ -109,7 +111,7 @@ export function AdminRoles() {
       setConfirmDelete(null);
     } catch (error) {
       console.error('Failed to delete role:', error);
-      alert('Failed to delete role. System roles cannot be deleted.');
+      showError('Failed to delete role. System roles cannot be deleted.');
       setConfirmDelete(null);
     }
   };
@@ -130,7 +132,7 @@ export function AdminRoles() {
       );
     } catch (error) {
       console.error('Failed to assign permission:', error);
-      alert('Failed to assign permission');
+      showError('Failed to assign permission');
     }
   };
 
@@ -150,7 +152,7 @@ export function AdminRoles() {
       );
     } catch (error) {
       console.error('Failed to remove permission:', error);
-      alert('Failed to remove permission');
+      showError('Failed to remove permission');
     }
   };
 

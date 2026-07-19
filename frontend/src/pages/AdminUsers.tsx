@@ -13,6 +13,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast } from '../hooks/useToast';
 
 interface UserListResponse {
   users: User[];
@@ -38,6 +39,7 @@ export function AdminUsers() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ userId: number; username: string } | null>(null);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     loadUsers();
@@ -110,7 +112,7 @@ export function AdminUsers() {
       loadUsers();
     } catch (error) {
       console.error('Failed to create user:', error);
-      alert('Failed to create user');
+      showError('Failed to create user');
     }
   };
 
@@ -134,7 +136,7 @@ export function AdminUsers() {
       loadUsers();
     } catch (error) {
       console.error('Failed to update user:', error);
-      alert('Failed to update user');
+      showError('Failed to update user');
     }
   };
 
@@ -147,7 +149,7 @@ export function AdminUsers() {
       setConfirmDelete(null);
     } catch (error) {
       console.error('Failed to delete user:', error);
-      alert('Failed to delete user');
+      showError('Failed to delete user');
       setConfirmDelete(null);
     }
   };
@@ -168,7 +170,7 @@ export function AdminUsers() {
       );
     } catch (error) {
       console.error('Failed to assign role:', error);
-      alert('Failed to assign role');
+      showError('Failed to assign role');
     }
   };
 
@@ -188,7 +190,7 @@ export function AdminUsers() {
       );
     } catch (error) {
       console.error('Failed to remove role:', error);
-      alert('Failed to remove role');
+      showError('Failed to remove role');
     }
   };
 
@@ -204,10 +206,10 @@ export function AdminUsers() {
       });
       setShowPasswordModal(false);
       setSelectedUser(null);
-      alert('Password reset successfully. User will be required to change password on next login.');
+      showSuccess('Password reset successfully. User will be required to change password on next login.');
     } catch (error) {
       console.error('Failed to reset password:', error);
-      alert('Failed to reset password');
+      showError('Failed to reset password');
     }
   };
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { MessageSquare, Star, Trash2, Eye, Camera } from 'lucide-react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast } from '../hooks/useToast';
 
 interface Rating {
   id: number;
@@ -53,6 +54,7 @@ interface PhotosResponse {
 
 export function AdminContent() {
   const [activeTab, setActiveTab] = useState<'content' | 'photos'>('content');
+  const { showError } = useToast();
 
   // Content state (ratings with their photos)
   const [ratings, setRatings] = useState<Rating[]>([]);
@@ -162,7 +164,7 @@ export function AdminContent() {
       loadRatings();
     } catch (error) {
       console.error('Failed to delete rating:', error);
-      alert('Failed to delete rating');
+      showError('Failed to delete rating');
     }
   };
 
@@ -178,7 +180,7 @@ export function AdminContent() {
       loadPhotos();
     } catch (error) {
       console.error('Failed to delete photo:', error);
-      alert('Failed to delete photo');
+      showError('Failed to delete photo');
     }
   };
 

@@ -32,25 +32,35 @@ export function GlobalSearch({ categories, foodTypes, filters, onFiltersChange }
   }, []);
 
   useEffect(() => {
+    if (query.trim().length < 2) {
+      setResults([]);
+      setIsOpen(false);
+      return;
+    }
+
+    const controller = new AbortController();
     const searchDebounce = setTimeout(async () => {
-      if (query.trim().length >= 2) {
-        setIsLoading(true);
-        try {
-          const data = await globalSearch(query);
-          setResults(data);
-          setIsOpen(true);
-        } catch (error) {
+      setIsLoading(true);
+      try {
+        const data = await globalSearch(query, controller.signal);
+        setResults(data);
+        setIsOpen(true);
+      } catch (error) {
+        // An aborted request just means a newer search superseded this one
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
           setResults([]);
-        } finally {
+        }
+      } finally {
+        if (!controller.signal.aborted) {
           setIsLoading(false);
         }
-      } else {
-        setResults([]);
-        setIsOpen(false);
       }
     }, 300);
 
-    return () => clearTimeout(searchDebounce);
+    return () => {
+      clearTimeout(searchDebounce);
+      controller.abort();
+    };
   }, [query]);
 
   const handleResultClick = (restaurant: Restaurant) => {

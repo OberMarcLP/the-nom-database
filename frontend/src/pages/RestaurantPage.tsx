@@ -7,8 +7,10 @@ import { Modal } from '../components/Modal';
 import { RestaurantForm } from '../components/RestaurantForm';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { deleteRestaurant, CreateRestaurantData } from '../services/api';
+import { useToast } from '../hooks/useToast';
 
 export function RestaurantPage() {
+  const { showError } = useToast();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -78,7 +80,7 @@ export function RestaurantPage() {
       navigate('/');
     } catch (error) {
       console.error('Failed to delete restaurant:', error);
-      alert('Failed to delete restaurant. Please try again.');
+      showError('Failed to delete restaurant. Please try again.');
       setShowDeleteConfirm(false);
     }
   };

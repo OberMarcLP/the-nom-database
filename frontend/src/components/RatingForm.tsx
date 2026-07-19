@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera, X } from 'lucide-react';
 import { StarRating } from './StarRating';
+import { useToast } from '../hooks/useToast';
 
 interface PhotoWithCaption {
   file: File;
   caption: string;
+}
+
+interface PhotoDraft extends PhotoWithCaption {
+  previewUrl: string;
 }
 
 interface RatingFormProps {
@@ -23,19 +28,31 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
   const [serviceRating, setServiceRating] = useState(0);
   const [ambianceRating, setAmbianceRating] = useState(0);
   const [comment, setComment] = useState('');
-  const [photos, setPhotos] = useState<PhotoWithCaption[]>([]);
+  const [photos, setPhotos] = useState<PhotoDraft[]>([]);
+  const { showWarning } = useToast();
+
+  // Revoke all preview object URLs on unmount to avoid leaking blob memory
+  const photosRef = useRef<PhotoDraft[]>([]);
+  photosRef.current = photos;
+  useEffect(() => {
+    return () => {
+      photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    };
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newPhotos = Array.from(e.target.files).map(file => ({
         file,
         caption: '',
+        previewUrl: URL.createObjectURL(file),
       }));
       setPhotos([...photos, ...newPhotos]);
     }
   };
 
   const removePhoto = (index: number) => {
+    URL.revokeObjectURL(photos[index].previewUrl);
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
@@ -53,7 +70,7 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
 
     // Validate that all photos have captions
     if (photos.some(photo => !photo.caption.trim())) {
-      alert('Please add a description for all photos');
+      showWarning('Please add a description for all photos');
       return;
     }
 
@@ -62,7 +79,9 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
       service_rating: serviceRating,
       ambiance_rating: ambianceRating,
       comment: comment || undefined,
-      photos: photos.length > 0 ? photos : undefined,
+      photos: photos.length > 0
+        ? photos.map(({ file, caption }) => ({ file, caption }))
+        : undefined,
     });
   };
 
@@ -115,7 +134,7 @@ export function RatingForm({ onSubmit, onCancel }: RatingFormProps) {
                 <div key={index} className="card p-3">
                   <div className="flex gap-3">
                     <img
-                      src={URL.createObjectURL(photo.file)}
+                      src={photo.previewUrl}
                       alt={`Preview ${index + 1}`}
                       className="w-20 h-20 object-cover rounded-sm shrink-0"
                     />

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { Utensils, Eye, Trash2, Search } from 'lucide-react';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast } from '../hooks/useToast';
 
 interface Restaurant {
   id: number;
@@ -30,6 +32,8 @@ export function AdminRestaurants() {
   const [stats, setStats] = useState<Stats>({ total: 0, with_ratings: 0, without_ratings: 0 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
+  const { showError } = useToast();
 
   useEffect(() => {
     loadRestaurants();
@@ -55,15 +59,19 @@ export function AdminRestaurants() {
     }
   };
 
-  const handleDelete = async (restaurantId: number, name: string) => {
-    if (!confirm(`Delete "${name}"? This will also delete all associated ratings and photos. This action cannot be undone.`)) return;
+  const handleDelete = (restaurantId: number, name: string) => {
+    setConfirmDelete({ id: restaurantId, name });
+  };
+
+  const confirmDeleteRestaurant = async () => {
+    if (!confirmDelete) return;
 
     try {
-      await api.delete(`/admin/restaurants/${restaurantId}`);
+      await api.delete(`/admin/restaurants/${confirmDelete.id}`);
       loadRestaurants();
     } catch (error) {
       console.error('Failed to delete restaurant:', error);
-      alert('Failed to delete restaurant');
+      showError('Failed to delete restaurant');
     }
   };
 
@@ -222,6 +230,16 @@ export function AdminRestaurants() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={confirmDeleteRestaurant}
+        title="Delete Restaurant"
+        message={`Delete "${confirmDelete?.name}"? This will also delete all associated ratings and photos. This action cannot be undone.`}
+        confirmText="Delete"
+        isDangerous
+      />
     </div>
   );
 }

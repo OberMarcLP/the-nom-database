@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { Settings, Database, Key, Globe, Mail, Save } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
 interface SystemSettings {
   app_name: string;
@@ -18,6 +19,7 @@ export function AdminSettings() {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     loadSettings();
@@ -42,10 +44,10 @@ export function AdminSettings() {
     try {
       setSaving(true);
       await api.put('/admin/settings', settings);
-      alert('Settings saved successfully! Note: Some changes may require server restart.');
+      showSuccess('Settings saved successfully! Note: Some changes may require server restart.');
     } catch (error) {
       console.error('Failed to save settings:', error);
-      alert('Failed to save settings');
+      showError('Failed to save settings');
     } finally {
       setSaving(false);
     }

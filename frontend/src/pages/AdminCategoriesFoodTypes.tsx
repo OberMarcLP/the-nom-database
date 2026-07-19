@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { Category, FoodType, getCategories, getFoodTypes, createCategory, updateCategory, deleteCategory, createFoodType, updateFoodType, deleteFoodType } from '../services/api';
 import { Tag, Utensils, Plus, Edit2, Trash2, X, Save } from 'lucide-react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useToast } from '../hooks/useToast';
 
 export function AdminCategoriesFoodTypes() {
+  const { showError } = useToast();
+
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -73,7 +76,7 @@ export function AdminCategoriesFoodTypes() {
       loadCategories();
     } catch (error) {
       console.error('Failed to create category:', error);
-      alert('Failed to create category');
+      showError('Failed to create category');
     }
   };
 
@@ -86,7 +89,7 @@ export function AdminCategoriesFoodTypes() {
       loadCategories();
     } catch (error) {
       console.error('Failed to update category:', error);
-      alert('Failed to update category');
+      showError('Failed to update category');
     }
   };
 
@@ -98,7 +101,7 @@ export function AdminCategoriesFoodTypes() {
       setConfirmDeleteCategory(null);
     } catch (error) {
       console.error('Failed to delete category:', error);
-      alert('Failed to delete category');
+      showError('Failed to delete category');
       setConfirmDeleteCategory(null);
     }
   };
@@ -113,7 +116,7 @@ export function AdminCategoriesFoodTypes() {
       loadFoodTypes();
     } catch (error) {
       console.error('Failed to create food type:', error);
-      alert('Failed to create food type');
+      showError('Failed to create food type');
     }
   };
 
@@ -126,7 +129,7 @@ export function AdminCategoriesFoodTypes() {
       loadFoodTypes();
     } catch (error) {
       console.error('Failed to update food type:', error);
-      alert('Failed to update food type');
+      showError('Failed to update food type');
     }
   };
 
@@ -138,7 +141,7 @@ export function AdminCategoriesFoodTypes() {
       setConfirmDeleteFoodType(null);
     } catch (error) {
       console.error('Failed to delete food type:', error);
-      alert('Failed to delete food type');
+      showError('Failed to delete food type');
       setConfirmDeleteFoodType(null);
     }
   };

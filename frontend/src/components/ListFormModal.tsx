@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { createList } from '../services/api';
+import { useToast } from '../hooks/useToast';
 
 interface ListFormModalProps {
   onClose: () => void;
@@ -12,6 +13,7 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { showError } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,7 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
       onSuccess();
     } catch (error) {
       console.error('Failed to create list:', error);
-      alert('Failed to create list');
+      showError('Failed to create list');
     } finally {
       setLoading(false);
     }

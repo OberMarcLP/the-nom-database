@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Loader2, Utensils } from 'lucide-react';
 import { FoodType, getFoodTypes, createFoodType, updateFoodType, deleteFoodType } from '../services/api';
 import { PermissionGuard } from '../components/PermissionGuard';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 export function FoodTypesPage() {
   const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
@@ -9,6 +10,7 @@ export function FoodTypesPage() {
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
 
   const fetchFoodTypes = async () => {
     try {
@@ -49,10 +51,10 @@ export function FoodTypesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this food type?')) return;
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
     try {
-      await deleteFoodType(id);
+      await deleteFoodType(confirmDelete.id);
       fetchFoodTypes();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
@@ -139,7 +141,7 @@ export function FoodTypesPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(foodType.id)}
+                        onClick={() => setConfirmDelete({ id: foodType.id, name: foodType.name })}
                         className="p-2 hover:bg-(--danger-dim) text-(--danger) rounded-lg"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -152,6 +154,16 @@ export function FoodTypesPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Food Type"
+        message={`Are you sure you want to delete "${confirmDelete?.name}"?`}
+        confirmText="Delete"
+        isDangerous
+      />
     </div>
   );
 }
