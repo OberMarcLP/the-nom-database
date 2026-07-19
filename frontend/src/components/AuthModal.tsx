@@ -160,16 +160,16 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
               <form onSubmit={handleLoginSubmit} className="space-y-5">
                 <div className="admin-form-group">
                   <label htmlFor="email" className="admin-label">
-                    Email address
+                    Username or email
                   </label>
                   <input
                     id="email"
                     name="email"
-                    type="email"
-                    autoComplete="email"
+                    type="text"
+                    autoComplete="username"
                     required
                     className="admin-input"
-                    placeholder="Email address"
+                    placeholder="Username or email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />

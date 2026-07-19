@@ -62,11 +62,11 @@ export default function LoginPage() {
               <input
                 id="email"
                 name="email"
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-(--border) placeholder-gray-500 dark:placeholder-gray-400 text-(--text) rounded-t-md focus:outline-hidden focus:ring-(--accent) focus:border-(--accent) focus:z-10 sm:text-sm bg-(--surface)"
-                placeholder="Email address"
+                placeholder="Username or email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />

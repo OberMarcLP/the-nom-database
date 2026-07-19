@@ -33,6 +33,9 @@ services:
       # DATABASE_URL needs special handling for docker-compose interpolation
       DATABASE_URL: postgres://${DB_USER:-nomdb}:${DB_PASSWORD:-nomdb_secret}@db:5432/${DB_NAME:-nomdb}?sslmode=disable
       PORT: 8080
+      # Dev convenience: deterministic admin login (username: admin).
+      # Override via .env; never rely on this default outside local dev.
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:-ChangeMeNow123!}
     ports:
       - "8080:8080"
     volumes:

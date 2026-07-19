@@ -141,6 +141,7 @@ func InitDefaultAdmin() error {
 
 	// Check for admin password from environment or generate a secure one
 	adminPassword := os.Getenv("ADMIN_DEFAULT_PASSWORD")
+	explicitPassword := adminPassword != ""
 	if adminPassword == "" {
 		// Generate a random secure password
 		var genErr error
@@ -163,14 +164,18 @@ func InitDefaultAdmin() error {
 	if err == pgx.ErrNoRows {
 		// Admin user doesn't exist - create it
 		logger.Info("Creating default admin user (username: admin)")
-		logger.Warn("⚠️  Generated admin password: %s", adminPassword)
-		logger.Warn("⚠️  IMPORTANT: Save this password and change it immediately after first login!")
+		if explicitPassword {
+			logger.Info("🔑 Admin password taken from ADMIN_DEFAULT_PASSWORD")
+		} else {
+			logger.Warn("⚠️  Generated admin password: %s", adminPassword)
+			logger.Warn("⚠️  IMPORTANT: Save this password and change it immediately after first login!")
+		}
 
 		err = pool.QueryRow(ctx,
 			`INSERT INTO users (username, email, password_hash, full_name, avatar_url, is_active, is_admin, email_verified, password_must_change, provider)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 			RETURNING id`,
-			"admin", "admin@nomdb.local", passwordHash, "Administrator", avatarURL, true, true, true, true, "local").
+			"admin", "admin@nomdb.local", passwordHash, "Administrator", avatarURL, true, true, true, !explicitPassword, "local").
 			Scan(&userID)
 
 		if err != nil {
@@ -195,24 +200,30 @@ func InitDefaultAdmin() error {
 		return fmt.Errorf("failed to check admin user: %w", err)
 	}
 
-	// If admin already has password, skip
-	if hasPassword {
+	// If admin already has a password, keep it - unless an explicit
+	// ADMIN_DEFAULT_PASSWORD is configured, which always wins so a known
+	// password can be enforced from the environment (dev/ops recovery).
+	if hasPassword && !explicitPassword {
 		logger.Debug("Default admin user already has password set")
 		return nil
 	}
 
 	// Update admin user with password and Gravatar
 	_, err = pool.Exec(ctx,
-		`UPDATE users SET password_hash = $1, avatar_url = $2, password_must_change = true WHERE email = 'admin@nomdb.local' AND username = 'admin'`,
-		passwordHash, avatarURL)
+		`UPDATE users SET password_hash = $1, avatar_url = $2, password_must_change = $3 WHERE email = 'admin@nomdb.local' AND username = 'admin'`,
+		passwordHash, avatarURL, !explicitPassword)
 
 	if err != nil {
 		return fmt.Errorf("failed to set default admin password: %w", err)
 	}
 
 	logger.Info("🔑 Default admin user password reset")
-	logger.Warn("⚠️  Generated admin password: %s", adminPassword)
-	logger.Warn("⚠️  IMPORTANT: Save this password and change it immediately after first login!")
+	if explicitPassword {
+		logger.Info("🔑 Admin password taken from ADMIN_DEFAULT_PASSWORD")
+	} else {
+		logger.Warn("⚠️  Generated admin password: %s", adminPassword)
+		logger.Warn("⚠️  IMPORTANT: Save this password and change it immediately after first login!")
+	}
 
 	return nil
 }
