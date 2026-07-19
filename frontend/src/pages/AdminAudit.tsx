@@ -49,7 +49,7 @@ export function AdminAudit() {
       if (resourceFilter) params.append('resource_type', resourceFilter);
 
       const response = await api.get<AuditResponse>(`/admin/audit-logs?${params}`);
-      setLogs(response.logs);
+      setLogs(response.logs ?? []);
       setTotal(response.pagination.total);
       setTotalPages(response.pagination.totalPages);
     } catch (error) {

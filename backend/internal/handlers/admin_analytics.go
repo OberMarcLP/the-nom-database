@@ -144,7 +144,7 @@ func AdminGetUserGrowth(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var data []map[string]interface{}
+	data := []map[string]interface{}{}
 	for rows.Next() {
 		var date time.Time
 		var count int
@@ -204,7 +204,7 @@ func AdminGetActiveUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var users []map[string]interface{}
+	users := []map[string]interface{}{}
 	for rows.Next() {
 		var id int
 		var username, email string
@@ -276,7 +276,7 @@ func AdminGetPopularRestaurants(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var restaurants []map[string]interface{}
+	restaurants := []map[string]interface{}{}
 	for rows.Next() {
 		var id int
 		var name string
@@ -408,7 +408,7 @@ func AdminGetAuditLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var logs []map[string]interface{}
+	logs := []map[string]interface{}{}
 	for rows.Next() {
 		var id, resourceID int
 		var userID *int

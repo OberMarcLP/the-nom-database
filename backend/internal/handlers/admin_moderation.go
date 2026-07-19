@@ -110,7 +110,7 @@ func AdminListRatings(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var ratings []map[string]interface{}
+	ratings := []map[string]interface{}{}
 	for rows.Next() {
 		var id, restaurantID int
 		var userID *int
@@ -229,7 +229,7 @@ func AdminListPhotos(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	var photos []map[string]interface{}
+	photos := []map[string]interface{}{}
 	var total int
 
 	if photoType == "review" || photoType == "" {
