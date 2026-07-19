@@ -149,6 +149,7 @@ func main() {
 	api.HandleFunc("/auth/logout", handlers.Logout).Methods("POST")
 	api.HandleFunc("/auth/oidc/login", handlers.OIDCLogin).Methods("GET")
 	api.HandleFunc("/auth/oidc/callback", handlers.OIDCCallback).Methods("GET")
+	api.HandleFunc("/auth/oidc/exchange", handlers.ExchangeOIDCCode).Methods("POST")
 
 	// Protected auth routes (authentication required)
 	authRoutes := api.PathPrefix("/auth").Subrouter()

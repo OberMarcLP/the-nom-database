@@ -47,6 +47,12 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Email is PII and the login identifier - only the owner or admins see it
+	if requester, ok := GetUserFromContext(r); !ok || requester == nil ||
+		(requester.ID != user.ID && !requester.IsAdmin) {
+		user.Email = ""
+	}
+
 	// Get user stats
 	var stats struct {
 		TotalReviews      int     `json:"total_reviews"`

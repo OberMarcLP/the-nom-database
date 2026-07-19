@@ -145,28 +145,77 @@ export interface GooglePlaceResult {
   longitude: number;
 }
 
-async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  // Get auth token from localStorage
-  const token = localStorage.getItem('access_token');
+let refreshInFlight: Promise<boolean> | null = null;
 
-  const headers: Record<string, string> = {
-    ...(options?.headers as Record<string, string> || {}),
+// Refresh the session once; concurrent 401s share the same attempt.
+// The backend rotates the refresh token on every use, so both tokens
+// must be replaced with the response values.
+async function tryRefreshTokens(): Promise<boolean> {
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) return false;
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        // allow the next expiry to trigger a fresh attempt
+        setTimeout(() => {
+          refreshInFlight = null;
+        }, 0);
+      }
+    })();
+  }
+  return refreshInFlight;
+}
+
+async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const doFetch = () => {
+    // Get auth token from localStorage
+    const token = localStorage.getItem('access_token');
+
+    const headers: Record<string, string> = {
+      ...(options?.headers as Record<string, string> || {}),
+    };
+
+    // Only set Content-Type if body is not FormData (browser sets it automatically for FormData)
+    if (!(options?.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    // Add Authorization header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return fetch(`${API_URL}/api${endpoint}`, {
+      ...options,
+      headers,
+    });
   };
 
-  // Only set Content-Type if body is not FormData (browser sets it automatically for FormData)
-  if (!(options?.body instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
-  }
+  let response = await doFetch();
 
-  // Add Authorization header if token exists
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  // On an expired access token, refresh once and retry the request
+  if (
+    response.status === 401 &&
+    !endpoint.startsWith('/auth/') &&
+    localStorage.getItem('refresh_token')
+  ) {
+    if (await tryRefreshTokens()) {
+      response = await doFetch();
+    }
   }
-
-  const response = await fetch(`${API_URL}/api${endpoint}`, {
-    ...options,
-    headers,
-  });
 
   if (!response.ok) {
     const error = await response.text();

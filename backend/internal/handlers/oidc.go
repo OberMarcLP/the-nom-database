@@ -232,18 +232,14 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("User logged in via OIDC: %s (ID: %d)", user.Email, user.ID)
 
-	// Redirect to frontend with tokens
-	// NOTE: tokens in query params can leak into logs/history; replacing this
-	// with a one-time-code exchange is tracked in the review backlog. The
-	// target URL is configurable so OIDC works outside localhost.
-	frontendURL := strings.TrimRight(os.Getenv("FRONTEND_URL"), "/")
-	if frontendURL == "" {
-		frontendURL = "http://localhost:3000"
+	// Hand the tokens to the frontend via a one-time code so they never
+	// appear in a URL (history, proxy logs, referrers).
+	redirectURL, err := issueOIDCLoginCode(response)
+	if err != nil {
+		logger.Error("Failed to issue OIDC login code: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
-	redirectURL := fmt.Sprintf("%s/auth/callback?access_token=%s&refresh_token=%s",
-		frontendURL,
-		response.AccessToken,
-		response.RefreshToken)
 
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }

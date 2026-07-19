@@ -10,32 +10,33 @@ export function AuthCallbackPage() {
   const { updateUser } = useAuth();
 
   useEffect(() => {
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
+    // The backend redirects here with a one-time code; the tokens
+    // themselves are fetched via POST so they never appear in a URL.
+    const code = searchParams.get('code');
 
-    if (accessToken && refreshToken) {
-      // Store tokens
-      localStorage.setItem('access_token', accessToken);
-      localStorage.setItem('refresh_token', refreshToken);
-
-      // Fetch full user details
-      fetch(`${API_URL}/api/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
+    if (code) {
+      fetch(`${API_URL}/api/auth/oidc/exchange`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Code exchange failed');
+          return res.json();
+        })
         .then(data => {
-          updateUser(data);
+          localStorage.setItem('access_token', data.access_token);
+          localStorage.setItem('refresh_token', data.refresh_token);
+          updateUser(data.user);
           // Redirect to home
           window.location.href = '/';
         })
         .catch(err => {
-          console.error('Failed to fetch user:', err);
+          console.error('Failed to complete OIDC login:', err);
           navigate('/');
         });
     } else {
-      // No tokens, redirect to home
+      // No code, redirect to home
       navigate('/');
     }
   }, [searchParams, navigate, updateUser]);

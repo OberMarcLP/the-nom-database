@@ -272,7 +272,7 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var userID int
 	err := database.GetPool().QueryRow(ctx,
 		`SELECT id, user_id, expires_at FROM sessions WHERE refresh_token = $1`,
-		req.RefreshToken).Scan(&session.ID, &userID, &session.ExpiresAt)
+		hashRefreshToken(req.RefreshToken)).Scan(&session.ID, &userID, &session.ExpiresAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -316,7 +316,7 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate new access token (keep same refresh token)
+	// Generate new access token and rotate the refresh token
 	jwtService := getJWTService()
 	if jwtService == nil {
 		http.Error(w, "Authentication service not available", http.StatusInternalServerError)
@@ -329,9 +329,25 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Rotation: a stolen refresh token becomes worthless after its first
+	// legitimate use; the absolute session expiry stays unchanged.
+	newRefreshToken, err := jwtService.GenerateRefreshToken()
+	if err != nil {
+		logger.Error("Failed to generate refresh token: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if _, err := database.GetPool().Exec(ctx,
+		"UPDATE sessions SET refresh_token = $1 WHERE id = $2",
+		hashRefreshToken(newRefreshToken), session.ID); err != nil {
+		logger.Error("Failed to rotate refresh token: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	response := models.LoginResponse{
 		AccessToken:  accessToken,
-		RefreshToken: req.RefreshToken,
+		RefreshToken: newRefreshToken,
 		TokenType:    "Bearer",
 		ExpiresIn:    int(jwtService.GetAccessTokenDuration().Seconds()),
 		User:         *user,
@@ -362,7 +378,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	if req.RefreshToken != "" {
 		ctx, cancel := RequestContext(r)
 		defer cancel()
-		_, err := database.GetPool().Exec(ctx, "DELETE FROM sessions WHERE refresh_token = $1", req.RefreshToken)
+		_, err := database.GetPool().Exec(ctx, "DELETE FROM sessions WHERE refresh_token = $1", hashRefreshToken(req.RefreshToken))
 		if err != nil {
 			logger.Warn("Failed to delete session: %v", err)
 		}
@@ -405,12 +421,14 @@ func getUserByID(ctx context.Context, userID int) (*models.User, error) {
 	return &user, nil
 }
 
+// getUserByEmail resolves a login identifier - an email address or a
+// username (only used by the login flow).
 func getUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	err := database.GetPool().QueryRow(ctx,
 		`SELECT id, email, username, password_hash, provider, provider_id, full_name, avatar_url,
 		is_active, is_admin, email_verified, password_must_change, last_login_at, created_at, updated_at
-		FROM users WHERE email = $1`, email).Scan(
+		FROM users WHERE email = $1 OR username = $1`, email).Scan(
 		&user.ID, &user.Email, &user.Username, &user.PasswordHash, &user.Provider, &user.ProviderID,
 		&user.FullName, &user.AvatarURL, &user.IsActive, &user.IsAdmin, &user.EmailVerified,
 		&user.PasswordMustChange, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
@@ -438,10 +456,11 @@ func generateLoginResponseWithService(ctx context.Context, user *models.User, r 
 	ipAddress := r.RemoteAddr
 	userAgent := r.UserAgent()
 
+	// Only the token digest is persisted - see hashRefreshToken
 	_, err = database.GetPool().Exec(ctx,
 		`INSERT INTO sessions (user_id, refresh_token, expires_at, ip_address, user_agent)
 		VALUES ($1, $2, $3, $4, $5)`,
-		user.ID, refreshToken, expiresAt, ipAddress, userAgent)
+		user.ID, hashRefreshToken(refreshToken), expiresAt, ipAddress, userAgent)
 	if err != nil {
 		return nil, err
 	}

@@ -29,7 +29,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		csp := []string{
 			"default-src 'self'",
 			"img-src 'self' data: https:",
-			"script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Adjust based on your frontend needs
+			"script-src 'self'",
 			"style-src 'self' 'unsafe-inline'",
 		}
 		w.Header().Set("Content-Security-Policy", strings.Join(csp, "; "))

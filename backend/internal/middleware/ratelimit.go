@@ -104,25 +104,23 @@ var trustProxyHeaders = os.Getenv("TRUST_PROXY") == "true"
 func getIPAddress(r *http.Request) string {
 	// Only trust proxy headers if explicitly enabled
 	if trustProxyHeaders {
-		// Check X-Forwarded-For header (format: "client, proxy1, proxy2, ...")
-		// Take the leftmost IP as the client IP
-		forwarded := r.Header.Get("X-Forwarded-For")
-		if forwarded != "" {
-			// Split by comma and get the first (leftmost) IP
-			ips := strings.Split(forwarded, ",")
-			if len(ips) > 0 {
-				clientIP := strings.TrimSpace(ips[0])
-				// Validate it's a proper IP
-				if isValidIP(clientIP) {
-					return clientIP
-				}
-			}
-		}
-
-		// Check X-Real-IP header
+		// Prefer X-Real-IP: our nginx sets it from the socket address, so
+		// clients cannot spoof it. X-Forwarded-For is client-influenced
+		// (nginx only appends), so its leftmost entries must not be trusted.
 		realIP := r.Header.Get("X-Real-IP")
 		if realIP != "" && isValidIP(realIP) {
 			return realIP
+		}
+
+		// Fall back to the rightmost X-Forwarded-For entry - that one was
+		// appended by our own proxy and reflects the real peer address.
+		forwarded := r.Header.Get("X-Forwarded-For")
+		if forwarded != "" {
+			ips := strings.Split(forwarded, ",")
+			clientIP := strings.TrimSpace(ips[len(ips)-1])
+			if isValidIP(clientIP) {
+				return clientIP
+			}
 		}
 	}
 
