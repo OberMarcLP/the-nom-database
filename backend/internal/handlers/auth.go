@@ -146,12 +146,17 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("User registered: %s (ID: %d)", user.Email, user.ID)
 
+	// Refresh token travels only via httpOnly cookie, never in the body
+	setRefreshCookie(w, r, response.RefreshToken, jwtService.GetRefreshTokenDuration())
+	response.RefreshToken = ""
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		logger.Error("Failed to encode response: %v", err)
 	}
 }
+
 // @Summary Login
 // @Description Login with email and password
 // @Tags Auth
@@ -235,6 +240,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("User logged in: %s (ID: %d)", user.Email, user.ID)
 
+	// Refresh token travels only via httpOnly cookie, never in the body
+	setRefreshCookie(w, r, response.RefreshToken, jwtService.GetRefreshTokenDuration())
+	response.RefreshToken = ""
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		logger.Error("Failed to encode response: %v", err)
@@ -253,14 +262,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal server error"
 // @Router /auth/refresh [post]
 func RefreshToken(w http.ResponseWriter, r *http.Request) {
+	// Body is optional - the token normally arrives via httpOnly cookie
 	var req models.RefreshTokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	refreshToken, fromCookie := refreshTokenFromRequest(r, req.RefreshToken)
+	if refreshToken == "" {
+		http.Error(w, "Refresh token is required", http.StatusBadRequest)
 		return
 	}
-
-	if req.RefreshToken == "" {
-		http.Error(w, "Refresh token is required", http.StatusBadRequest)
+	if fromCookie && !checkAuthOrigin(r) {
+		http.Error(w, "Origin not allowed", http.StatusForbidden)
 		return
 	}
 
@@ -272,10 +284,11 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var userID int
 	err := database.GetPool().QueryRow(ctx,
 		`SELECT id, user_id, expires_at FROM sessions WHERE refresh_token = $1`,
-		hashRefreshToken(req.RefreshToken)).Scan(&session.ID, &userID, &session.ExpiresAt)
+		hashRefreshToken(refreshToken)).Scan(&session.ID, &userID, &session.ExpiresAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			clearRefreshCookie(w, r)
 			http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
 			return
 		}
@@ -290,6 +303,7 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		if _, err := database.GetPool().Exec(ctx, "DELETE FROM sessions WHERE id = $1", session.ID); err != nil {
 			logger.Warn("Failed to delete expired session: %v", err)
 		}
+		clearRefreshCookie(w, r)
 		http.Error(w, "Refresh token expired", http.StatusUnauthorized)
 		return
 	}
@@ -345,12 +359,14 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Rotate the cookie alongside the session; the body stays token-free
+	setRefreshCookie(w, r, newRefreshToken, jwtService.GetRefreshTokenDuration())
+
 	response := models.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: newRefreshToken,
-		TokenType:    "Bearer",
-		ExpiresIn:    int(jwtService.GetAccessTokenDuration().Seconds()),
-		User:         *user,
+		AccessToken: accessToken,
+		TokenType:   "Bearer",
+		ExpiresIn:   int(jwtService.GetAccessTokenDuration().Seconds()),
+		User:        *user,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -369,23 +385,26 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Invalid request"
 // @Router /auth/logout [post]
 func Logout(w http.ResponseWriter, r *http.Request) {
+	// Body is optional - the token normally arrives via httpOnly cookie
 	var req models.RefreshTokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	refreshToken, fromCookie := refreshTokenFromRequest(r, req.RefreshToken)
+	if fromCookie && !checkAuthOrigin(r) {
+		http.Error(w, "Origin not allowed", http.StatusForbidden)
 		return
 	}
-
-	if req.RefreshToken != "" {
+	if refreshToken != "" {
 		ctx, cancel := RequestContext(r)
 		defer cancel()
-		_, err := database.GetPool().Exec(ctx, "DELETE FROM sessions WHERE refresh_token = $1", hashRefreshToken(req.RefreshToken))
+		_, err := database.GetPool().Exec(ctx, "DELETE FROM sessions WHERE refresh_token = $1", hashRefreshToken(refreshToken))
 		if err != nil {
 			logger.Warn("Failed to delete session: %v", err)
 		}
 	}
+	clearRefreshCookie(w, r)
 
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("Logged out successfully"))
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // @Summary Get current user

@@ -35,16 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
     const response = await apiLogin(credentials);
+    // Refresh token lives in an httpOnly cookie set by the server
     localStorage.setItem('access_token', response.access_token);
-    localStorage.setItem('refresh_token', response.refresh_token);
+    localStorage.removeItem('refresh_token');
     setUser({ ...response.user });
     return response;
   };
 
   const register = async (data: RegisterRequest): Promise<LoginResponse> => {
     const response = await apiRegister(data);
+    // Refresh token lives in an httpOnly cookie set by the server
     localStorage.setItem('access_token', response.access_token);
-    localStorage.setItem('refresh_token', response.refresh_token);
+    localStorage.removeItem('refresh_token');
     setUser({ ...response.user });
     return response;
   };

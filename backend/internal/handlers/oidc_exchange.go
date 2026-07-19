@@ -80,6 +80,12 @@ func ExchangeOIDCCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Refresh token travels only via httpOnly cookie, never in the body
+	if svc := getJWTService(); svc != nil {
+		setRefreshCookie(w, r, pending.response.RefreshToken, svc.GetRefreshTokenDuration())
+	}
+	pending.response.RefreshToken = ""
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(pending.response); err != nil {
 		logger.Error("Failed to encode response: %v", err)

@@ -17,6 +17,7 @@ export function AuthCallbackPage() {
     if (code) {
       fetch(`${API_URL}/api/auth/oidc/exchange`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
       })
@@ -25,8 +26,9 @@ export function AuthCallbackPage() {
           return res.json();
         })
         .then(data => {
+          // Refresh token arrives as httpOnly cookie from the exchange
           localStorage.setItem('access_token', data.access_token);
-          localStorage.setItem('refresh_token', data.refresh_token);
+          localStorage.removeItem('refresh_token');
           updateUser(data.user);
           // Redirect to home
           window.location.href = '/';

@@ -151,20 +151,22 @@ let refreshInFlight: Promise<boolean> | null = null;
 // The backend rotates the refresh token on every use, so both tokens
 // must be replaced with the response values.
 async function tryRefreshTokens(): Promise<boolean> {
-  const refreshToken = localStorage.getItem('refresh_token');
-  if (!refreshToken) return false;
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
       try {
+        // The refresh token normally arrives via httpOnly cookie; the body
+        // fallback only serves clients that still hold a legacy token.
+        const legacyToken = localStorage.getItem('refresh_token');
         const res = await fetch(`${API_URL}/api/auth/refresh`, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: refreshToken }),
+          body: JSON.stringify(legacyToken ? { refresh_token: legacyToken } : {}),
         });
         if (!res.ok) return false;
         const data = await res.json();
         localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
+        localStorage.removeItem('refresh_token');
         return true;
       } catch {
         return false;
@@ -200,6 +202,7 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
     return fetch(`${API_URL}/api${endpoint}`, {
       ...options,
+      credentials: 'include',
       headers,
     });
   };
@@ -207,11 +210,7 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   let response = await doFetch();
 
   // On an expired access token, refresh once and retry the request
-  if (
-    response.status === 401 &&
-    !endpoint.startsWith('/auth/') &&
-    localStorage.getItem('refresh_token')
-  ) {
+  if (response.status === 401 && !endpoint.startsWith('/auth/')) {
     if (await tryRefreshTokens()) {
       response = await doFetch();
     }
@@ -575,7 +574,7 @@ export const register = (data: RegisterRequest) =>
   });
 
 export const logout = () =>
-  fetchApi<void>('/auth/logout', { method: 'POST' });
+  fetchApi<void>('/auth/logout', { method: 'POST', body: JSON.stringify({}) });
 
 export const getCurrentUser = () =>
   fetchApi<User>('/auth/me');
