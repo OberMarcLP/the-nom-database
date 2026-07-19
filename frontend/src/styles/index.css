@@ -1,6 +1,6 @@
 /* The Nom Database - Unified Brutalist Design System */
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap')
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap')
 layer(base);
 
 @import 'tailwindcss';
@@ -132,25 +132,48 @@ layer(base);
 :root {
   font-family: 'Space Grotesk', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 
-  /* Unified Color System */
-  --bg: #0a0a0a;
-  --surface: #141414;
-  --surface-hover: #1a1a1a;
-  --card: #141414;
-  --card-hover: #1a1a1a;
-  --border: #2a2a2a;
-  --text: #ffffff;
-  --text-muted: #888888;
-  --accent: #00ff88;
-  --accent-dim: #00ff8820;
-  --danger: #ff3366;
-  --warning: #ffaa00;
-  --info: #00aaff;
-  --success: #00ff88;
+  /* White Table Design System - Light (default) */
+  --bg: #f8f7f3;
+  --surface: #ffffff;
+  --surface-hover: #f1efe8;
+  --card: #ffffff;
+  --card-hover: #f1efe8;
+  --border: #e2ded3;
+  --text: #211f1a;
+  --text-muted: #7d7669;
+  --accent: #8c2332;
+  --accent-dim: rgba(140, 35, 50, 0.08);
+  --danger: #b3261e;
+  --danger-dim: rgba(179, 38, 30, 0.08);
+  --warning: #a8730a;
+  --info: #2b5f8f;
+  --success: #1e7a4d;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --page-glow: none;
 
   /* Admin specific */
   --admin-sidebar-width: 260px;
   --admin-sidebar-collapsed: 70px;
+}
+
+/* White Table - Dark ("Abendkarte"); toggled via .dark on <html> */
+:root.dark {
+  --bg: #14110e;
+  --surface: #1d1915;
+  --surface-hover: #26211b;
+  --card: #1d1915;
+  --card-hover: #26211b;
+  --border: #37312a;
+  --text: #f2ecdf;
+  --text-muted: #9b9282;
+  --accent: #c25460;
+  --accent-dim: rgba(194, 84, 96, 0.13);
+  --danger: #e0654f;
+  --danger-dim: rgba(224, 101, 79, 0.13);
+  --warning: #d4a94e;
+  --info: #7da7c9;
+  --success: #6fae8b;
+  --page-glow: radial-gradient(circle at 50% 0%, rgba(194, 84, 96, 0.07) 0%, transparent 45%);
 }
 
 body {
@@ -164,9 +187,7 @@ body::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(0, 255, 136, 0.03) 0%, transparent 50%);
+  background-image: var(--page-glow);
   pointer-events: none;
 }
 
@@ -179,7 +200,7 @@ body::before {
   font-size: 14px;
   font-weight: 600;
   font-family: 'Space Grotesk', sans-serif;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
   cursor: pointer;
@@ -295,7 +316,7 @@ body::before {
   background: var(--success);
   border-color: var(--success);
   color: var(--bg);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
+  box-shadow: 0 4px 12px var(--accent-dim);
 }
 
 .btn-glass-success:hover {
@@ -337,7 +358,7 @@ body::before {
 /* Base card class - alias for card-glass */
 .card {
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -349,7 +370,7 @@ body::before {
 
 .card-glass, .admin-card {
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -364,7 +385,7 @@ body::before {
 
 .card-glass-strong {
   background: var(--surface);
-  border: 2px solid var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 8px;
   padding: 24px;
   box-shadow: 0 8px 24px var(--accent-dim);
@@ -383,7 +404,7 @@ body::before {
 }
 
 .admin-card-title {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -403,7 +424,7 @@ body::before {
 
 .admin-stat-card {
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
   position: relative;
@@ -430,13 +451,13 @@ body::before {
   text-transform: uppercase;
   color: var(--text-muted);
   margin-bottom: 12px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
 }
 
 .admin-stat-value {
   font-size: 42px;
   font-weight: 700;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   color: var(--accent);
   line-height: 1;
   margin-bottom: 8px;
@@ -445,7 +466,7 @@ body::before {
 
 .admin-stat-change {
   font-size: 13px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -468,7 +489,7 @@ body::before {
   width: 100%;
   padding: 12px 16px;
   background: var(--bg);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
   font-family: 'Space Grotesk', sans-serif;
@@ -508,7 +529,7 @@ body::before {
   font-weight: 600;
   letter-spacing: 0.05em;
   color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
 }
 
 /* =========================
@@ -517,7 +538,7 @@ body::before {
 
 .nav-glass {
   background: var(--surface);
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 200;
 }
@@ -545,9 +566,9 @@ body::before {
 
 .modal-glass, .admin-modal {
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 255, 136, 0.1);
+  box-shadow: 0 20px 60px var(--accent-dim);
   animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 600px;
   width: 100%;
@@ -566,14 +587,14 @@ body::before {
 
 .admin-modal-header {
   padding: 24px;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .admin-modal-title {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -601,7 +622,7 @@ body::before {
 
 .admin-modal-footer {
   padding: 24px;
-  border-top: 2px solid var(--border);
+  border-top: 1px solid var(--border);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -622,17 +643,17 @@ body::before {
 
 .admin-confirm-dialog {
   background: var(--surface);
-  border: 2px solid var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 8px;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 255, 136, 0.2);
+  box-shadow: 0 20px 60px var(--accent-dim);
   animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .admin-confirm-header {
   padding: 24px;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -645,13 +666,13 @@ body::before {
   align-items: center;
   justify-content: center;
   background: var(--accent-dim);
-  border: 2px solid var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 50%;
   color: var(--accent);
 }
 
 .admin-confirm-title {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -668,7 +689,7 @@ body::before {
 
 .admin-confirm-footer {
   padding: 24px;
-  border-top: 2px solid var(--border);
+  border-top: 1px solid var(--border);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -684,7 +705,7 @@ body::before {
 }
 
 .admin-permission-resource {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
@@ -702,7 +723,7 @@ body::before {
 .admin-permission-toggle {
   padding: 12px 16px;
   background: transparent;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
   display: flex;
@@ -710,7 +731,7 @@ body::before {
   gap: 10px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 13px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-weight: 500;
   color: var(--text);
   text-align: left;
@@ -733,13 +754,13 @@ body::before {
 .admin-permission-toggle.admin-permission-active:hover {
   background: var(--accent);
   border-color: var(--accent);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  box-shadow: 0 4px 12px var(--accent-dim);
 }
 
 .admin-permission-checkbox {
   width: 14px;
   height: 14px;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 3px;
   flex-shrink: 0;
   transition: all 0.2s ease;
@@ -764,7 +785,7 @@ body::before {
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -780,7 +801,7 @@ body::before {
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
 }
 
 .badge-food-type {
@@ -794,7 +815,7 @@ body::before {
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
 }
 
 .admin-badge {
@@ -803,7 +824,7 @@ body::before {
   padding: 4px 10px;
   font-size: 11px;
   font-weight: 600;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border-radius: 4px;
@@ -840,7 +861,7 @@ body::before {
 
 .admin-table-container {
   overflow-x: auto;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
 }
@@ -853,13 +874,13 @@ body::before {
 
 .admin-table thead {
   background: var(--bg);
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .admin-table th {
   padding: 16px;
   text-align: left;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.1em;
@@ -995,7 +1016,7 @@ body::before {
 .admin-sidebar {
   width: var(--admin-sidebar-width);
   background: var(--surface);
-  border-right: 2px solid var(--border);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -1017,7 +1038,7 @@ body::before {
 
 .admin-sidebar-header {
   padding: 24px 20px;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1028,7 +1049,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 18px;
   letter-spacing: 0.1em;
@@ -1099,11 +1120,11 @@ body::before {
 
 .admin-sidebar-footer {
   padding: 20px;
-  border-top: 2px solid var(--border);
+  border-top: 1px solid var(--border);
 }
 
 .admin-build-info {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: 11px;
   color: var(--text-muted);
   letter-spacing: 0.05em;
@@ -1134,7 +1155,7 @@ body::before {
 }
 
 .admin-page-title {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: 36px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -1168,7 +1189,7 @@ body::before {
   justify-content: center;
   padding: 60px 20px;
   color: var(--text-muted);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
 }
 
 .admin-spinner {
@@ -1209,7 +1230,7 @@ body::before {
   align-items: center;
   justify-content: space-between;
   padding: 20px 0;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: 13px;
 }
 
@@ -1230,7 +1251,7 @@ body::before {
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: 12px;
 }
 
@@ -1279,7 +1300,7 @@ body::before {
 .admin-tabs {
   display: flex;
   gap: 4px;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
   margin-bottom: 24px;
 }
 
@@ -1325,7 +1346,7 @@ body::before {
    ========================= */
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--info) 100%);
+  background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
