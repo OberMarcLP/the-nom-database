@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/nomdb/backend/internal/database"
+	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
 	"github.com/nomdb/backend/internal/services"
 )
@@ -83,7 +84,8 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 		WHERE r.restaurant_id = $1
 		ORDER BY r.created_at DESC`, restaurantID, currentUserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -100,7 +102,8 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating,
 			&rt.Comment, &rt.UserID, &rt.CreatedAt, &rt.UpdatedAt, &rt.HelpfulCount, &rt.NotHelpfulCount,
 			&userID, &username, &fullName, &avatarURL, &rt.UserVote); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -187,7 +190,8 @@ func CreateRating(w http.ResponseWriter, r *http.Request) {
 		req.RestaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, userID,
 	).Scan(&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating, &rt.Comment, &rt.UserID, &rt.CreatedAt, &rt.UpdatedAt, &rt.HelpfulCount, &rt.NotHelpfulCount)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -274,7 +278,8 @@ func UpdateRating(w http.ResponseWriter, r *http.Request) {
 		req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, id,
 	).Scan(&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating, &rt.Comment, &rt.UserID, &rt.CreatedAt, &rt.UpdatedAt, &rt.HelpfulCount, &rt.NotHelpfulCount)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -332,7 +337,8 @@ func DeleteRating(w http.ResponseWriter, r *http.Request) {
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM ratings WHERE id = $1", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -408,7 +414,8 @@ func VoteOnReview(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("ERROR: Failed to insert/update vote - ratingID=%d, userID=%d, voteType=%s, error=%v",
 			ratingID, user.ID, req.VoteType, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -422,7 +429,8 @@ func VoteOnReview(w http.ResponseWriter, r *http.Request) {
 		&rt.Comment, &rt.UserID, &rt.CreatedAt, &rt.UpdatedAt, &rt.HelpfulCount, &rt.NotHelpfulCount)
 	if err != nil {
 		log.Printf("ERROR: Failed to fetch updated rating - ratingID=%d, error=%v", ratingID, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -467,7 +475,8 @@ func RemoveVote(w http.ResponseWriter, r *http.Request) {
 		"DELETE FROM review_votes WHERE rating_id = $1 AND user_id = $2",
 		ratingID, user.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -480,7 +489,8 @@ func RemoveVote(w http.ResponseWriter, r *http.Request) {
 		&rt.ID, &rt.RestaurantID, &rt.FoodRating, &rt.ServiceRating, &rt.AmbianceRating,
 		&rt.Comment, &rt.UserID, &rt.CreatedAt, &rt.UpdatedAt, &rt.HelpfulCount, &rt.NotHelpfulCount)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -601,7 +611,8 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 		"SELECT COALESCE(MAX(display_order), -1) FROM review_photos WHERE rating_id = $1", ratingID).Scan(&maxOrder)
 	if err != nil {
 		log.Printf("ERROR: Failed to get max display_order - ratingID=%d, error=%v", ratingID, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -615,7 +626,8 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 		&photo.ID, &photo.RatingID, &photo.PhotoURL, &photo.Caption, &photo.DisplayOrder, &photo.CreatedAt)
 	if err != nil {
 		log.Printf("ERROR: Failed to insert review photo - ratingID=%d, error=%v", ratingID, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -675,7 +687,8 @@ func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM review_photos WHERE id = $1", photoID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 

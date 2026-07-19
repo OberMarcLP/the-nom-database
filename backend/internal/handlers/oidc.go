@@ -23,12 +23,12 @@ import (
 )
 
 var (
-	oidcProvider       *oidc.Provider
-	oidcConfig         *oauth2.Config
-	oidcVerifier       *oidc.IDTokenVerifier
-	oidcStateStore     = make(map[string]time.Time) // In production, use Redis
-	oidcStateMu        sync.RWMutex                 // Mutex for thread-safe access to oidcStateStore
-	oidcCleanupStopCh  chan struct{}                // Channel to stop cleanup goroutine
+	oidcProvider      *oidc.Provider
+	oidcConfig        *oauth2.Config
+	oidcVerifier      *oidc.IDTokenVerifier
+	oidcStateStore    = make(map[string]time.Time) // In production, use Redis
+	oidcStateMu       sync.RWMutex                 // Mutex for thread-safe access to oidcStateStore
+	oidcCleanupStopCh chan struct{}                // Channel to stop cleanup goroutine
 )
 
 // InitOIDC initializes OIDC provider (Authentik or any OIDC-compliant provider)
@@ -178,12 +178,12 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Extract claims
 	var claims struct {
-		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
-		Name          string `json:"name"`
+		Email             string `json:"email"`
+		EmailVerified     bool   `json:"email_verified"`
+		Name              string `json:"name"`
 		PreferredUsername string `json:"preferred_username"`
-		Picture       string `json:"picture"`
-		Sub           string `json:"sub"` // Subject - unique user ID
+		Picture           string `json:"picture"`
+		Sub               string `json:"sub"` // Subject - unique user ID
 	}
 	if err := idToken.Claims(&claims); err != nil {
 		logger.Error("Failed to parse claims: %v", err)

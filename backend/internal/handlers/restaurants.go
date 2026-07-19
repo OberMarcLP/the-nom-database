@@ -197,7 +197,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 
 	// Parse query parameters for filtering
 	queryParams := r.URL.Query()
-	searchQuery := queryParams.Get("q")        // search query for name/address
+	searchQuery := queryParams.Get("q") // search query for name/address
 	categoryID := queryParams.Get("category_id")
 	foodTypeIDs := queryParams.Get("food_type_ids") // comma-separated
 	priceRange := queryParams.Get("price_range")    // max price range (1-4)
@@ -468,7 +468,8 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := database.GetPool().Query(ctx, finalQuery, args...)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -514,7 +515,8 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 			)
 		}
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -580,7 +582,8 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 	if len(restaurantIDs) > 0 {
 		foodTypeMap, err := getFoodTypesForRestaurantsBatch(ctx, restaurantIDs)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		restaurantFoodTypes = foodTypeMap
@@ -591,7 +594,8 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 	if len(suggestionIDs) > 0 {
 		foodTypeMap, err := getFoodTypesForSuggestionsBatch(ctx, suggestionIDs)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		suggestionFoodTypes = foodTypeMap
@@ -731,7 +735,8 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 		foodTypes, err = getFoodTypesForRestaurant(ctx, rest.ID)
 	}
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	rest.FoodTypes = foodTypes
@@ -811,14 +816,15 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		logger.Error("Failed to create restaurant: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	// Set food types
 	if len(req.FoodTypeIDs) > 0 {
 		if err := setFoodTypesForRestaurant(ctx, rest.ID, req.FoodTypeIDs); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		foodTypes, _ := getFoodTypesForRestaurant(ctx, rest.ID)
@@ -906,7 +912,8 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 	// Update food types if provided
 	if req.FoodTypeIDs != nil {
 		if err := setFoodTypesForRestaurant(ctx, rest.ID, req.FoodTypeIDs); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -961,7 +968,8 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM restaurants WHERE id = $1", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -1036,7 +1044,8 @@ func GlobalSearch(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := database.GetPool().Query(ctx, restaurantsQuery, searchPattern)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -1064,7 +1073,8 @@ func GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			&isSuggestion, &suggestionID, &status,
 		)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -1107,7 +1117,8 @@ func GlobalSearch(w http.ResponseWriter, r *http.Request) {
 	if len(restaurantIDs) > 0 {
 		foodTypeMap, err := getFoodTypesForRestaurantsBatch(ctx, restaurantIDs)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		restaurantFoodTypes = foodTypeMap
@@ -1118,7 +1129,8 @@ func GlobalSearch(w http.ResponseWriter, r *http.Request) {
 	if len(suggestionIDs) > 0 {
 		foodTypeMap, err := getFoodTypesForSuggestionsBatch(ctx, suggestionIDs)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		suggestionFoodTypes = foodTypeMap

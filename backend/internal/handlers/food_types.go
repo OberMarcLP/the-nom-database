@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/nomdb/backend/internal/database"
+	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
 )
 
@@ -26,7 +27,8 @@ func GetFoodTypes(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.GetPool().Query(ctx,
 		"SELECT id, name, created_at, updated_at FROM food_types ORDER BY name")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -35,7 +37,8 @@ func GetFoodTypes(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var ft models.FoodType
 		if err := rows.Scan(&ft.ID, &ft.Name, &ft.CreatedAt, &ft.UpdatedAt); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		foodTypes = append(foodTypes, ft)
@@ -113,7 +116,8 @@ func CreateFoodType(w http.ResponseWriter, r *http.Request) {
 		"INSERT INTO food_types (name) VALUES ($1) RETURNING id, name, created_at, updated_at",
 		req.Name).Scan(&ft.ID, &ft.Name, &ft.CreatedAt, &ft.UpdatedAt)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -195,7 +199,8 @@ func DeleteFoodType(w http.ResponseWriter, r *http.Request) {
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM food_types WHERE id = $1", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 

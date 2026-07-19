@@ -27,7 +27,8 @@ func GetCategories(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.GetPool().Query(ctx,
 		"SELECT id, name, created_at, updated_at FROM categories ORDER BY name")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -36,7 +37,8 @@ func GetCategories(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var c models.Category
 		if err := rows.Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		categories = append(categories, c)
@@ -118,7 +120,8 @@ func CreateCategory(w http.ResponseWriter, r *http.Request) {
 		"INSERT INTO categories (name) VALUES ($1) RETURNING id, name, created_at, updated_at",
 		req.Name).Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -200,7 +203,8 @@ func DeleteCategory(w http.ResponseWriter, r *http.Request) {
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM categories WHERE id = $1", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 

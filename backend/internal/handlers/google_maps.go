@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/services"
 )
 
@@ -29,7 +30,8 @@ func SearchPlaces(w http.ResponseWriter, r *http.Request) {
 
 	results, err := mapsService.SearchPlaces(query)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -56,7 +58,8 @@ func GeocodeCities(w http.ResponseWriter, r *http.Request) {
 
 	results, err := mapsService.GeocodeCities(query)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -84,7 +87,8 @@ func GetPlaceDetails(w http.ResponseWriter, r *http.Request) {
 
 	result, err := mapsService.GetPlaceDetails(placeID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 

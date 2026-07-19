@@ -92,8 +92,8 @@ func AdminListUsers(w http.ResponseWriter, r *http.Request) {
 
 	if search != "" {
 		query += ` AND (u.username ILIKE $` + strconv.Itoa(argPos) +
-		         ` OR u.email ILIKE $` + strconv.Itoa(argPos) +
-		         ` OR u.full_name ILIKE $` + strconv.Itoa(argPos) + `)`
+			` OR u.email ILIKE $` + strconv.Itoa(argPos) +
+			` OR u.full_name ILIKE $` + strconv.Itoa(argPos) + `)`
 		args = append(args, "%"+search+"%")
 		argPos++
 	}

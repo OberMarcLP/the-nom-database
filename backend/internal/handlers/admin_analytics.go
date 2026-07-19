@@ -38,10 +38,10 @@ func AdminGetStatistics(w http.ResponseWriter, r *http.Request) {
 	`).Scan(&totalUsers, &activeUsers, &verifiedUsers, &newUsersLast30Days)
 
 	stats["users"] = map[string]interface{}{
-		"total":              totalUsers,
-		"active":             activeUsers,
-		"verified":           verifiedUsers,
-		"new_last_30_days":   newUsersLast30Days,
+		"total":            totalUsers,
+		"active":           activeUsers,
+		"verified":         verifiedUsers,
+		"new_last_30_days": newUsersLast30Days,
 	}
 
 	// Get all restaurant and suggestion statistics in a single query
@@ -57,8 +57,8 @@ func AdminGetStatistics(w http.ResponseWriter, r *http.Request) {
 	`).Scan(&totalRestaurants, &pendingSuggestions, &approvedSuggestions, &rejectedSuggestions)
 
 	stats["restaurants"] = map[string]interface{}{
-		"total":               totalRestaurants,
-		"pending_suggestions": pendingSuggestions,
+		"total":                totalRestaurants,
+		"pending_suggestions":  pendingSuggestions,
 		"approved_suggestions": approvedSuggestions,
 		"rejected_suggestions": rejectedSuggestions,
 	}
@@ -76,10 +76,10 @@ func AdminGetStatistics(w http.ResponseWriter, r *http.Request) {
 	`).Scan(&totalRatings, &avgFoodRating, &avgServiceRating, &avgAmbianceRating)
 
 	stats["ratings"] = map[string]interface{}{
-		"total":           totalRatings,
-		"avg_food":        avgFoodRating,
-		"avg_service":     avgServiceRating,
-		"avg_ambiance":    avgAmbianceRating,
+		"total":        totalRatings,
+		"avg_food":     avgFoodRating,
+		"avg_service":  avgServiceRating,
+		"avg_ambiance": avgAmbianceRating,
 	}
 
 	// Get all content statistics in a single query

@@ -70,13 +70,13 @@ func TestValidateRestaurantInput(t *testing.T) {
 
 func TestBuildFilterQuery(t *testing.T) {
 	tests := []struct {
-		name            string
-		categoryID      string
-		foodTypeID      string
-		searchQuery     string
-		expectCategory  bool
-		expectFoodType  bool
-		expectSearch    bool
+		name           string
+		categoryID     string
+		foodTypeID     string
+		searchQuery    string
+		expectCategory bool
+		expectFoodType bool
+		expectSearch   bool
 	}{
 		{
 			name:           "No filters",

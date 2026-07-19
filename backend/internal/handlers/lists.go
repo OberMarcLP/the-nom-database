@@ -155,8 +155,8 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := struct {
-		List        models.RestaurantList    `json:"list"`
-		Restaurants []models.ListRestaurant  `json:"restaurants"`
+		List        models.RestaurantList   `json:"list"`
+		Restaurants []models.ListRestaurant `json:"restaurants"`
 	}{
 		List:        list,
 		Restaurants: restaurants,

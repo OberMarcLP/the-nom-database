@@ -84,7 +84,8 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := database.GetPool().Query(ctx, query, args...)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -106,7 +107,8 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 			&catID, &catName,
 			&userID, &username, &fullName, &avatarURL,
 		); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -126,7 +128,8 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 		// Get food types
 		foodTypes, err := getFoodTypesForSuggestion(ctx, sug.ID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		sug.FoodTypes = foodTypes
@@ -208,7 +211,8 @@ func GetSuggestion(w http.ResponseWriter, r *http.Request) {
 	// Get food types
 	foodTypes, err := getFoodTypesForSuggestion(ctx, sug.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	sug.FoodTypes = foodTypes
@@ -302,19 +306,21 @@ func CreateSuggestion(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		logger.Error("Failed to create suggestion: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	// Set food types
 	if len(req.FoodTypeIDs) > 0 {
 		if err := setFoodTypesForSuggestion(ctx, sug.ID, req.FoodTypeIDs); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		foodTypes, err := getFoodTypesForSuggestion(ctx, sug.ID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 		sug.FoodTypes = foodTypes
@@ -378,7 +384,8 @@ func UpdateSuggestionStatus(w http.ResponseWriter, r *http.Request) {
 
 	foodTypes, err := getFoodTypesForSuggestion(ctx, sug.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	sug.FoodTypes = foodTypes
@@ -451,9 +458,25 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch food types before the transaction (read-only)
+	foodTypes, err := getFoodTypesForSuggestion(ctx, sug.ID)
+	if err != nil {
+		logger.Warn("Failed to get food types for suggestion %d: %v", sug.ID, err)
+	}
+
+	// All conversion steps are atomic: restaurant, food types, initial
+	// rating and suggestion removal succeed or fail together.
+	tx, err := database.GetPool().Begin(ctx)
+	if err != nil {
+		logger.Error("Failed to begin transaction: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // no-op after successful commit
+
 	// Create restaurant
 	var restaurantID int
-	err = database.GetPool().QueryRow(ctx,
+	err = tx.QueryRow(ctx,
 		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id, user_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id`,
@@ -461,47 +484,43 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 	).Scan(&restaurantID)
 	if err != nil {
 		logger.Error("Failed to create restaurant from suggestion: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	// Copy food types from suggestion to restaurant
-	foodTypes, err := getFoodTypesForSuggestion(ctx, sug.ID)
-	if err != nil {
-		logger.Warn("Failed to get food types for suggestion %d: %v", sug.ID, err)
-	}
-	if len(foodTypes) > 0 {
-		var foodTypeIDs []int
-		for _, ft := range foodTypes {
-			foodTypeIDs = append(foodTypeIDs, ft.ID)
-		}
-		for _, ftID := range foodTypeIDs {
-			_, err := database.GetPool().Exec(ctx,
-				"INSERT INTO restaurant_food_types (restaurant_id, food_type_id) VALUES ($1, $2)",
-				restaurantID, ftID)
-			if err != nil {
-				// Non-fatal, continue
-				continue
-			}
+	for _, ft := range foodTypes {
+		if _, err := tx.Exec(ctx,
+			"INSERT INTO restaurant_food_types (restaurant_id, food_type_id) VALUES ($1, $2)",
+			restaurantID, ft.ID); err != nil {
+			logger.Error("Failed to copy food type %d: %v", ft.ID, err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
 		}
 	}
 
 	// Create initial rating from the conversion
-	_, err = database.GetPool().Exec(ctx,
+	if _, err := tx.Exec(ctx,
 		`INSERT INTO ratings (restaurant_id, food_rating, service_rating, ambiance_rating, comment, user_id)
 		VALUES ($1, $2, $3, $4, $5, $6)`,
-		restaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, userID,
-	)
-	if err != nil {
-		logger.Warn("Failed to create initial rating for restaurant %d: %v", restaurantID, err)
+		restaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, userID); err != nil {
+		logger.Error("Failed to create initial rating: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	// Delete the suggestion after successful conversion
-	_, err = database.GetPool().Exec(ctx,
-		"DELETE FROM restaurant_suggestions WHERE id = $1", id)
-	if err != nil {
-		// Non-fatal, but log it
-		logger.Warn("Failed to delete converted suggestion %d: %v", id, err)
+	if _, err := tx.Exec(ctx,
+		"DELETE FROM restaurant_suggestions WHERE id = $1", id); err != nil {
+		logger.Error("Failed to delete converted suggestion %d: %v", id, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		logger.Error("Failed to commit conversion: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -554,9 +573,24 @@ func ApproveSuggestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch food types before the transaction (read-only)
+	foodTypes, ftErr := getFoodTypesForSuggestion(ctx, sug.ID)
+	if ftErr != nil {
+		logger.Warn("Failed to get food types for suggestion %d: %v", sug.ID, ftErr)
+	}
+
+	// Restaurant, food types and status update succeed or fail together
+	tx, err := database.GetPool().Begin(ctx)
+	if err != nil {
+		logger.Error("Failed to begin transaction: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // no-op after successful commit
+
 	// Create restaurant
 	var restaurantID int
-	err = database.GetPool().QueryRow(ctx,
+	err = tx.QueryRow(ctx,
 		`INSERT INTO restaurants (name, address, phone, website, latitude, longitude, google_place_id, category_id, user_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id`,
@@ -569,20 +603,28 @@ func ApproveSuggestion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Copy food types from suggestion to restaurant
-	foodTypes, err := getFoodTypesForSuggestion(ctx, sug.ID)
-	if err == nil && len(foodTypes) > 0 {
-		for _, ft := range foodTypes {
-			_, _ = database.GetPool().Exec(ctx,
-				"INSERT INTO restaurant_food_types (restaurant_id, food_type_id) VALUES ($1, $2)",
-				restaurantID, ft.ID)
+	for _, ft := range foodTypes {
+		if _, err := tx.Exec(ctx,
+			"INSERT INTO restaurant_food_types (restaurant_id, food_type_id) VALUES ($1, $2)",
+			restaurantID, ft.ID); err != nil {
+			logger.Error("Failed to copy food type %d: %v", ft.ID, err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
 		}
 	}
 
 	// Update suggestion status to approved
-	_, err = database.GetPool().Exec(ctx,
-		"UPDATE restaurant_suggestions SET status = 'approved', updated_at = NOW() WHERE id = $1", id)
-	if err != nil {
-		logger.Warn("Failed to update suggestion status: %v", err)
+	if _, err := tx.Exec(ctx,
+		"UPDATE restaurant_suggestions SET status = 'approved', updated_at = NOW() WHERE id = $1", id); err != nil {
+		logger.Error("Failed to update suggestion status: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		logger.Error("Failed to commit approval: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -659,7 +701,8 @@ func DeleteSuggestion(w http.ResponseWriter, r *http.Request) {
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM restaurant_suggestions WHERE id = $1", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 

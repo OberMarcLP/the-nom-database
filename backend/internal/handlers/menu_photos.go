@@ -94,7 +94,8 @@ func GetMenuPhotos(w http.ResponseWriter, r *http.Request) {
 		WHERE restaurant_id = $1
 		ORDER BY created_at DESC`, restaurantID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -108,7 +109,8 @@ func GetMenuPhotos(w http.ResponseWriter, r *http.Request) {
 			&photo.ID, &photo.RestaurantID, &photo.Filename, &photo.OriginalFilename,
 			&photo.Caption, &photo.FileSize, &photo.MimeType, &photo.CreatedAt, &photo.UpdatedAt,
 		); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("request failed: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -293,7 +295,8 @@ func UploadMenuPhoto(w http.ResponseWriter, r *http.Request) {
 				logger.Warn("Failed to delete file after database error: %v", delErr)
 			}
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -439,7 +442,8 @@ func DeleteMenuPhoto(w http.ResponseWriter, r *http.Request) {
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM menu_photos WHERE id = $1", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
