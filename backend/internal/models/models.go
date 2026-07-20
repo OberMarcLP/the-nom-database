@@ -108,6 +108,7 @@ type CreateRestaurantRequest struct {
 	Longitude     *float64 `json:"longitude"`
 	GooglePlaceID *string  `json:"google_place_id"`
 	CategoryID    *int     `json:"category_id"`
+	PriceRange    *int     `json:"price_range"` // optional, 1 = $ to 4 = $$$$
 	FoodTypeIDs   []int    `json:"food_type_ids"`
 }
 
@@ -121,6 +122,7 @@ type UpdateRestaurantRequest struct {
 	Longitude     *float64 `json:"longitude"`
 	GooglePlaceID *string  `json:"google_place_id"`
 	CategoryID    *int     `json:"category_id"`
+	PriceRange    *int     `json:"price_range"` // optional, 1 = $ to 4 = $$$$
 	FoodTypeIDs   []int    `json:"food_type_ids"`
 }
 

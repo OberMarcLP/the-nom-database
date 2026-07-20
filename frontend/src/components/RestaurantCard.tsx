@@ -45,6 +45,11 @@ export function RestaurantCard({ restaurant, onClick, onReview, onReject }: Rest
             {ft.name}
           </span>
         ))}
+        {!!restaurant.price_range && (
+          <span className="self-center text-sm font-medium text-(--text-muted)">
+            {'$'.repeat(restaurant.price_range)}
+          </span>
+        )}
       </div>
 
       {(restaurant.address || restaurant.distance !== undefined) && (

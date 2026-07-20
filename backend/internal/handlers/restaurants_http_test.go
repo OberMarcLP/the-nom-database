@@ -57,6 +57,9 @@ func TestCreateRestaurant_ValidationErrors(t *testing.T) {
 		{"wrong field type", `{"name":123}`, "Invalid request body"},
 		{"missing name", `{}`, "Name is required"},
 		{"empty name", `{"name":""}`, "Name is required"},
+		{"price range zero", `{"name":"Nom","price_range":0}`, "Price range must be between 1 and 4"},
+		{"price range above maximum", `{"name":"Nom","price_range":5}`, "Price range must be between 1 and 4"},
+		{"price range negative", `{"name":"Nom","price_range":-1}`, "Price range must be between 1 and 4"},
 	}
 
 	for _, tt := range tests {
@@ -128,6 +131,72 @@ func TestUpdateRestaurant_GuardPaths(t *testing.T) {
 		}
 		if !strings.Contains(rr.Body.String(), "Authentication required") {
 			t.Errorf("body = %q, want it to mention required authentication", rr.Body.String())
+		}
+	})
+
+	t.Run("invalid price range rejected before auth check", func(t *testing.T) {
+		t.Parallel()
+
+		for _, body := range []string{`{"price_range":0}`, `{"price_range":5}`, `{"price_range":-1}`} {
+			rr := httptest.NewRecorder()
+			r := newJSONRequestWithVars(http.MethodPut, "/api/restaurants/1", body, map[string]string{"id": "1"})
+
+			UpdateRestaurant(rr, r)
+
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("body %s: status = %d, want %d", body, rr.Code, http.StatusBadRequest)
+			}
+			if !strings.Contains(rr.Body.String(), "Price range must be between 1 and 4") {
+				t.Errorf("body %s: response = %q, want the price range message", body, rr.Body.String())
+			}
+		}
+	})
+
+	t.Run("valid or absent price range passes validation to auth guard", func(t *testing.T) {
+		t.Parallel()
+
+		// 401 (not 400) proves these bodies clear the price_range validation
+		// and reach the next guard; DB access is never hit without a user.
+		for _, body := range []string{`{"price_range":1}`, `{"price_range":4}`, `{}`} {
+			rr := httptest.NewRecorder()
+			r := newJSONRequestWithVars(http.MethodPut, "/api/restaurants/1", body, map[string]string{"id": "1"})
+
+			UpdateRestaurant(rr, r)
+
+			if rr.Code != http.StatusUnauthorized {
+				t.Errorf("body %s: status = %d, want %d", body, rr.Code, http.StatusUnauthorized)
+			}
+		}
+	})
+}
+
+func TestValidatePriceRange(t *testing.T) {
+	t.Parallel()
+
+	intPtr := func(v int) *int { return &v }
+
+	t.Run("valid values", func(t *testing.T) {
+		t.Parallel()
+
+		for _, pr := range []*int{nil, intPtr(1), intPtr(2), intPtr(3), intPtr(4)} {
+			if err := validatePriceRange(pr); err != nil {
+				t.Errorf("validatePriceRange(%v) = %v, want nil", pr, err)
+			}
+		}
+	})
+
+	t.Run("out of range values", func(t *testing.T) {
+		t.Parallel()
+
+		for _, v := range []int{0, 5, -1, 100} {
+			err := validatePriceRange(intPtr(v))
+			if err == nil {
+				t.Errorf("validatePriceRange(%d) = nil, want an error", v)
+				continue
+			}
+			if err.Error() != "Price range must be between 1 and 4" {
+				t.Errorf("validatePriceRange(%d) message = %q, want the contract message", v, err.Error())
+			}
 		}
 	})
 }

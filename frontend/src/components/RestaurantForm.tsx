@@ -24,6 +24,7 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
     longitude: restaurant?.longitude || null,
     google_place_id: restaurant?.google_place_id || '',
     category_id: restaurant?.category_id || null,
+    price_range: restaurant?.price_range || undefined,
     food_type_ids: restaurant?.food_types?.map(ft => ft.id) || [] as number[],
   });
 
@@ -63,6 +64,13 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
     }));
   };
 
+  const handlePriceRangeSelect = (value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      price_range: prev.price_range === value ? undefined : value,
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
@@ -75,6 +83,7 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
       longitude: formData.longitude,
       google_place_id: formData.google_place_id || null,
       category_id: formData.category_id,
+      price_range: formData.price_range,
       food_type_ids: formData.food_type_ids,
     });
   };
@@ -169,6 +178,31 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label className="admin-label">Price Range (optional)</label>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: 1, label: '$' },
+            { value: 2, label: '$$' },
+            { value: 3, label: '$$$' },
+            { value: 4, label: '$$$$' },
+          ].map((price) => (
+            <button
+              key={price.value}
+              type="button"
+              onClick={() => handlePriceRangeSelect(price.value)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                formData.price_range === price.value
+                  ? 'bg-(--success)/20 border-2 border-(--success) text-(--success)'
+                  : 'btn-glass'
+              }`}
+            >
+              {price.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div>

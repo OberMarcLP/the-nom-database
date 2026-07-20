@@ -105,6 +105,7 @@ export interface CreateRestaurantData {
   longitude?: number | null;
   google_place_id?: string | null;
   category_id?: number | null;
+  price_range?: number; // 1 = $, 2 = $$, 3 = $$$, 4 = $$$$
   food_type_ids?: number[];
 }
 

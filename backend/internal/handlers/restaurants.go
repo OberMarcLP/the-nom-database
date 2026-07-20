@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -710,7 +711,7 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 		SELECT * FROM (
 			SELECT
 				r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
-				r.google_place_id, r.category_id, r.user_id as created_by, NULL::integer as updated_by, r.created_at, r.updated_at,
+				r.google_place_id, r.category_id, r.price_range, r.user_id as created_by, NULL::integer as updated_by, r.created_at, r.updated_at,
 				c.id, c.name,
 				COALESCE(AVG(rt.food_rating), 0) as avg_food,
 				COALESCE(AVG(rt.service_rating), 0) as avg_service,
@@ -730,7 +731,7 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 
 			SELECT
 				s.id, s.name, NULL::text as description, s.address, s.phone, s.website, s.latitude, s.longitude,
-				s.google_place_id, s.suggested_category_id as category_id, NULL::integer as created_by, NULL::integer as updated_by, s.created_at, s.updated_at,
+				s.google_place_id, s.suggested_category_id as category_id, NULL::integer as price_range, NULL::integer as created_by, NULL::integer as updated_by, s.created_at, s.updated_at,
 				c.id, c.name,
 				0.0 as avg_food,
 				0.0 as avg_service,
@@ -759,7 +760,7 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 
 	err = database.GetPool().QueryRow(ctx, query, id).Scan(
 		&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
+		&rest.GooglePlaceID, &rest.CategoryID, &rest.PriceRange, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 		&catID, &catName,
 		&avgFood, &avgService, &avgAmbiance, &ratingCount,
 		&isSuggestion,
@@ -824,9 +825,21 @@ func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(rest)
 }
 
+// validatePriceRange checks the optional price_range value (1 = $ to 4 = $$$$).
+// nil means "no price range given" and is valid.
+func validatePriceRange(priceRange *int) error {
+	if priceRange == nil {
+		return nil
+	}
+	if *priceRange < 1 || *priceRange > 4 {
+		return errors.New("Price range must be between 1 and 4")
+	}
+	return nil
+}
+
 // CreateRestaurant godoc
 // @Summary Create a new restaurant
-// @Description Create a new restaurant with details and food types
+// @Description Create a new restaurant with details and food types. price_range is optional (1 = $ to 4 = $$$$).
 // @Tags Restaurants
 // @Accept json
 // @Produce json
@@ -848,6 +861,11 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := validatePriceRange(req.PriceRange); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	// Get user from context
 	user, ok := GetUserFromContext(r)
 	var userID *int
@@ -860,13 +878,13 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 
 	var rest models.Restaurant
 	err := database.GetPool().QueryRow(ctx,
-		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_by, updated_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, created_by, updated_by, created_at, updated_at`,
-		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, userID, userID,
+		`INSERT INTO restaurants (name, description, address, phone, website, latitude, longitude, google_place_id, category_id, price_range, created_by, updated_by)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, price_range, created_by, updated_by, created_at, updated_at`,
+		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, req.PriceRange, userID, userID,
 	).Scan(
 		&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
+		&rest.GooglePlaceID, &rest.CategoryID, &rest.PriceRange, &rest.CreatedBy, &rest.UpdatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 	)
 	if err != nil {
 		// Check if it's a unique constraint violation
@@ -906,7 +924,7 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 
 // UpdateRestaurant godoc
 // @Summary Update a restaurant
-// @Description Update an existing restaurant's information
+// @Description Update an existing restaurant's information. price_range is optional (1 = $ to 4 = $$$$); omitted or null fields keep their current value.
 // @Tags Restaurants
 // @Accept json
 // @Produce json
@@ -928,6 +946,11 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 	var req models.UpdateRestaurantRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := validatePriceRange(req.PriceRange); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -963,13 +986,14 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 			longitude = COALESCE($7, longitude),
 			google_place_id = COALESCE($8, google_place_id),
 			category_id = COALESCE($9, category_id),
+			price_range = $10, -- not COALESCE: the edit form sends full state, so absent means clear
 			updated_at = NOW()
-		WHERE id = $10
-		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, user_id, created_at, updated_at`,
-		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, id,
+		WHERE id = $11
+		RETURNING id, name, description, address, phone, website, latitude, longitude, google_place_id, category_id, price_range, user_id, created_at, updated_at`,
+		req.Name, req.Description, req.Address, req.Phone, req.Website, req.Latitude, req.Longitude, req.GooglePlaceID, req.CategoryID, req.PriceRange, id,
 	).Scan(
 		&rest.ID, &rest.Name, &rest.Description, &rest.Address, &rest.Phone, &rest.Website, &rest.Latitude, &rest.Longitude,
-		&rest.GooglePlaceID, &rest.CategoryID, &rest.CreatedBy, &rest.CreatedAt, &rest.UpdatedAt,
+		&rest.GooglePlaceID, &rest.CategoryID, &rest.PriceRange, &rest.CreatedBy, &rest.CreatedAt, &rest.UpdatedAt,
 	)
 	if err != nil {
 		logger.Error("Failed to update restaurant ID %d: %v", id, err)
