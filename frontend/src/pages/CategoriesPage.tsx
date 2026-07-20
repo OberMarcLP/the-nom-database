@@ -1,39 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Edit, Trash2, Loader2, Tag } from 'lucide-react';
-import { Category, getCategories, createCategory, updateCategory, deleteCategory } from '../services/api';
+import { Category } from '../services/api';
 import { PermissionGuard } from '../components/PermissionGuard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useCategories, useCreateCategory, useDeleteCategory, useUpdateCategory } from '../hooks/useApi';
 
 export function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
 
-  const fetchCategories = async () => {
-    try {
-      const data = await getCategories();
-      setCategories(data);
-    } catch {
-      // intentionally ignored - user-facing error handling tracked in review backlog
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  const { data: categories = [], isLoading: loading } = useCategories();
+  const createCategoryMutation = useCreateCategory();
+  const updateCategoryMutation = useUpdateCategory();
+  const deleteCategoryMutation = useDeleteCategory();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
     try {
-      await createCategory(newName);
+      await createCategoryMutation.mutateAsync(newName);
       setNewName('');
-      fetchCategories();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -42,10 +30,9 @@ export function CategoriesPage() {
   const handleUpdate = async (id: number) => {
     if (!editName.trim()) return;
     try {
-      await updateCategory(id, editName);
+      await updateCategoryMutation.mutateAsync({ id, name: editName });
       setEditingId(null);
       setEditName('');
-      fetchCategories();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -54,8 +41,7 @@ export function CategoriesPage() {
   const handleDelete = async () => {
     if (!confirmDelete) return;
     try {
-      await deleteCategory(confirmDelete.id);
-      fetchCategories();
+      await deleteCategoryMutation.mutateAsync(confirmDelete.id);
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }

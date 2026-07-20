@@ -1,34 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Bookmark, Trash2, Eye, EyeOff, MapPin } from 'lucide-react';
-import { getUserLists, deleteList, getList, RestaurantList, ListWithRestaurants } from '../services/api';
 import { ListFormModal } from '../components/ListFormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useToast } from '../hooks/useToast';
+import { useDeleteList, useListDetail, useUserLists } from '../hooks/useApi';
 
 export function ListsPage() {
-  const [lists, setLists] = useState<RestaurantList[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedList, setSelectedList] = useState<ListWithRestaurants | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [selectedListId, setSelectedListId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
   const { showError } = useToast();
 
-  useEffect(() => {
-    loadLists();
-  }, []);
+  const { data: lists = [], isLoading: loading } = useUserLists();
+  const {
+    data: selectedList = null,
+    isLoading: loadingDetail,
+    error: detailError,
+  } = useListDetail(selectedListId ?? 0);
+  const deleteListMutation = useDeleteList();
 
-  const loadLists = async () => {
-    try {
-      setLoading(true);
-      const data = await getUserLists();
-      setLists(data);
-    } catch (error) {
-      console.error('Failed to load lists:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (detailError) {
+      showError('Failed to load list details');
     }
-  };
+  }, [detailError, showError]);
 
   const handleDelete = (listId: number, name: string) => {
     setConfirmDelete({ id: listId, name });
@@ -38,10 +33,9 @@ export function ListsPage() {
     if (!confirmDelete) return;
 
     try {
-      await deleteList(confirmDelete.id);
-      await loadLists();
-      if (selectedList?.list.id === confirmDelete.id) {
-        setSelectedList(null);
+      await deleteListMutation.mutateAsync(confirmDelete.id);
+      if (selectedListId === confirmDelete.id) {
+        setSelectedListId(null);
       }
     } catch (error) {
       console.error('Failed to delete list:', error);
@@ -49,22 +43,8 @@ export function ListsPage() {
     }
   };
 
-  const handleSelectList = async (listId: number) => {
-    if (selectedList?.list.id === listId) {
-      setSelectedList(null);
-      return;
-    }
-
-    try {
-      setLoadingDetail(true);
-      const data = await getList(listId);
-      setSelectedList(data);
-    } catch (error) {
-      console.error('Failed to load list detail:', error);
-      showError('Failed to load list details');
-    } finally {
-      setLoadingDetail(false);
-    }
+  const handleSelectList = (listId: number) => {
+    setSelectedListId((prev) => (prev === listId ? null : listId));
   };
 
   return (
@@ -111,7 +91,7 @@ export function ListsPage() {
                 key={list.id}
                 onClick={() => handleSelectList(list.id)}
                 className={`w-full card p-4 text-left transition-all ${
-                  selectedList?.list.id === list.id
+                  selectedListId === list.id
                     ? 'ring-2 ring-(--accent) bg-(--accent-dim)'
                     : 'hover:shadow-lg'
                 }`}
@@ -216,10 +196,7 @@ export function ListsPage() {
       {showCreateModal && (
         <ListFormModal
           onClose={() => setShowCreateModal(false)}
-          onSuccess={() => {
-            setShowCreateModal(false);
-            loadLists();
-          }}
+          onSuccess={() => setShowCreateModal(false)}
         />
       )}
 

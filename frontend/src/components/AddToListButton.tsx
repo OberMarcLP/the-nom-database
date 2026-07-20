@@ -1,6 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Bookmark, Plus, Check } from 'lucide-react';
-import { getRestaurantLists, addRestaurantToList, removeRestaurantFromList, createList, ListWithStatus } from '../services/api';
+import {
+  useAddRestaurantToList,
+  useCreateList,
+  useRemoveRestaurantFromList,
+  useRestaurantLists,
+} from '../hooks/useApi';
 import { useToast } from '../hooks/useToast';
 import { Modal } from './Modal';
 
@@ -11,39 +16,25 @@ interface AddToListButtonProps {
 
 export function AddToListButton({ restaurantId, restaurantName }: AddToListButtonProps) {
   const [showModal, setShowModal] = useState(false);
-  const [lists, setLists] = useState<ListWithStatus[]>([]);
-  const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newListName, setNewListName] = useState('');
-  const [creating, setCreating] = useState(false);
   const { showError } = useToast();
 
-  useEffect(() => {
-    if (showModal) {
-      loadLists();
-    }
-  }, [showModal]);
-
-  const loadLists = async () => {
-    try {
-      setLoading(true);
-      const data = await getRestaurantLists(restaurantId);
-      setLists(data);
-    } catch (error) {
-      console.error('Failed to load lists:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: lists = [], isLoading: loading } = useRestaurantLists(restaurantId, {
+    enabled: showModal,
+  });
+  const addToListMutation = useAddRestaurantToList();
+  const removeFromListMutation = useRemoveRestaurantFromList();
+  const createListMutation = useCreateList();
+  const creating = createListMutation.isPending;
 
   const handleToggleList = async (listId: number, isInList: boolean) => {
     try {
       if (isInList) {
-        await removeRestaurantFromList(listId, restaurantId);
+        await removeFromListMutation.mutateAsync({ listId, restaurantId });
       } else {
-        await addRestaurantToList(listId, restaurantId);
+        await addToListMutation.mutateAsync({ listId, restaurantId });
       }
-      await loadLists();
     } catch (error) {
       console.error('Failed to toggle list:', error);
       showError('Failed to update list');
@@ -55,19 +46,15 @@ export function AddToListButton({ restaurantId, restaurantName }: AddToListButto
     if (!newListName.trim()) return;
 
     try {
-      setCreating(true);
-      await createList({
+      await createListMutation.mutateAsync({
         name: newListName,
         is_public: false,
       });
       setNewListName('');
       setShowCreateForm(false);
-      await loadLists();
     } catch (error) {
       console.error('Failed to create list:', error);
       showError('Failed to create list');
-    } finally {
-      setCreating(false);
     }
   };
 

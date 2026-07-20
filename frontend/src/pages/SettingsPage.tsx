@@ -1,13 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Edit, Trash2, Loader2, Tag, Utensils, Settings as SettingsIcon } from 'lucide-react';
-import { Category, FoodType, getCategories, getFoodTypes, createCategory, updateCategory, deleteCategory, createFoodType, updateFoodType, deleteFoodType } from '../services/api';
+import { Category, FoodType } from '../services/api';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import {
+  useCategories,
+  useCreateCategory,
+  useCreateFoodType,
+  useDeleteCategory,
+  useDeleteFoodType,
+  useFoodTypes,
+  useUpdateCategory,
+  useUpdateFoodType,
+} from '../hooks/useApi';
 
 export function SettingsPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
   const [editCategoryName, setEditCategoryName] = useState('');
@@ -19,30 +25,24 @@ export function SettingsPage() {
   const [confirmDeleteCategory, setConfirmDeleteCategory] = useState<{ id: number; name: string } | null>(null);
   const [confirmDeleteFoodType, setConfirmDeleteFoodType] = useState<{ id: number; name: string } | null>(null);
 
-  const fetchData = async () => {
-    try {
-      const [cats, fts] = await Promise.all([getCategories(), getFoodTypes()]);
-      setCategories(cats);
-      setFoodTypes(fts);
-    } catch {
-      // intentionally ignored - user-facing error handling tracked in review backlog
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: categories = [], isLoading: loadingCategories } = useCategories();
+  const { data: foodTypes = [], isLoading: loadingFoodTypes } = useFoodTypes();
+  const loading = loadingCategories || loadingFoodTypes;
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const createCategoryMutation = useCreateCategory();
+  const updateCategoryMutation = useUpdateCategory();
+  const deleteCategoryMutation = useDeleteCategory();
+  const createFoodTypeMutation = useCreateFoodType();
+  const updateFoodTypeMutation = useUpdateFoodType();
+  const deleteFoodTypeMutation = useDeleteFoodType();
 
   // Category handlers
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
     try {
-      await createCategory(newCategoryName);
+      await createCategoryMutation.mutateAsync(newCategoryName);
       setNewCategoryName('');
-      fetchData();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -51,10 +51,9 @@ export function SettingsPage() {
   const handleUpdateCategory = async (id: number) => {
     if (!editCategoryName.trim()) return;
     try {
-      await updateCategory(id, editCategoryName);
+      await updateCategoryMutation.mutateAsync({ id, name: editCategoryName });
       setEditingCategoryId(null);
       setEditCategoryName('');
-      fetchData();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -63,8 +62,7 @@ export function SettingsPage() {
   const handleDeleteCategory = async () => {
     if (!confirmDeleteCategory) return;
     try {
-      await deleteCategory(confirmDeleteCategory.id);
-      fetchData();
+      await deleteCategoryMutation.mutateAsync(confirmDeleteCategory.id);
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -80,9 +78,8 @@ export function SettingsPage() {
     e.preventDefault();
     if (!newFoodTypeName.trim()) return;
     try {
-      await createFoodType(newFoodTypeName);
+      await createFoodTypeMutation.mutateAsync(newFoodTypeName);
       setNewFoodTypeName('');
-      fetchData();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -91,10 +88,9 @@ export function SettingsPage() {
   const handleUpdateFoodType = async (id: number) => {
     if (!editFoodTypeName.trim()) return;
     try {
-      await updateFoodType(id, editFoodTypeName);
+      await updateFoodTypeMutation.mutateAsync({ id, name: editFoodTypeName });
       setEditingFoodTypeId(null);
       setEditFoodTypeName('');
-      fetchData();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -103,8 +99,7 @@ export function SettingsPage() {
   const handleDeleteFoodType = async () => {
     if (!confirmDeleteFoodType) return;
     try {
-      await deleteFoodType(confirmDeleteFoodType.id);
-      fetchData();
+      await deleteFoodTypeMutation.mutateAsync(confirmDeleteFoodType.id);
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }

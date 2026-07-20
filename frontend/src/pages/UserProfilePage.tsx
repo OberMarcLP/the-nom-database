@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Star, MapPin, List, MessageSquare, Calendar, Edit2, ArrowLeft, Lock, Globe } from 'lucide-react';
-import { getUserProfile, getUserReviews, getUserLists, UserProfile, Rating, RestaurantList } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { StarRating } from '../components/StarRating';
 import { EditProfileModal } from '../components/EditProfileModal';
+import { useUserLists, useUserProfile, useUserReviews } from '../hooks/useApi';
 
 type TabType = 'reviews' | 'lists' | 'about';
 
@@ -12,59 +12,24 @@ export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [reviews, setReviews] = useState<Rating[]>([]);
-  const [lists, setLists] = useState<RestaurantList[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('reviews');
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const isOwnProfile = currentUser?.id === Number(id);
+  const userId = Number(id);
+  const isOwnProfile = currentUser?.id === userId;
 
-  const loadProfile = useCallback(async () => {
-    if (!id) return;
-    try {
-      setLoading(true);
-      const data = await getUserProfile(Number(id));
-      setProfile(data);
-    } catch (error) {
-      console.error('Failed to load profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  const loadReviews = useCallback(async () => {
-    if (!id) return;
-    try {
-      const data = await getUserReviews(Number(id));
-      setReviews(data);
-    } catch (error) {
-      console.error('Failed to load reviews:', error);
-    }
-  }, [id]);
-
-  const loadLists = useCallback(async () => {
-    if (!isOwnProfile) return; // Only load lists for own profile for now
-    try {
-      const data = await getUserLists();
-      setLists(data);
-    } catch (error) {
-      console.error('Failed to load lists:', error);
-    }
-  }, [isOwnProfile]);
-
-  useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
-
-  useEffect(() => {
-    if (activeTab === 'reviews') {
-      loadReviews();
-    } else if (activeTab === 'lists') {
-      loadLists();
-    }
-  }, [activeTab, loadReviews, loadLists]);
+  const {
+    data: profile = null,
+    isLoading: loading,
+    refetch: refetchProfile,
+  } = useUserProfile(userId);
+  const { data: reviews = [] } = useUserReviews(userId, {
+    enabled: userId > 0 && activeTab === 'reviews',
+  });
+  const { data: lists = [] } = useUserLists({
+    // Only load lists for own profile for now
+    enabled: isOwnProfile && activeTab === 'lists',
+  });
 
   if (loading) {
     return (
@@ -466,7 +431,7 @@ export default function UserProfilePage() {
       <EditProfileModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        onSuccess={loadProfile}
+        onSuccess={() => refetchProfile()}
       />
     </div>
   );

@@ -12,6 +12,11 @@ import type {
   CreateSuggestionData,
   GooglePlaceResult,
   PaginatedResponse,
+  RestaurantList,
+  ListRestaurant,
+  ListWithRestaurants,
+  ListWithStatus,
+  UserProfile,
 } from '../services/api';
 
 // Query Keys - centralized for easy cache management
@@ -27,6 +32,11 @@ export const queryKeys = {
   menuPhotos: (restaurantId: number) => ['menuPhotos', restaurantId] as const,
   globalSearch: (query: string) => ['globalSearch', query] as const,
   placesSearch: (query: string) => ['placesSearch', query] as const,
+  userLists: () => ['lists'] as const,
+  list: (id: number) => ['list', id] as const,
+  restaurantLists: (restaurantId: number) => ['restaurantLists', restaurantId] as const,
+  userProfile: (userId: number) => ['userProfile', userId] as const,
+  userReviews: (userId: number) => ['userReviews', userId] as const,
 };
 
 // ============= RESTAURANTS =============
@@ -511,6 +521,141 @@ export const useDeleteMenuPhoto = (
     onSuccess: (_, { restaurantId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.menuPhotos(restaurantId) });
     },
+    ...options,
+  });
+};
+
+// ============= RESTAURANT LISTS =============
+
+export const useUserLists = (
+  options?: Omit<UseQueryOptions<RestaurantList[], Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery({
+    queryKey: queryKeys.userLists(),
+    queryFn: api.getUserLists,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000,
+    ...options,
+  });
+};
+
+export const useListDetail = (
+  id: number,
+  options?: Omit<UseQueryOptions<ListWithRestaurants, Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery({
+    queryKey: queryKeys.list(id),
+    queryFn: () => api.getList(id),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: id > 0,
+    ...options,
+  });
+};
+
+export const useRestaurantLists = (
+  restaurantId: number,
+  options?: Omit<UseQueryOptions<ListWithStatus[], Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery({
+    queryKey: queryKeys.restaurantLists(restaurantId),
+    queryFn: () => api.getRestaurantLists(restaurantId),
+    staleTime: 1 * 60 * 1000, // 1 minute - membership changes frequently
+    gcTime: 5 * 60 * 1000,
+    enabled: restaurantId > 0,
+    ...options,
+  });
+};
+
+export const useCreateList = (
+  options?: UseMutationOptions<RestaurantList, Error, { name: string; description?: string; is_public: boolean }>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.createList,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurantLists'] });
+    },
+    ...options,
+  });
+};
+
+export const useDeleteList = (
+  options?: UseMutationOptions<void, Error, number>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.deleteList,
+    onSuccess: (_, listId) => {
+      queryClient.removeQueries({ queryKey: queryKeys.list(listId) });
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurantLists'] });
+    },
+    ...options,
+  });
+};
+
+export const useAddRestaurantToList = (
+  options?: UseMutationOptions<ListRestaurant, Error, { listId: number; restaurantId: number; notes?: string }>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ listId, restaurantId, notes }) => api.addRestaurantToList(listId, restaurantId, notes),
+    onSuccess: (_, { listId, restaurantId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.restaurantLists(restaurantId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.list(listId) });
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
+    },
+    ...options,
+  });
+};
+
+export const useRemoveRestaurantFromList = (
+  options?: UseMutationOptions<void, Error, { listId: number; restaurantId: number }>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ listId, restaurantId }) => api.removeRestaurantFromList(listId, restaurantId),
+    onSuccess: (_, { listId, restaurantId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.restaurantLists(restaurantId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.list(listId) });
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
+    },
+    ...options,
+  });
+};
+
+// ============= USER PROFILE =============
+
+export const useUserProfile = (
+  userId: number,
+  options?: Omit<UseQueryOptions<UserProfile, Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery({
+    queryKey: queryKeys.userProfile(userId),
+    queryFn: () => api.getUserProfile(userId),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: userId > 0,
+    ...options,
+  });
+};
+
+export const useUserReviews = (
+  userId: number,
+  options?: Omit<UseQueryOptions<Rating[], Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery({
+    queryKey: queryKeys.userReviews(userId),
+    queryFn: () => api.getUserReviews(userId),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: userId > 0,
     ...options,
   });
 };

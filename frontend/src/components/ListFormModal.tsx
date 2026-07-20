@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createList } from '../services/api';
+import { useCreateList } from '../hooks/useApi';
 import { useToast } from '../hooks/useToast';
 import { Modal } from './Modal';
 
@@ -12,16 +12,16 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
-  const [loading, setLoading] = useState(false);
   const { showError } = useToast();
+  const createListMutation = useCreateList();
+  const loading = createListMutation.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     try {
-      setLoading(true);
-      await createList({
+      await createListMutation.mutateAsync({
         name: name.trim(),
         description: description.trim() || undefined,
         is_public: isPublic,
@@ -30,8 +30,6 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
     } catch (error) {
       console.error('Failed to create list:', error);
       showError('Failed to create list');
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Category, FoodType, GooglePlaceResult, CreateSuggestionData, getCategories, getFoodTypes, getPlaceDetails } from '../services/api';
+import { useState } from 'react';
+import { GooglePlaceResult, CreateSuggestionData, getPlaceDetails } from '../services/api';
 import { PlaceSearch } from './PlaceSearch';
 import { X, Loader2 } from 'lucide-react';
+import { useCategories, useFoodTypes } from '../hooks/useApi';
 
 interface SuggestionFormProps {
   onSubmit: (data: CreateSuggestionData) => void;
@@ -9,8 +10,8 @@ interface SuggestionFormProps {
 }
 
 export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
+  const { data: categories = [] } = useCategories();
+  const { data: foodTypes = [] } = useFoodTypes();
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -24,15 +25,6 @@ export function SuggestionForm({ onSubmit, onCancel }: SuggestionFormProps) {
     food_type_ids: [] as number[],
     notes: '',
   });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const [cats, fts] = await Promise.all([getCategories(), getFoodTypes()]);
-      setCategories(cats);
-      setFoodTypes(fts);
-    };
-    fetchData();
-  }, []);
 
   const handlePlaceSelect = async (place: GooglePlaceResult) => {
     // First set basic info from search results

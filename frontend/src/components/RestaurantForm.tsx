@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Restaurant, Category, FoodType, GooglePlaceResult, CreateRestaurantData, getCategories, getFoodTypes, getPlaceDetails } from '../services/api';
+import { useState } from 'react';
+import { Restaurant, GooglePlaceResult, CreateRestaurantData, getPlaceDetails } from '../services/api';
 import { PlaceSearch } from './PlaceSearch';
 import { X, Loader2 } from 'lucide-react';
+import { useCategories, useFoodTypes } from '../hooks/useApi';
 
 interface RestaurantFormProps {
   restaurant?: Restaurant;
@@ -10,8 +11,8 @@ interface RestaurantFormProps {
 }
 
 export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFormProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
+  const { data: categories = [] } = useCategories();
+  const { data: foodTypes = [] } = useFoodTypes();
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [formData, setFormData] = useState({
     name: restaurant?.name || '',
@@ -25,15 +26,6 @@ export function RestaurantForm({ restaurant, onSubmit, onCancel }: RestaurantFor
     category_id: restaurant?.category_id || null,
     food_type_ids: restaurant?.food_types?.map(ft => ft.id) || [] as number[],
   });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const [cats, fts] = await Promise.all([getCategories(), getFoodTypes()]);
-      setCategories(cats);
-      setFoodTypes(fts);
-    };
-    fetchData();
-  }, []);
 
   const handlePlaceSelect = async (place: GooglePlaceResult) => {
     // First set basic info from search results

@@ -1,39 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Edit, Trash2, Loader2, Utensils } from 'lucide-react';
-import { FoodType, getFoodTypes, createFoodType, updateFoodType, deleteFoodType } from '../services/api';
+import { FoodType } from '../services/api';
 import { PermissionGuard } from '../components/PermissionGuard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useCreateFoodType, useDeleteFoodType, useFoodTypes, useUpdateFoodType } from '../hooks/useApi';
 
 export function FoodTypesPage() {
-  const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
-  const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
 
-  const fetchFoodTypes = async () => {
-    try {
-      const data = await getFoodTypes();
-      setFoodTypes(data);
-    } catch {
-      // intentionally ignored - user-facing error handling tracked in review backlog
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchFoodTypes();
-  }, []);
+  const { data: foodTypes = [], isLoading: loading } = useFoodTypes();
+  const createFoodTypeMutation = useCreateFoodType();
+  const updateFoodTypeMutation = useUpdateFoodType();
+  const deleteFoodTypeMutation = useDeleteFoodType();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
     try {
-      await createFoodType(newName);
+      await createFoodTypeMutation.mutateAsync(newName);
       setNewName('');
-      fetchFoodTypes();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -42,10 +30,9 @@ export function FoodTypesPage() {
   const handleUpdate = async (id: number) => {
     if (!editName.trim()) return;
     try {
-      await updateFoodType(id, editName);
+      await updateFoodTypeMutation.mutateAsync({ id, name: editName });
       setEditingId(null);
       setEditName('');
-      fetchFoodTypes();
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }
@@ -54,8 +41,7 @@ export function FoodTypesPage() {
   const handleDelete = async () => {
     if (!confirmDelete) return;
     try {
-      await deleteFoodType(confirmDelete.id);
-      fetchFoodTypes();
+      await deleteFoodTypeMutation.mutateAsync(confirmDelete.id);
     } catch {
       // intentionally ignored - user-facing error handling tracked in review backlog
     }

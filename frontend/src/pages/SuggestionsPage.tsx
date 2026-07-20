@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { keepPreviousData } from '@tanstack/react-query';
 import { Plus, Loader2, XCircle, Clock, ListChecks, Trash2 } from 'lucide-react';
+import { CreateSuggestionData } from '../services/api';
 import {
-  RestaurantSuggestion,
-  CreateSuggestionData,
-  getSuggestions,
-  createSuggestion,
-  convertSuggestion,
-  deleteSuggestion,
-} from '../services/api';
+  useConvertSuggestion,
+  useCreateSuggestion,
+  useDeleteSuggestion,
+  useSuggestions,
+} from '../hooks/useApi';
 import { SuggestionForm } from '../components/SuggestionForm';
 import { Modal } from '../components/Modal';
 import { ReviewConvertModal } from '../components/ReviewConvertModal';
@@ -19,36 +19,25 @@ import { PermissionGuard } from '../components/PermissionGuard';
 type StatusFilter = '' | 'pending' | 'approved' | 'tested' | 'rejected';
 
 export function SuggestionsPage() {
-  const [suggestions, setSuggestions] = useState<RestaurantSuggestion[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
-  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [reviewingId, setReviewingId] = useState<number | null>(null);
   const [reviewingName, setReviewingName] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [alertMessage, setAlertMessage] = useState('');
 
-  const fetchSuggestions = useCallback(async () => {
-    try {
-      const data = await getSuggestions(statusFilter);
-      setSuggestions(data);
-    } catch {
-      // intentionally ignored - user-facing error handling tracked in review backlog
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter]);
-
-  useEffect(() => {
-    fetchSuggestions();
-  }, [fetchSuggestions]);
+  const { data: suggestions = [], isLoading: loading } = useSuggestions(statusFilter, {
+    placeholderData: keepPreviousData,
+  });
+  const createSuggestionMutation = useCreateSuggestion();
+  const convertSuggestionMutation = useConvertSuggestion();
+  const deleteSuggestionMutation = useDeleteSuggestion();
 
   const handleCreate = async (data: CreateSuggestionData) => {
     try {
-      await createSuggestion(data);
+      await createSuggestionMutation.mutateAsync(data);
       setShowAddModal(false);
-      fetchSuggestions();
-    } catch (error) {
+    } catch {
       setAlertMessage('Failed to create suggestion');
     }
   };
@@ -62,19 +51,21 @@ export function SuggestionsPage() {
   }) => {
     if (!reviewingId) return;
     try {
-      await convertSuggestion(reviewingId, {
-        description: data.description || undefined,
-        category_id: undefined,
-        food_rating: data.foodRating,
-        service_rating: data.serviceRating,
-        ambiance_rating: data.ambianceRating,
-        comment: data.comment || undefined,
+      await convertSuggestionMutation.mutateAsync({
+        id: reviewingId,
+        data: {
+          description: data.description || undefined,
+          category_id: undefined,
+          food_rating: data.foodRating,
+          service_rating: data.serviceRating,
+          ambiance_rating: data.ambianceRating,
+          comment: data.comment || undefined,
+        },
       });
       setReviewingId(null);
       setReviewingName('');
-      fetchSuggestions();
       setAlertMessage('Suggestion converted to restaurant successfully!');
-    } catch (error) {
+    } catch {
       setAlertMessage('Failed to convert suggestion');
     }
   };
@@ -86,10 +77,9 @@ export function SuggestionsPage() {
   const confirmDelete = async () => {
     if (!deletingId) return;
     try {
-      await deleteSuggestion(deletingId);
+      await deleteSuggestionMutation.mutateAsync(deletingId);
       setDeletingId(null);
-      fetchSuggestions();
-    } catch (error) {
+    } catch {
       setAlertMessage('Failed to delete suggestion');
       setDeletingId(null);
     }
