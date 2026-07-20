@@ -628,6 +628,12 @@ body::before {
   justify-content: flex-end;
 }
 
+/* Footers rendered inside the Modal component body: pull flush against the
+   modal edges so they look identical to the former sibling-of-body layout. */
+.admin-modal-body .admin-modal-footer {
+  margin: 24px -24px -24px;
+}
+
 /* Confirm Dialog */
 .admin-confirm-overlay {
   position: fixed;

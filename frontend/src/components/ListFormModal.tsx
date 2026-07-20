@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import { createList } from '../services/api';
 import { useToast } from '../hooks/useToast';
+import { Modal } from './Modal';
 
 interface ListFormModalProps {
   onClose: () => void;
@@ -36,83 +36,72 @@ export function ListFormModal({ onClose, onSuccess }: ListFormModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-glass" onClick={(e) => e.stopPropagation()}>
-        <div className="admin-modal-header">
-          <h2 className="admin-modal-title">Create New List</h2>
-          <button onClick={onClose} className="admin-modal-close">
-            <X className="w-5 h-5" />
+    <Modal isOpen onClose={onClose} title="Create New List">
+      <p className="text-sm text-(--text-muted) mb-6">
+        Organize restaurants you want to try or your favorites
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="admin-form-group">
+          <label htmlFor="listName" className="admin-label">
+            List Name *
+          </label>
+          <input
+            id="listName"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Want to Try, Favorites, Date Night"
+            className="admin-input"
+            required
+            data-autofocus
+          />
+        </div>
+
+        <div className="admin-form-group">
+          <label htmlFor="listDescription" className="admin-label">
+            Description (optional)
+          </label>
+          <textarea
+            id="listDescription"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add a description for this list..."
+            className="admin-textarea"
+            rows={3}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="isPublic"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+            className="w-4 h-4 rounded-sm border-(--border) bg-(--surface) text-(--accent) focus:ring-(--accent) focus:ring-offset-0"
+          />
+          <label htmlFor="isPublic" className="text-sm text-(--text)">
+            Make this list public (others can view it)
+          </label>
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={loading || !name.trim()}
+            className="admin-btn-primary flex-1"
+          >
+            {loading ? 'Creating...' : 'Create List'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="admin-btn"
+          >
+            Cancel
           </button>
         </div>
-
-        <div className="admin-modal-body">
-          <p className="text-sm text-(--text-muted) mb-6">
-            Organize restaurants you want to try or your favorites
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="admin-form-group">
-              <label htmlFor="listName" className="admin-label">
-                List Name *
-              </label>
-              <input
-                id="listName"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Want to Try, Favorites, Date Night"
-                className="admin-input"
-                required
-                autoFocus
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="listDescription" className="admin-label">
-                Description (optional)
-              </label>
-              <textarea
-                id="listDescription"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add a description for this list..."
-                className="admin-textarea"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isPublic"
-                checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
-                className="w-4 h-4 rounded-sm border-(--border) bg-(--surface) text-(--accent) focus:ring-(--accent) focus:ring-offset-0"
-              />
-              <label htmlFor="isPublic" className="text-sm text-(--text)">
-                Make this list public (others can view it)
-              </label>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={loading || !name.trim()}
-                className="admin-btn-primary flex-1"
-              >
-                {loading ? 'Creating...' : 'Create List'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="admin-btn"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 }

@@ -8,9 +8,11 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  /** 'lg' applies admin-modal-lg for wide content */
+  size?: 'default' | 'lg';
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'default' }: ModalProps) {
   useEscapeKey(onClose, isOpen);
   const containerRef = useFocusTrap<HTMLDivElement>(isOpen);
   const titleId = useId();
@@ -34,7 +36,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="modal-glass"
+        className={size === 'lg' ? 'modal-glass admin-modal-lg' : 'modal-glass'}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="admin-modal-header">

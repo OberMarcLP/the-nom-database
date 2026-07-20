@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Camera } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { updateUserProfile, uploadAvatar } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Avatar } from './Avatar';
+import { Modal } from './Modal';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -98,134 +99,121 @@ export function EditProfileModal({ isOpen, onClose, onSuccess }: EditProfileModa
     }
   };
 
-  if (!isOpen) return null;
-
   const isOIDCUser = user?.provider === 'oidc';
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-glass" onClick={(e) => e.stopPropagation()}>
-        <div className="admin-modal-header">
-          <h2 className="admin-modal-title">Edit Profile</h2>
-          <button onClick={onClose} className="admin-modal-close">
-            <X className="w-5 h-5" />
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
+      <p className="text-sm text-(--text-muted) mb-6">
+        Update your profile information
+      </p>
+
+      {/* Avatar Upload Section */}
+      <div className="flex flex-col items-center mb-6">
+        <div className="relative group">
+          <Avatar
+            src={user?.avatar_url}
+            alt={user?.username}
+            size="xl"
+            fallbackText={user?.full_name || user?.username}
+            className="ring-4 ring-(--border)"
+          />
+          <button
+            type="button"
+            onClick={handleAvatarClick}
+            disabled={uploading}
+            className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            title="Upload new avatar"
+          >
+            <Camera className="w-8 h-8 text-white" />
           </button>
         </div>
-
-        <div className="admin-modal-body">
-          <p className="text-sm text-(--text-muted) mb-6">
-            Update your profile information
-          </p>
-
-          {/* Avatar Upload Section */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="relative group">
-              <Avatar
-                src={user?.avatar_url}
-                alt={user?.username}
-                size="xl"
-                fallbackText={user?.full_name || user?.username}
-                className="ring-4 ring-(--border)"
-              />
-              <button
-                type="button"
-                onClick={handleAvatarClick}
-                disabled={uploading}
-                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                title="Upload new avatar"
-              >
-                <Camera className="w-8 h-8 text-white" />
-              </button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
-            <p className="text-xs text-(--text-muted) mt-3 text-center">
-              {uploading ? 'Uploading...' : 'Click avatar to upload new picture (max 5MB)'}
-            </p>
-          </div>
-
-          {isOIDCUser && (
-            <div className="mb-5 p-4 border-2 border-(--info) bg-(--info)/10 rounded-sm">
-              <p className="text-sm text-(--info) font-semibold">
-                Username cannot be changed for OIDC accounts
-              </p>
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-5 p-4 border-2 border-(--danger) bg-(--danger)/10 rounded-sm">
-              <p className="text-sm text-(--danger) font-semibold">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="admin-form-group">
-              <label htmlFor="username" className="admin-label">
-                Username *
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className={`admin-input ${isOIDCUser ? 'opacity-50 cursor-not-allowed' : ''}`}
-                required
-                disabled={isOIDCUser}
-                title={isOIDCUser ? "Username cannot be changed for OIDC accounts" : ""}
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="fullName" className="admin-label">
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="admin-input"
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="email" className="admin-label">
-                Email *
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="admin-input"
-                required
-              />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="admin-btn-primary flex-1"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="admin-btn"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handleAvatarUpload}
+          className="hidden"
+        />
+        <p className="text-xs text-(--text-muted) mt-3 text-center">
+          {uploading ? 'Uploading...' : 'Click avatar to upload new picture (max 5MB)'}
+        </p>
       </div>
-    </div>
+
+      {isOIDCUser && (
+        <div className="mb-5 p-4 border-2 border-(--info) bg-(--info)/10 rounded-sm">
+          <p className="text-sm text-(--info) font-semibold">
+            Username cannot be changed for OIDC accounts
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-5 p-4 border-2 border-(--danger) bg-(--danger)/10 rounded-sm">
+          <p className="text-sm text-(--danger) font-semibold">{error}</p>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="admin-form-group">
+          <label htmlFor="username" className="admin-label">
+            Username *
+          </label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className={`admin-input ${isOIDCUser ? 'opacity-50 cursor-not-allowed' : ''}`}
+            required
+            disabled={isOIDCUser}
+            title={isOIDCUser ? "Username cannot be changed for OIDC accounts" : ""}
+          />
+        </div>
+
+        <div className="admin-form-group">
+          <label htmlFor="fullName" className="admin-label">
+            Full Name
+          </label>
+          <input
+            id="fullName"
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="admin-input"
+          />
+        </div>
+
+        <div className="admin-form-group">
+          <label htmlFor="email" className="admin-label">
+            Email *
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="admin-input"
+            required
+          />
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="admin-btn-primary flex-1"
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="admin-btn"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

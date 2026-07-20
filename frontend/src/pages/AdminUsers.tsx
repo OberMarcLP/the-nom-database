@@ -8,11 +8,11 @@ import {
   Trash2,
   Shield,
   Key,
-  X,
   CheckCircle,
   XCircle,
 } from 'lucide-react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Modal } from '../components/Modal';
 import { useToast } from '../hooks/useToast';
 
 interface UserListResponse {
@@ -45,28 +45,6 @@ export function AdminUsers() {
     loadUsers();
     loadRoles();
   }, [page, search]);
-
-  // Handle ESC key to close modals
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (confirmDelete) {
-          setConfirmDelete(null);
-        } else if (showPasswordModal) {
-          setShowPasswordModal(false);
-        } else if (showRolesModal) {
-          setShowRolesModal(false);
-        } else if (showEditModal) {
-          setShowEditModal(false);
-        } else if (showCreateModal) {
-          setShowCreateModal(false);
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [showCreateModal, showEditModal, showRolesModal, showPasswordModal, confirmDelete]);
 
   const loadUsers = async () => {
     try {
@@ -406,188 +384,162 @@ export function AdminUsers() {
       )}
 
       {/* Create User Modal */}
-      {showCreateModal && (
-        <div className="admin-modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <h3 className="admin-modal-title">Create New User</h3>
-              <button className="admin-modal-close" onClick={() => setShowCreateModal(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleCreateUser}>
-              <div className="admin-modal-body">
-                <div className="admin-form-group">
-                  <label className="admin-label">Username *</label>
-                  <input type="text" name="username" className="admin-input" required />
-                </div>
-                <div className="admin-form-group">
-                  <label className="admin-label">Email *</label>
-                  <input type="email" name="email" className="admin-input" required />
-                </div>
-                <div className="admin-form-group">
-                  <label className="admin-label">Password *</label>
-                  <input type="password" name="password" className="admin-input" required minLength={8} />
-                </div>
-                <div className="admin-form-group">
-                  <label className="admin-label">Full Name</label>
-                  <input type="text" name="full_name" className="admin-input" />
-                </div>
-              </div>
-              <div className="admin-modal-footer">
-                <button type="button" className="admin-btn" onClick={() => setShowCreateModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="admin-btn admin-btn-primary">
-                  Create User
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New User"
+      >
+        <form onSubmit={handleCreateUser}>
+          <div className="admin-form-group">
+            <label className="admin-label">Username *</label>
+            <input type="text" name="username" className="admin-input" required />
           </div>
-        </div>
-      )}
+          <div className="admin-form-group">
+            <label className="admin-label">Email *</label>
+            <input type="email" name="email" className="admin-input" required />
+          </div>
+          <div className="admin-form-group">
+            <label className="admin-label">Password *</label>
+            <input type="password" name="password" className="admin-input" required minLength={8} />
+          </div>
+          <div className="admin-form-group">
+            <label className="admin-label">Full Name</label>
+            <input type="text" name="full_name" className="admin-input" />
+          </div>
+          <div className="admin-modal-footer">
+            <button type="button" className="admin-btn" onClick={() => setShowCreateModal(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="admin-btn admin-btn-primary">
+              Create User
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Edit User Modal */}
-      {showEditModal && selectedUser && (
-        <div className="admin-modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <h3 className="admin-modal-title">Edit User: {selectedUser.username}</h3>
-              <button className="admin-modal-close" onClick={() => setShowEditModal(false)}>
-                <X size={20} />
+      {selectedUser && (
+        <Modal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          title={`Edit User: ${selectedUser.username}`}
+        >
+          <form onSubmit={handleUpdateUser}>
+            <div className="admin-form-group">
+              <label className="admin-label">Username</label>
+              <input type="text" name="username" className="admin-input" defaultValue={selectedUser.username} required />
+            </div>
+            <div className="admin-form-group">
+              <label className="admin-label">Email</label>
+              <input type="email" name="email" className="admin-input" defaultValue={selectedUser.email} required />
+            </div>
+            <div className="admin-form-group">
+              <label className="admin-label">Full Name</label>
+              <input type="text" name="full_name" className="admin-input" defaultValue={selectedUser.full_name || ''} />
+            </div>
+            <div className="admin-form-group">
+              <label className="admin-label">Bio</label>
+              <textarea name="bio" className="admin-textarea" rows={3} defaultValue={selectedUser.bio || ''} />
+            </div>
+            <div className="admin-form-group">
+              <label className="admin-checkbox-label">
+                <input type="checkbox" name="is_active" defaultChecked={selectedUser.is_active} />
+                <span className="admin-label">Account Active</span>
+              </label>
+            </div>
+            <div className="admin-form-group">
+              <label className="admin-checkbox-label">
+                <input type="checkbox" name="email_verified" defaultChecked={selectedUser.email_verified} />
+                <span className="admin-label">Email Verified</span>
+              </label>
+            </div>
+            <div className="admin-modal-footer">
+              <button type="button" className="admin-btn" onClick={() => setShowEditModal(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="admin-btn admin-btn-primary">
+                Save Changes
               </button>
             </div>
-            <form onSubmit={handleUpdateUser}>
-              <div className="admin-modal-body">
-                <div className="admin-form-group">
-                  <label className="admin-label">Username</label>
-                  <input type="text" name="username" className="admin-input" defaultValue={selectedUser.username} required />
-                </div>
-                <div className="admin-form-group">
-                  <label className="admin-label">Email</label>
-                  <input type="email" name="email" className="admin-input" defaultValue={selectedUser.email} required />
-                </div>
-                <div className="admin-form-group">
-                  <label className="admin-label">Full Name</label>
-                  <input type="text" name="full_name" className="admin-input" defaultValue={selectedUser.full_name || ''} />
-                </div>
-                <div className="admin-form-group">
-                  <label className="admin-label">Bio</label>
-                  <textarea name="bio" className="admin-textarea" rows={3} defaultValue={selectedUser.bio || ''} />
-                </div>
-                <div className="admin-form-group">
-                  <label className="admin-checkbox-label">
-                    <input type="checkbox" name="is_active" defaultChecked={selectedUser.is_active} />
-                    <span className="admin-label">Account Active</span>
-                  </label>
-                </div>
-                <div className="admin-form-group">
-                  <label className="admin-checkbox-label">
-                    <input type="checkbox" name="email_verified" defaultChecked={selectedUser.email_verified} />
-                    <span className="admin-label">Email Verified</span>
-                  </label>
-                </div>
-              </div>
-              <div className="admin-modal-footer">
-                <button type="button" className="admin-btn" onClick={() => setShowEditModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="admin-btn admin-btn-primary">
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
       {/* Manage Roles Modal */}
-      {showRolesModal && selectedUser && (
-        <div className="admin-modal-overlay" onClick={() => setShowRolesModal(false)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <h3 className="admin-modal-title">Manage Roles: {selectedUser.username}</h3>
-              <button className="admin-modal-close" onClick={() => setShowRolesModal(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="admin-modal-body">
-              <div className="admin-form-group">
-                <label className="admin-label">Current Roles</label>
-                <div className="admin-roles-cell" style={{ marginBottom: '20px' }}>
-                  {selectedUser.roles && selectedUser.roles.length > 0 ? (
-                    selectedUser.roles.map((role) => (
-                      <div key={role.id} className="admin-badge admin-badge-info admin-badge-removable">
-                        {role.name}
-                        <button
-                          onClick={() => handleRemoveRole(role.id)}
-                          className="admin-badge-remove-btn"
-                        >
-                          <XCircle size={14} />
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <span className="text-muted">No roles assigned</span>
-                  )}
-                </div>
-              </div>
-              <div className="admin-form-group">
-                <label className="admin-label">Add Role</label>
-                <div className="admin-grid-list">
-                  {roles.filter(role => !selectedUser.roles?.find(r => r.id === role.id)).map((role) => (
+      {selectedUser && (
+        <Modal
+          isOpen={showRolesModal}
+          onClose={() => setShowRolesModal(false)}
+          title={`Manage Roles: ${selectedUser.username}`}
+        >
+          <div className="admin-form-group">
+            <label className="admin-label">Current Roles</label>
+            <div className="admin-roles-cell" style={{ marginBottom: '20px' }}>
+              {selectedUser.roles && selectedUser.roles.length > 0 ? (
+                selectedUser.roles.map((role) => (
+                  <div key={role.id} className="admin-badge admin-badge-info admin-badge-removable">
+                    {role.name}
                     <button
-                      key={role.id}
-                      className="admin-btn admin-btn-between"
-                      onClick={() => handleAssignRole(role.id)}
+                      onClick={() => handleRemoveRole(role.id)}
+                      className="admin-badge-remove-btn"
                     >
-                      <span>{role.name}</span>
-                      <Plus size={16} />
+                      <XCircle size={14} />
                     </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="admin-modal-footer">
-              <button className="admin-btn" onClick={() => setShowRolesModal(false)}>
-                Close
-              </button>
+                  </div>
+                ))
+              ) : (
+                <span className="text-muted">No roles assigned</span>
+              )}
             </div>
           </div>
-        </div>
+          <div className="admin-form-group">
+            <label className="admin-label">Add Role</label>
+            <div className="admin-grid-list">
+              {roles.filter(role => !selectedUser.roles?.find(r => r.id === role.id)).map((role) => (
+                <button
+                  key={role.id}
+                  className="admin-btn admin-btn-between"
+                  onClick={() => handleAssignRole(role.id)}
+                >
+                  <span>{role.name}</span>
+                  <Plus size={16} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="admin-modal-footer">
+            <button className="admin-btn" onClick={() => setShowRolesModal(false)}>
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
 
       {/* Reset Password Modal */}
-      {showPasswordModal && selectedUser && (
-        <div className="admin-modal-overlay" onClick={() => setShowPasswordModal(false)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <h3 className="admin-modal-title">Reset Password: {selectedUser.username}</h3>
-              <button className="admin-modal-close" onClick={() => setShowPasswordModal(false)}>
-                <X size={20} />
+      {selectedUser && (
+        <Modal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          title={`Reset Password: ${selectedUser.username}`}
+        >
+          <form onSubmit={handleResetPassword}>
+            <p className="admin-info-text">
+              User will be required to change their password on next login.
+            </p>
+            <div className="admin-form-group">
+              <label className="admin-label">New Password</label>
+              <input type="password" name="new_password" className="admin-input" required minLength={8} />
+            </div>
+            <div className="admin-modal-footer">
+              <button type="button" className="admin-btn" onClick={() => setShowPasswordModal(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="admin-btn admin-btn-danger">
+                Reset Password
               </button>
             </div>
-            <form onSubmit={handleResetPassword}>
-              <div className="admin-modal-body">
-                <p className="admin-info-text">
-                  User will be required to change their password on next login.
-                </p>
-                <div className="admin-form-group">
-                  <label className="admin-label">New Password</label>
-                  <input type="password" name="new_password" className="admin-input" required minLength={8} />
-                </div>
-              </div>
-              <div className="admin-modal-footer">
-                <button type="button" className="admin-btn" onClick={() => setShowPasswordModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="admin-btn admin-btn-danger">
-                  Reset Password
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
       {/* Confirm Delete Dialog */}

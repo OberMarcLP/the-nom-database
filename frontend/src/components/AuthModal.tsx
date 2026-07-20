@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_URL } from '../services/api';
-import { useEscapeKey } from '../hooks/useEscapeKey';
+import { Modal } from './Modal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,7 +11,6 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
-  useEscapeKey(onClose, isOpen);
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -89,207 +87,197 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-glass admin-modal-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="admin-modal-header">
-          <h2 className="admin-modal-title">
-            {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
-          </h2>
-          <button onClick={onClose} className="admin-modal-close">
-            <X className="w-5 h-5" />
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'login' ? 'Sign in to your account' : 'Create your account'}
+      size="lg"
+    >
+      <p className="text-sm text-(--text-muted) mb-6">
+        {mode === 'login' ? (
+          <>
+            Or{' '}
+            <button
+              onClick={() => setMode('register')}
+              className="text-(--accent) hover:text-(--accent) font-semibold"
+            >
+              create a new account
+            </button>
+          </>
+        ) : (
+          <>
+            Or{' '}
+            <button
+              onClick={() => setMode('login')}
+              className="text-(--accent) hover:text-(--accent) font-semibold"
+            >
+              sign in to existing account
+            </button>
+          </>
+        )}
+      </p>
+
+      {/* Error message */}
+      {error && (
+        <div className="mb-5 p-4 border-2 border-(--danger) bg-(--danger)/10 rounded-sm">
+          <p className="text-sm text-(--danger) font-semibold">{error}</p>
+        </div>
+      )}
+
+      {/* Login Form */}
+      {mode === 'login' && (
+        <>
+          {/* OIDC Login Button */}
+          <button
+            type="button"
+            onClick={handleOIDCLogin}
+            className="admin-btn-primary w-full mb-6"
+          >
+            Sign in with OIDC
           </button>
-        </div>
 
-        <div className="admin-modal-body">
-          <p className="text-sm text-(--text-muted) mb-6">
-            {mode === 'login' ? (
-              <>
-                Or{' '}
-                <button
-                  onClick={() => setMode('register')}
-                  className="text-(--accent) hover:text-(--accent) font-semibold"
-                >
-                  create a new account
-                </button>
-              </>
-            ) : (
-              <>
-                Or{' '}
-                <button
-                  onClick={() => setMode('login')}
-                  className="text-(--accent) hover:text-(--accent) font-semibold"
-                >
-                  sign in to existing account
-                </button>
-              </>
-            )}
-          </p>
-
-          {/* Error message */}
-          {error && (
-            <div className="mb-5 p-4 border-2 border-(--danger) bg-(--danger)/10 rounded-sm">
-              <p className="text-sm text-(--danger) font-semibold">{error}</p>
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-(--border)"></div>
             </div>
-          )}
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-(--surface) text-(--text-muted)">Or continue with email</span>
+            </div>
+          </div>
 
-          {/* Login Form */}
-          {mode === 'login' && (
-            <>
-              {/* OIDC Login Button */}
-              <button
-                type="button"
-                onClick={handleOIDCLogin}
-                className="admin-btn-primary w-full mb-6"
-              >
-                Sign in with OIDC
-              </button>
+          <form onSubmit={handleLoginSubmit} className="space-y-5">
+            <div className="admin-form-group">
+              <label htmlFor="email" className="admin-label">
+                Username or email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="text"
+                autoComplete="username"
+                required
+                className="admin-input"
+                placeholder="Username or email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="admin-form-group">
+              <label htmlFor="password" className="admin-label">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="admin-input"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="admin-btn-primary w-full mt-2"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </form>
+        </>
+      )}
 
-              {/* Divider */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-(--border)"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-(--surface) text-(--text-muted)">Or continue with email</span>
-                </div>
-              </div>
-
-              <form onSubmit={handleLoginSubmit} className="space-y-5">
-                <div className="admin-form-group">
-                  <label htmlFor="email" className="admin-label">
-                    Username or email
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="text"
-                    autoComplete="username"
-                    required
-                    className="admin-input"
-                    placeholder="Username or email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="admin-form-group">
-                  <label htmlFor="password" className="admin-label">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    className="admin-input"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="admin-btn-primary w-full mt-2"
-                >
-                  {loading ? 'Signing in...' : 'Sign in'}
-                </button>
-              </form>
-            </>
-          )}
-
-          {/* Register Form */}
-          {mode === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-5">
-              <div className="admin-form-group">
-                <label htmlFor="register-email" className="admin-label">
-                  Email address
-                </label>
-                <input
-                  id="register-email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="admin-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="admin-form-group">
-                <label htmlFor="register-username" className="admin-label">
-                  Username
-                </label>
-                <input
-                  id="register-username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  className="admin-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
-              <div className="admin-form-group">
-                <label htmlFor="register-fullname" className="admin-label">
-                  Full Name (optional)
-                </label>
-                <input
-                  id="register-fullname"
-                  name="fullName"
-                  type="text"
-                  autoComplete="name"
-                  className="admin-input"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
-              <div className="admin-form-group">
-                <label htmlFor="register-password" className="admin-label">
-                  Password
-                </label>
-                <input
-                  id="register-password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  className="admin-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <p className="mt-1 text-xs text-(--text-muted)">Must be at least 8 characters</p>
-              </div>
-              <div className="admin-form-group">
-                <label htmlFor="register-confirm-password" className="admin-label">
-                  Confirm Password
-                </label>
-                <input
-                  id="register-confirm-password"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  className="admin-input"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="admin-btn-primary w-full mt-2"
-              >
-                {loading ? 'Creating account...' : 'Create account'}
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
-    </div>
+      {/* Register Form */}
+      {mode === 'register' && (
+        <form onSubmit={handleRegisterSubmit} className="space-y-5">
+          <div className="admin-form-group">
+            <label htmlFor="register-email" className="admin-label">
+              Email address
+            </label>
+            <input
+              id="register-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="admin-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="admin-form-group">
+            <label htmlFor="register-username" className="admin-label">
+              Username
+            </label>
+            <input
+              id="register-username"
+              name="username"
+              type="text"
+              autoComplete="username"
+              required
+              className="admin-input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+          <div className="admin-form-group">
+            <label htmlFor="register-fullname" className="admin-label">
+              Full Name (optional)
+            </label>
+            <input
+              id="register-fullname"
+              name="fullName"
+              type="text"
+              autoComplete="name"
+              className="admin-input"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </div>
+          <div className="admin-form-group">
+            <label htmlFor="register-password" className="admin-label">
+              Password
+            </label>
+            <input
+              id="register-password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              className="admin-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-(--text-muted)">Must be at least 8 characters</p>
+          </div>
+          <div className="admin-form-group">
+            <label htmlFor="register-confirm-password" className="admin-label">
+              Confirm Password
+            </label>
+            <input
+              id="register-confirm-password"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              className="admin-input"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="admin-btn-primary w-full mt-2"
+          >
+            {loading ? 'Creating account...' : 'Create account'}
+          </button>
+        </form>
+      )}
+    </Modal>
   );
 }
