@@ -104,7 +104,7 @@ func AdminListRoles(w http.ResponseWriter, r *http.Request) {
 func AdminGetRole(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	roleID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
@@ -263,7 +263,7 @@ func AdminCreateRole(w http.ResponseWriter, r *http.Request) {
 func AdminUpdateRole(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	roleID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
@@ -354,7 +354,7 @@ func AdminUpdateRole(w http.ResponseWriter, r *http.Request) {
 func AdminDeleteRole(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	roleID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
@@ -410,7 +410,7 @@ func AdminDeleteRole(w http.ResponseWriter, r *http.Request) {
 func AdminAssignPermission(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	roleID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
@@ -463,13 +463,13 @@ func AdminAssignPermission(w http.ResponseWriter, r *http.Request) {
 func AdminRemovePermission(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	roleID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
 
 	permissionID, err := strconv.Atoi(vars["permissionId"])
-	if err != nil {
+	if err != nil || permissionID <= 0 {
 		http.Error(w, "Invalid permission ID", http.StatusBadRequest)
 		return
 	}

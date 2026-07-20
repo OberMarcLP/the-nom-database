@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/nomdb/backend/internal/models"
 )
 
@@ -95,10 +97,15 @@ func TestIsValidEmail(t *testing.T) {
 	}{
 		{"typical address", "user@example.com", true},
 		{"short but complete", "a@b.c", true},
+		{"subdomain", "user@sub.example.com", true},
 		{"empty string", "", false},
 		{"no at sign", "userexample.com", false},
-		{"no dot", "user@examplecom", false},
-		{"below minimum length", "a@b", false},
+		{"domain without dot", "user@examplecom", false},
+		{"bare localhost domain", "user@localhost", false},
+		{"dot only before the at sign", "user.name@example", false},
+		{"display name form", "Name <a@b.ch>", false},
+		{"surrounding whitespace", " user@example.com", false},
+		{"single-letter domain without dot", "a@b", false},
 	}
 
 	for _, tt := range tests {
@@ -121,8 +128,10 @@ func TestIsDuplicateKeyError(t *testing.T) {
 		want bool
 	}{
 		{"nil error", nil, false},
-		{"postgres duplicate key message", errors.New(`ERROR: duplicate key value violates unique constraint "users_email_key"`), true},
-		{"unique constraint message", errors.New("violates unique constraint"), true},
+		{"pg unique violation", &pgconn.PgError{Code: "23505"}, true},
+		{"wrapped pg unique violation", fmt.Errorf("insert user: %w", &pgconn.PgError{Code: "23505"}), true},
+		{"pg foreign key violation is not a duplicate", &pgconn.PgError{Code: "23503"}, false},
+		{"string error mentioning duplicate key must not match", errors.New(`ERROR: duplicate key value violates unique constraint "users_email_key"`), false},
 		{"unrelated error", errors.New("connection refused"), false},
 	}
 
@@ -187,6 +196,24 @@ func TestGetUserIDFromPath(t *testing.T) {
 		r := newRequestWithVars(http.MethodGet, "/api/users/abc", nil, map[string]string{"id": "abc"})
 		if _, err := GetUserIDFromPath(r); err == nil {
 			t.Error("error = nil, want an error for a non-numeric id")
+		}
+	})
+
+	t.Run("zero id", func(t *testing.T) {
+		t.Parallel()
+
+		r := newRequestWithVars(http.MethodGet, "/api/users/0", nil, map[string]string{"id": "0"})
+		if _, err := GetUserIDFromPath(r); err == nil {
+			t.Error("error = nil, want an error for id 0")
+		}
+	})
+
+	t.Run("negative id", func(t *testing.T) {
+		t.Parallel()
+
+		r := newRequestWithVars(http.MethodGet, "/api/users/-5", nil, map[string]string{"id": "-5"})
+		if _, err := GetUserIDFromPath(r); err == nil {
+			t.Error("error = nil, want an error for a negative id")
 		}
 	})
 

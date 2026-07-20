@@ -178,7 +178,7 @@ func AdminListRatings(w http.ResponseWriter, r *http.Request) {
 func AdminDeleteRating(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	ratingID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || ratingID <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
 	}
@@ -403,7 +403,7 @@ func AdminDeletePhoto(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	photoType := vars["type"]
 	photoID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || photoID <= 0 {
 		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
 		return
 	}
@@ -478,7 +478,7 @@ func AdminDeletePhoto(w http.ResponseWriter, r *http.Request) {
 func AdminUpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	restaurantID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}
@@ -547,7 +547,7 @@ func AdminUpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 func AdminDeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	restaurantID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}

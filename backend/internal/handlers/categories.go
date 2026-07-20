@@ -68,7 +68,7 @@ func GetCategory(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid category ID", http.StatusBadRequest)
 		return
 	}
@@ -148,7 +148,7 @@ func UpdateCategory(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid category ID", http.StatusBadRequest)
 		return
 	}
@@ -195,7 +195,7 @@ func DeleteCategory(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid category ID", http.StatusBadRequest)
 		return
 	}

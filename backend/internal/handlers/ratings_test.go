@@ -21,6 +21,8 @@ func TestGetRatings_InvalidRestaurantID(t *testing.T) {
 		{"missing id", ""},
 		{"float id", "1.5"},
 		{"numeric with suffix", "12abc"},
+		{"zero id", "0"},
+		{"negative id", "-5"},
 	}
 
 	for _, tt := range tests {
@@ -86,19 +88,21 @@ func TestCreateRating_ValidationErrors(t *testing.T) {
 func TestUpdateRating_InvalidInput(t *testing.T) {
 	t.Parallel()
 
-	t.Run("non-numeric rating id", func(t *testing.T) {
+	t.Run("invalid rating id", func(t *testing.T) {
 		t.Parallel()
 
-		rr := httptest.NewRecorder()
-		r := newJSONRequestWithVars(http.MethodPut, "/api/ratings/abc", `{}`, map[string]string{"id": "abc"})
+		for _, id := range []string{"abc", "0", "-5"} {
+			rr := httptest.NewRecorder()
+			r := newJSONRequestWithVars(http.MethodPut, "/api/ratings/"+id, `{}`, map[string]string{"id": id})
 
-		UpdateRating(rr, r)
+			UpdateRating(rr, r)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("status = %d, want %d", rr.Code, http.StatusBadRequest)
-		}
-		if !strings.Contains(rr.Body.String(), "Invalid rating ID") {
-			t.Errorf("body = %q, want it to mention the invalid rating ID", rr.Body.String())
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("id %q: status = %d, want %d", id, rr.Code, http.StatusBadRequest)
+			}
+			if !strings.Contains(rr.Body.String(), "Invalid rating ID") {
+				t.Errorf("id %q: body = %q, want it to mention the invalid rating ID", id, rr.Body.String())
+			}
 		}
 	})
 
@@ -122,16 +126,18 @@ func TestUpdateRating_InvalidInput(t *testing.T) {
 func TestDeleteRating_InvalidInput(t *testing.T) {
 	t.Parallel()
 
-	t.Run("non-numeric rating id", func(t *testing.T) {
+	t.Run("invalid rating id", func(t *testing.T) {
 		t.Parallel()
 
-		rr := httptest.NewRecorder()
-		r := newRequestWithVars(http.MethodDelete, "/api/ratings/abc", nil, map[string]string{"id": "abc"})
+		for _, id := range []string{"abc", "0", "-5"} {
+			rr := httptest.NewRecorder()
+			r := newRequestWithVars(http.MethodDelete, "/api/ratings/"+id, nil, map[string]string{"id": id})
 
-		DeleteRating(rr, r)
+			DeleteRating(rr, r)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("status = %d, want %d", rr.Code, http.StatusBadRequest)
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("id %q: status = %d, want %d", id, rr.Code, http.StatusBadRequest)
+			}
 		}
 	})
 
@@ -152,17 +158,19 @@ func TestDeleteRating_InvalidInput(t *testing.T) {
 func TestVoteOnReview_InvalidInput(t *testing.T) {
 	t.Parallel()
 
-	t.Run("non-numeric rating id", func(t *testing.T) {
+	t.Run("invalid rating id", func(t *testing.T) {
 		t.Parallel()
 
-		rr := httptest.NewRecorder()
-		r := newJSONRequestWithVars(http.MethodPost, "/api/ratings/abc/vote", `{"is_helpful":true}`,
-			map[string]string{"id": "abc"})
+		for _, id := range []string{"abc", "0", "-5"} {
+			rr := httptest.NewRecorder()
+			r := newJSONRequestWithVars(http.MethodPost, "/api/ratings/"+id+"/vote", `{"is_helpful":true}`,
+				map[string]string{"id": id})
 
-		VoteOnReview(rr, r)
+			VoteOnReview(rr, r)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("status = %d, want %d", rr.Code, http.StatusBadRequest)
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("id %q: status = %d, want %d", id, rr.Code, http.StatusBadRequest)
+			}
 		}
 	})
 
@@ -184,16 +192,18 @@ func TestVoteOnReview_InvalidInput(t *testing.T) {
 func TestRemoveVote_InvalidInput(t *testing.T) {
 	t.Parallel()
 
-	t.Run("non-numeric rating id", func(t *testing.T) {
+	t.Run("invalid rating id", func(t *testing.T) {
 		t.Parallel()
 
-		rr := httptest.NewRecorder()
-		r := newRequestWithVars(http.MethodDelete, "/api/ratings/abc/vote", nil, map[string]string{"id": "abc"})
+		for _, id := range []string{"abc", "0", "-5"} {
+			rr := httptest.NewRecorder()
+			r := newRequestWithVars(http.MethodDelete, "/api/ratings/"+id+"/vote", nil, map[string]string{"id": id})
 
-		RemoveVote(rr, r)
+			RemoveVote(rr, r)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("status = %d, want %d", rr.Code, http.StatusBadRequest)
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("id %q: status = %d, want %d", id, rr.Code, http.StatusBadRequest)
+			}
 		}
 	})
 
@@ -214,16 +224,18 @@ func TestRemoveVote_InvalidInput(t *testing.T) {
 func TestUploadReviewPhoto_InvalidInput(t *testing.T) {
 	t.Parallel()
 
-	t.Run("non-numeric rating id", func(t *testing.T) {
+	t.Run("invalid rating id", func(t *testing.T) {
 		t.Parallel()
 
-		rr := httptest.NewRecorder()
-		r := newRequestWithVars(http.MethodPost, "/api/ratings/abc/photos", nil, map[string]string{"id": "abc"})
+		for _, id := range []string{"abc", "0", "-5"} {
+			rr := httptest.NewRecorder()
+			r := newRequestWithVars(http.MethodPost, "/api/ratings/"+id+"/photos", nil, map[string]string{"id": id})
 
-		UploadReviewPhoto(rr, r)
+			UploadReviewPhoto(rr, r)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("status = %d, want %d", rr.Code, http.StatusBadRequest)
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("id %q: status = %d, want %d", id, rr.Code, http.StatusBadRequest)
+			}
 		}
 	})
 
@@ -244,19 +256,21 @@ func TestUploadReviewPhoto_InvalidInput(t *testing.T) {
 func TestDeleteReviewPhoto_InvalidInput(t *testing.T) {
 	t.Parallel()
 
-	t.Run("non-numeric photo id", func(t *testing.T) {
+	t.Run("invalid photo id", func(t *testing.T) {
 		t.Parallel()
 
-		rr := httptest.NewRecorder()
-		r := newRequestWithVars(http.MethodDelete, "/api/review-photos/abc", nil, map[string]string{"id": "abc"})
+		for _, id := range []string{"abc", "0", "-5"} {
+			rr := httptest.NewRecorder()
+			r := newRequestWithVars(http.MethodDelete, "/api/review-photos/"+id, nil, map[string]string{"id": id})
 
-		DeleteReviewPhoto(rr, r)
+			DeleteReviewPhoto(rr, r)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("status = %d, want %d", rr.Code, http.StatusBadRequest)
-		}
-		if !strings.Contains(rr.Body.String(), "Invalid photo ID") {
-			t.Errorf("body = %q, want it to mention the invalid photo ID", rr.Body.String())
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("id %q: status = %d, want %d", id, rr.Code, http.StatusBadRequest)
+			}
+			if !strings.Contains(rr.Body.String(), "Invalid photo ID") {
+				t.Errorf("id %q: body = %q, want it to mention the invalid photo ID", id, rr.Body.String())
+			}
 		}
 	})
 

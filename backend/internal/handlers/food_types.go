@@ -66,7 +66,7 @@ func GetFoodType(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid food type ID", http.StatusBadRequest)
 		return
 	}
@@ -144,7 +144,7 @@ func UpdateFoodType(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid food type ID", http.StatusBadRequest)
 		return
 	}
@@ -191,7 +191,7 @@ func DeleteFoodType(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid food type ID", http.StatusBadRequest)
 		return
 	}

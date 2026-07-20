@@ -162,7 +162,7 @@ func TestVerifyPassword_InvalidHashRejected(t *testing.T) {
 	tests := []struct {
 		name    string
 		hash    string
-		wantErr error // nil means: any non-nil error is acceptable
+		wantErr error
 	}{
 		{"empty hash", "", ErrInvalidHash},
 		{"plain text", "not-a-hash-at-all", ErrInvalidHash},
@@ -171,10 +171,10 @@ func TestVerifyPassword_InvalidHashRejected(t *testing.T) {
 		{"wrong algorithm", "$argon2i$v=19$m=1024,t=1,p=1$c2FsdA$aGFzaA", ErrInvalidHash},
 		{"bcrypt style hash", "$2a$10$abcdefghijklmnopqrstuv", ErrInvalidHash},
 		{"incompatible version", "$argon2id$v=18$m=1024,t=1,p=1$c2FsdA$aGFzaA", ErrIncompatibleVersion},
-		{"malformed version segment", "$argon2id$version$m=1024,t=1,p=1$c2FsdA$aGFzaA", nil},
-		{"malformed params segment", "$argon2id$v=19$garbage$c2FsdA$aGFzaA", nil},
-		{"invalid base64 salt", "$argon2id$v=19$m=1024,t=1,p=1$!!!!$aGFzaA", nil},
-		{"invalid base64 hash", "$argon2id$v=19$m=1024,t=1,p=1$c2FsdA$!!!!", nil},
+		{"malformed version segment", "$argon2id$version$m=1024,t=1,p=1$c2FsdA$aGFzaA", ErrInvalidHash},
+		{"malformed params segment", "$argon2id$v=19$garbage$c2FsdA$aGFzaA", ErrInvalidHash},
+		{"invalid base64 salt", "$argon2id$v=19$m=1024,t=1,p=1$!!!!$aGFzaA", ErrInvalidHash},
+		{"invalid base64 hash", "$argon2id$v=19$m=1024,t=1,p=1$c2FsdA$!!!!", ErrInvalidHash},
 	}
 
 	for _, tt := range tests {
@@ -185,10 +185,7 @@ func TestVerifyPassword_InvalidHashRejected(t *testing.T) {
 			if ok {
 				t.Errorf("VerifyPassword(%q) = true, want false", tt.hash)
 			}
-			if err == nil {
-				t.Fatalf("VerifyPassword(%q) error = nil, want an error", tt.hash)
-			}
-			if tt.wantErr != nil && !errors.Is(err, tt.wantErr) {
+			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("VerifyPassword(%q) error = %v, want %v", tt.hash, err, tt.wantErr)
 			}
 		})
@@ -263,7 +260,7 @@ func TestVerifyPassword_TruncatedHashRejected(t *testing.T) {
 	if ok {
 		t.Errorf("VerifyPassword(truncated) = true, want false")
 	}
-	if err == nil {
-		t.Error("VerifyPassword(truncated) error = nil, want an error")
+	if !errors.Is(err, ErrInvalidHash) {
+		t.Errorf("VerifyPassword(truncated) error = %v, want ErrInvalidHash", err)
 	}
 }

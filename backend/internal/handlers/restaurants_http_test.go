@@ -21,6 +21,8 @@ func TestGetRestaurant_InvalidID(t *testing.T) {
 		{"missing id", ""},
 		{"numeric with suffix", "12abc"},
 		{"float id", "3.14"},
+		{"zero id", "0"},
+		{"negative id", "-5"},
 	}
 
 	for _, tt := range tests {
@@ -79,19 +81,21 @@ func TestCreateRestaurant_ValidationErrors(t *testing.T) {
 func TestUpdateRestaurant_GuardPaths(t *testing.T) {
 	t.Parallel()
 
-	t.Run("non-numeric restaurant id", func(t *testing.T) {
+	t.Run("invalid restaurant id", func(t *testing.T) {
 		t.Parallel()
 
-		rr := httptest.NewRecorder()
-		r := newJSONRequestWithVars(http.MethodPut, "/api/restaurants/abc", `{}`, map[string]string{"id": "abc"})
+		for _, id := range []string{"abc", "0", "-5"} {
+			rr := httptest.NewRecorder()
+			r := newJSONRequestWithVars(http.MethodPut, "/api/restaurants/"+id, `{}`, map[string]string{"id": id})
 
-		UpdateRestaurant(rr, r)
+			UpdateRestaurant(rr, r)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("status = %d, want %d", rr.Code, http.StatusBadRequest)
-		}
-		if !strings.Contains(rr.Body.String(), "Invalid restaurant ID") {
-			t.Errorf("body = %q, want it to mention the invalid restaurant ID", rr.Body.String())
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("id %q: status = %d, want %d", id, rr.Code, http.StatusBadRequest)
+			}
+			if !strings.Contains(rr.Body.String(), "Invalid restaurant ID") {
+				t.Errorf("id %q: body = %q, want it to mention the invalid restaurant ID", id, rr.Body.String())
+			}
 		}
 	})
 
@@ -131,19 +135,21 @@ func TestUpdateRestaurant_GuardPaths(t *testing.T) {
 func TestDeleteRestaurant_GuardPaths(t *testing.T) {
 	t.Parallel()
 
-	t.Run("non-numeric restaurant id", func(t *testing.T) {
+	t.Run("invalid restaurant id", func(t *testing.T) {
 		t.Parallel()
 
-		rr := httptest.NewRecorder()
-		r := newRequestWithVars(http.MethodDelete, "/api/restaurants/xyz", nil, map[string]string{"id": "xyz"})
+		for _, id := range []string{"xyz", "0", "-5"} {
+			rr := httptest.NewRecorder()
+			r := newRequestWithVars(http.MethodDelete, "/api/restaurants/"+id, nil, map[string]string{"id": id})
 
-		DeleteRestaurant(rr, r)
+			DeleteRestaurant(rr, r)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("status = %d, want %d", rr.Code, http.StatusBadRequest)
-		}
-		if !strings.Contains(rr.Body.String(), "Invalid restaurant ID") {
-			t.Errorf("body = %q, want it to mention the invalid restaurant ID", rr.Body.String())
+			if rr.Code != http.StatusBadRequest {
+				t.Errorf("id %q: status = %d, want %d", id, rr.Code, http.StatusBadRequest)
+			}
+			if !strings.Contains(rr.Body.String(), "Invalid restaurant ID") {
+				t.Errorf("id %q: body = %q, want it to mention the invalid restaurant ID", id, rr.Body.String())
+			}
 		}
 	})
 

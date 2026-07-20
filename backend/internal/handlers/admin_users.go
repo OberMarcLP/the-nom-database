@@ -216,7 +216,7 @@ func AdminListUsers(w http.ResponseWriter, r *http.Request) {
 func AdminGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
@@ -402,7 +402,7 @@ func AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 func AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
@@ -546,7 +546,7 @@ func AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
 func AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
@@ -597,7 +597,7 @@ func AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 func AdminAssignRole(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
@@ -650,13 +650,13 @@ func AdminAssignRole(w http.ResponseWriter, r *http.Request) {
 func AdminRemoveRole(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
 	roleID, err := strconv.Atoi(vars["roleId"])
-	if err != nil {
+	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
@@ -699,7 +699,7 @@ func AdminRemoveRole(w http.ResponseWriter, r *http.Request) {
 func AdminResetPassword(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}

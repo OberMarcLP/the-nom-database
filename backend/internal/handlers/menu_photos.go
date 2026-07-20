@@ -81,7 +81,7 @@ func init() {
 func GetMenuPhotos(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	restaurantID, err := strconv.Atoi(vars["restaurantId"])
-	if err != nil {
+	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}
@@ -150,7 +150,7 @@ func GetMenuPhotos(w http.ResponseWriter, r *http.Request) {
 func UploadMenuPhoto(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	restaurantID, err := strconv.Atoi(vars["restaurantId"])
-	if err != nil {
+	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}
@@ -323,7 +323,7 @@ func UploadMenuPhoto(w http.ResponseWriter, r *http.Request) {
 func UpdatePhotoCaption(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
 		return
 	}
@@ -400,7 +400,7 @@ func UpdatePhotoCaption(w http.ResponseWriter, r *http.Request) {
 func DeleteMenuPhoto(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
 		return
 	}

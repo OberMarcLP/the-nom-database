@@ -155,7 +155,7 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 func GetSuggestion(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
 	}
@@ -346,7 +346,7 @@ func CreateSuggestion(w http.ResponseWriter, r *http.Request) {
 func UpdateSuggestionStatus(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
 	}
@@ -409,7 +409,7 @@ func UpdateSuggestionStatus(w http.ResponseWriter, r *http.Request) {
 func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
 	}
@@ -544,7 +544,7 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 func ApproveSuggestion(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
 	}
@@ -648,7 +648,7 @@ func ApproveSuggestion(w http.ResponseWriter, r *http.Request) {
 func RejectSuggestion(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
 	}
@@ -693,7 +693,7 @@ func DeleteSuggestion(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
 	}

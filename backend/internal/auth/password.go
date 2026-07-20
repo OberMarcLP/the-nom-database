@@ -93,7 +93,7 @@ func decodeHash(encodedHash string) (*Argon2Params, []byte, []byte, error) {
 
 	var version int
 	if _, err := fmt.Sscanf(parts[2], "v=%d", &version); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, ErrInvalidHash
 	}
 	if version != argon2.Version {
 		return nil, nil, nil, ErrIncompatibleVersion
@@ -101,18 +101,18 @@ func decodeHash(encodedHash string) (*Argon2Params, []byte, []byte, error) {
 
 	params := &Argon2Params{}
 	if _, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &params.Memory, &params.Iterations, &params.Parallelism); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, ErrInvalidHash
 	}
 
 	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, ErrInvalidHash
 	}
 	params.SaltLength = uint32(len(salt))
 
 	hash, err := base64.RawStdEncoding.DecodeString(parts[5])
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, ErrInvalidHash
 	}
 	params.KeyLength = uint32(len(hash))
 

@@ -62,7 +62,7 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	restaurantID, err := strconv.Atoi(vars["restaurantId"])
-	if err != nil {
+	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}
@@ -220,7 +220,7 @@ func UpdateRating(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
 	}
@@ -305,7 +305,7 @@ func DeleteRating(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
 	}
@@ -370,7 +370,7 @@ func VoteOnReview(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	ratingID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || ratingID <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
 	}
@@ -458,7 +458,7 @@ func RemoveVote(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	ratingID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || ratingID <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
 	}
@@ -518,7 +518,7 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	ratingID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || ratingID <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
 	}
@@ -655,7 +655,7 @@ func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	photoID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || photoID <= 0 {
 		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
 		return
 	}

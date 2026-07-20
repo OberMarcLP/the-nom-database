@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/mail"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/nomdb/backend/internal/auth"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
@@ -579,13 +581,23 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func isValidEmail(email string) bool {
-	// Basic email validation - you might want to use a more robust library
-	return len(email) > 3 && strings.Contains(email, "@") && strings.Contains(email, ".")
+	// RFC 5322 parsing via net/mail; addr.Address must equal the input so
+	// display-name forms like `Name <a@b.ch>` and padded inputs are rejected.
+	addr, err := mail.ParseAddress(email)
+	if err != nil || addr.Address != email {
+		return false
+	}
+	// Additionally require a dot in the domain part so bare hosts such as
+	// user@localhost are rejected even though RFC 5322 allows them.
+	at := strings.LastIndex(email, "@")
+	return at != -1 && strings.Contains(email[at+1:], ".")
 }
 
 func isDuplicateKeyError(err error) bool {
-	// Check for PostgreSQL duplicate key error
-	return err != nil && (strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint"))
+	// 23505 = PostgreSQL unique_violation; match on the SQLSTATE code instead
+	// of fragile error-message strings.
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }
 
 // GetUserFromContext extracts user from request context
@@ -594,12 +606,16 @@ func GetUserFromContext(r *http.Request) (*models.User, bool) {
 	return user, ok
 }
 
-// GetUserIDFromPath extracts user ID from URL path
+// GetUserIDFromPath extracts a positive user ID from the URL path
 func GetUserIDFromPath(r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	if idStr == "" {
 		return 0, errors.New("missing user ID")
 	}
-	return strconv.Atoi(idStr)
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		return 0, errors.New("invalid user ID")
+	}
+	return id, nil
 }

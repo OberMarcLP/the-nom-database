@@ -71,7 +71,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	listID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
 	}
@@ -226,7 +226,7 @@ func UpdateList(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	listID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
 	}
@@ -290,7 +290,7 @@ func DeleteList(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	listID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
 	}
@@ -332,7 +332,7 @@ func AddRestaurantToList(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	listID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
 	}
@@ -392,13 +392,13 @@ func RemoveRestaurantFromList(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	listID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
 	}
 
 	restaurantID, err := strconv.Atoi(vars["restaurantId"])
-	if err != nil {
+	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}
@@ -441,7 +441,7 @@ func GetRestaurantLists(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	restaurantID, err := strconv.Atoi(vars["restaurantId"])
-	if err != nil {
+	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}

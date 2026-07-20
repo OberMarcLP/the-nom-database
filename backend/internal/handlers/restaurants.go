@@ -629,7 +629,7 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 func GetRestaurant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}
@@ -852,7 +852,7 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}
@@ -943,7 +943,7 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
 	}
