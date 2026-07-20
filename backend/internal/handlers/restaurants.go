@@ -217,6 +217,11 @@ func GetRestaurants(w http.ResponseWriter, r *http.Request) {
 		}
 		restaurants = append(restaurants, rest)
 	}
+	if err := rows.Err(); err != nil {
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
 	if err := attachRestaurantListFoodTypes(ctx, restaurants); err != nil {
 		logger.Error("request failed: %v", err)
@@ -291,16 +296,18 @@ func parseDistanceFilter(f restaurantListFilters) distanceFilter {
 	return distanceFilter{active: true, lat: latVal, lng: lngVal, radius: radiusVal}
 }
 
-// buildMinRatingHaving returns the HAVING clause for the min_rating filter,
-// or an empty string when the parameter is absent or out of range.
-func buildMinRatingHaving(minRating string) string {
+// buildMinRatingHaving returns the HAVING clause and its argument for the
+// min_rating filter, or an empty clause when the parameter is absent or out
+// of range. argIndex is the positional-placeholder index to use.
+func buildMinRatingHaving(minRating string, argIndex int) (string, []interface{}) {
 	if minRating == "" {
-		return ""
+		return "", nil
 	}
 	if mr, err := strconv.ParseFloat(minRating, 64); err == nil && mr >= 1 && mr <= 5 {
-		return fmt.Sprintf("HAVING COALESCE(AVG((rt.food_rating + rt.service_rating + rt.ambiance_rating) / 3.0), 0) >= %f", mr)
+		clause := fmt.Sprintf("HAVING COALESCE(AVG((rt.food_rating + rt.service_rating + rt.ambiance_rating) / 3.0), 0) >= $%d", argIndex)
+		return clause, []interface{}{mr}
 	}
-	return ""
+	return "", nil
 }
 
 // buildRestaurantBranch builds the restaurants half of the UNION query.
@@ -365,7 +372,11 @@ func buildRestaurantBranch(f restaurantListFilters, dist distanceFilter) (string
 				sin(radians($%d)) * sin(radians(r.latitude))
 			)) <= $%d`, argIndex+3, argIndex+4, argIndex+5, argIndex+6))
 		args = append(args, dist.lat, dist.lng, dist.lat, dist.radius)
+		argIndex += 7
 	}
+
+	havingClause, havingArgs := buildMinRatingHaving(f.minRating, argIndex)
+	args = append(args, havingArgs...)
 
 	whereClause := ""
 	if len(conditions) > 0 {
@@ -375,8 +386,8 @@ func buildRestaurantBranch(f restaurantListFilters, dist distanceFilter) (string
 	query := fmt.Sprintf(`
 		SELECT
 			r.id, r.name, r.description, r.address, r.phone, r.website, r.latitude, r.longitude,
-			r.google_place_id, r.category_id, NULL::integer as price_range, r.user_id as created_by, NULL::integer as updated_by, r.created_at, r.updated_at,
-			c.id, c.name,
+			r.google_place_id, r.category_id, r.price_range, r.user_id as created_by, NULL::integer as updated_by, r.created_at, r.updated_at,
+			c.id, c.name AS category_name,
 			COALESCE(AVG(rt.food_rating), 0) as avg_food,
 			COALESCE(AVG(rt.service_rating), 0) as avg_service,
 			COALESCE(AVG(rt.ambiance_rating), 0) as avg_ambiance,
@@ -396,7 +407,7 @@ func buildRestaurantBranch(f restaurantListFilters, dist distanceFilter) (string
 		%s
 		GROUP BY r.id, c.id, cu.id
 		%s
-	`, distanceSelect, whereClause, buildMinRatingHaving(f.minRating))
+	`, distanceSelect, whereClause, havingClause)
 
 	return query, args
 }
@@ -460,7 +471,7 @@ func buildSuggestionBranch(f restaurantListFilters, dist distanceFilter, argStar
 		SELECT
 			s.id, s.name, NULL::text as description, s.address, s.phone, s.website, s.latitude, s.longitude,
 			s.google_place_id, s.suggested_category_id as category_id, NULL::integer as price_range, NULL::integer as created_by, NULL::integer as updated_by, s.created_at, s.updated_at,
-			c.id, c.name,
+			c.id, c.name AS category_name,
 			0.0 as avg_food,
 			0.0 as avg_service,
 			0.0 as avg_ambiance,
