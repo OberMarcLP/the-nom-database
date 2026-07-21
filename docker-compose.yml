@@ -3,7 +3,7 @@
 
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: nomdb-db
     env_file:
       - .env
@@ -15,7 +15,8 @@ services:
       # Bind to localhost only - the DB must not be reachable from the network in production
       - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # postgres:18 images mount the version-aware parent dir, not .../data
+      - postgres_data:/var/lib/postgresql
       - ./db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nomdb} -d ${DB_NAME:-nomdb}"]
