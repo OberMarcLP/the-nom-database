@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery, UseQueryOptions, UseMutationOptions, UseInfiniteQueryOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import * as api from '../services/api';
 import type {
   Restaurant,
@@ -11,7 +11,6 @@ import type {
   CreateRestaurantData,
   CreateSuggestionData,
   GooglePlaceResult,
-  PaginatedResponse,
   RestaurantList,
   ListRestaurant,
   ListWithRestaurants,
@@ -22,7 +21,6 @@ import type {
 // Query Keys - centralized for easy cache management
 export const queryKeys = {
   restaurants: (filters?: RestaurantFilters) => ['restaurants', filters] as const,
-  restaurantsPaginated: (filters?: RestaurantFilters) => ['restaurants', 'paginated', filters] as const,
   restaurant: (id: number) => ['restaurant', id] as const,
   categories: () => ['categories'] as const,
   foodTypes: () => ['foodTypes'] as const,
@@ -50,23 +48,6 @@ export const useRestaurants = (
     queryFn: () => api.getRestaurants(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    ...options,
-  });
-};
-
-export const useRestaurantsPaginated = (
-  filters?: RestaurantFilters,
-  options?: Omit<UseInfiniteQueryOptions<PaginatedResponse<Restaurant>, Error>, 'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'>
-) => {
-  return useInfiniteQuery({
-    queryKey: queryKeys.restaurantsPaginated(filters),
-    queryFn: ({ pageParam }) => api.getRestaurantsPaginated(filters, { cursor: pageParam as string | undefined, limit: 20 }),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) => {
-      return lastPage.has_more ? lastPage.next_cursor : undefined;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
     ...options,
   });
 };
