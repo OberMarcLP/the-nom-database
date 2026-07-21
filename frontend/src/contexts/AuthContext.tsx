@@ -1,5 +1,17 @@
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { User, LoginRequest, RegisterRequest, LoginResponse, login as apiLogin, register as apiRegister, logout as apiLogout, getCurrentUser } from '../services/api';
+import {
+  User,
+  LoginRequest,
+  RegisterRequest,
+  LoginResponse,
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  getCurrentUser,
+  restoreSession,
+  setAccessToken,
+  clearAccessToken,
+} from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -16,27 +28,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user on mount if token exists
+  // Restore the session on app start: the httpOnly refresh cookie is the
+  // only persistent credential, so silently mint a fresh in-memory access
+  // token first, then load the user. While this runs, `loading` is true.
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      getCurrentUser()
-        .then(setUser)
-        .catch(() => {
-          // Token is invalid, clear it
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const restored = await restoreSession();
+        if (!restored || cancelled) return;
+        const currentUser = await getCurrentUser();
+        if (!cancelled) {
+          setUser(currentUser);
+        }
+      } catch {
+        // No valid session - stay logged out
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
     const response = await apiLogin(credentials);
-    // Refresh token lives in an httpOnly cookie set by the server
-    localStorage.setItem('access_token', response.access_token);
+    // Refresh token lives in an httpOnly cookie set by the server;
+    // the access token is held in memory only (never persisted).
+    setAccessToken(response.access_token);
     localStorage.removeItem('refresh_token');
     setUser({ ...response.user });
     return response;
@@ -44,8 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (data: RegisterRequest): Promise<LoginResponse> => {
     const response = await apiRegister(data);
-    // Refresh token lives in an httpOnly cookie set by the server
-    localStorage.setItem('access_token', response.access_token);
+    // Refresh token lives in an httpOnly cookie set by the server;
+    // the access token is held in memory only (never persisted).
+    setAccessToken(response.access_token);
     localStorage.removeItem('refresh_token');
     setUser({ ...response.user });
     return response;
@@ -58,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Continue with logout even if API call fails
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('access_token');
+      clearAccessToken();
       localStorage.removeItem('refresh_token');
       setUser(null);
     }

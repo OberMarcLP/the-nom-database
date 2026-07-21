@@ -134,6 +134,24 @@ export interface GooglePlaceResult {
   longitude: number;
 }
 
+// The access token lives only in this module-level variable (never in
+// localStorage/sessionStorage) so an XSS payload cannot exfiltrate it from
+// storage. Sessions survive page reloads exclusively via the httpOnly
+// refresh cookie (see tryRefreshTokens/restoreSession).
+let accessToken: string | null = null;
+
+export const setAccessToken = (token: string) => {
+  accessToken = token;
+};
+
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
+// One-time migration: older app versions persisted the access token in
+// localStorage; purge any leftover copy from previous sessions.
+localStorage.removeItem('access_token');
+
 let refreshInFlight: Promise<boolean> | null = null;
 
 // Refresh the session once; concurrent 401s share the same attempt.
@@ -154,7 +172,7 @@ async function tryRefreshTokens(): Promise<boolean> {
         });
         if (!res.ok) return false;
         const data = await res.json();
-        localStorage.setItem('access_token', data.access_token);
+        accessToken = data.access_token;
         localStorage.removeItem('refresh_token');
         return true;
       } catch {
@@ -170,10 +188,14 @@ async function tryRefreshTokens(): Promise<boolean> {
   return refreshInFlight;
 }
 
+// Restore a session from the httpOnly refresh cookie (used on app start).
+// Resolves true when a fresh in-memory access token was issued.
+export const restoreSession = (): Promise<boolean> => tryRefreshTokens();
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const doFetch = () => {
-    // Get auth token from localStorage
-    const token = localStorage.getItem('access_token');
+    // Use the in-memory access token (never persisted to storage)
+    const token = accessToken;
 
     const headers: Record<string, string> = {
       ...(options?.headers as Record<string, string> || {}),
@@ -646,7 +668,7 @@ export const uploadAvatar = async (file: File): Promise<{ avatar_url: string; me
   const formData = new FormData();
   formData.append('avatar', file);
 
-  const token = localStorage.getItem('access_token');
+  const token = accessToken;
   const response = await fetch(`${API_URL}/api/user/avatar`, {
     method: 'POST',
     headers: {

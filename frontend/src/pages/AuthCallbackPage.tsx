@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { API_URL } from '../services/api';
+import { API_URL, setAccessToken } from '../services/api';
 
 export function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -26,12 +26,14 @@ export function AuthCallbackPage() {
           return res.json();
         })
         .then(data => {
-          // Refresh token arrives as httpOnly cookie from the exchange
-          localStorage.setItem('access_token', data.access_token);
+          // Refresh token arrives as httpOnly cookie from the exchange;
+          // the access token is held in memory only, so navigate within
+          // the SPA (a hard reload would discard it and force an extra
+          // silent-refresh roundtrip).
+          setAccessToken(data.access_token);
           localStorage.removeItem('refresh_token');
           updateUser(data.user);
-          // Redirect to home
-          window.location.href = '/';
+          navigate('/', { replace: true });
         })
         .catch(err => {
           console.error('Failed to complete OIDC login:', err);
