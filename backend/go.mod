@@ -1,6 +1,6 @@
 module github.com/nomdb/backend
 
-go 1.26.0
+go 1.26.5
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.42.1
