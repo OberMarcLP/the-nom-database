@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
@@ -24,8 +24,7 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	userIDStr := vars["id"]
+	userIDStr := chi.URLParam(r, "id")
 
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
@@ -108,8 +107,7 @@ func GetUserReviews(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	userIDStr := vars["id"]
+	userIDStr := chi.URLParam(r, "id")
 
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {

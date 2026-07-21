@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
@@ -79,8 +79,7 @@ func init() {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /restaurants/{restaurantId}/photos [get]
 func GetMenuPhotos(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	restaurantID, err := strconv.Atoi(vars["restaurantId"])
+	restaurantID, err := strconv.Atoi(chi.URLParam(r, "restaurantId"))
 	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
@@ -148,8 +147,7 @@ func GetMenuPhotos(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /restaurants/{restaurantId}/photos [post]
 func UploadMenuPhoto(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	restaurantID, err := strconv.Atoi(vars["restaurantId"])
+	restaurantID, err := strconv.Atoi(chi.URLParam(r, "restaurantId"))
 	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
@@ -321,8 +319,7 @@ func UploadMenuPhoto(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /photos/{id} [put]
 func UpdatePhotoCaption(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
 		return
@@ -398,8 +395,7 @@ func UpdatePhotoCaption(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /photos/{id} [delete]
 func DeleteMenuPhoto(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
 		return

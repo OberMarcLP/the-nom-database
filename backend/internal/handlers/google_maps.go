@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/services"
 )
@@ -78,8 +78,7 @@ func GeocodeCities(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /places/{placeId} [get]
 func GetPlaceDetails(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	placeID := vars["placeId"]
+	placeID := chi.URLParam(r, "placeId")
 	if placeID == "" {
 		http.Error(w, "Place ID is required", http.StatusBadRequest)
 		return

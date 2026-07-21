@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/nomdb/backend/internal/auth"
 	"github.com/nomdb/backend/internal/database"
@@ -608,8 +608,7 @@ func GetUserFromContext(r *http.Request) (*models.User, bool) {
 
 // GetUserIDFromPath extracts a positive user ID from the URL path
 func GetUserIDFromPath(r *http.Request) (int, error) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
+	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
 		return 0, errors.New("missing user ID")
 	}

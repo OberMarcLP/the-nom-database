@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/nomdb/backend/internal/auth"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
@@ -214,8 +214,7 @@ func AdminListUsers(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/users/{id} [get]
 func AdminGetUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["id"])
+	userID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
@@ -400,8 +399,7 @@ func AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/users/{id} [put]
 func AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["id"])
+	userID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
@@ -544,8 +542,7 @@ func AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/users/{id} [delete]
 func AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["id"])
+	userID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
@@ -595,8 +592,7 @@ func AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/users/{id}/roles [post]
 func AdminAssignRole(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["id"])
+	userID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
@@ -648,14 +644,13 @@ func AdminAssignRole(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/users/{id}/roles/{roleId} [delete]
 func AdminRemoveRole(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["id"])
+	userID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
-	roleID, err := strconv.Atoi(vars["roleId"])
+	roleID, err := strconv.Atoi(chi.URLParam(r, "roleId"))
 	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
@@ -697,8 +692,7 @@ func AdminRemoveRole(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/users/{id}/reset-password [post]
 func AdminResetPassword(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["id"])
+	userID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return

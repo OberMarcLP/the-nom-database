@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
@@ -60,8 +60,7 @@ func GetRatings(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	restaurantID, err := strconv.Atoi(vars["restaurantId"])
+	restaurantID, err := strconv.Atoi(chi.URLParam(r, "restaurantId"))
 	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
@@ -218,8 +217,7 @@ func UpdateRating(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
@@ -303,8 +301,7 @@ func DeleteRating(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
@@ -368,8 +365,7 @@ func VoteOnReview(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	ratingID, err := strconv.Atoi(vars["id"])
+	ratingID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || ratingID <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
@@ -456,8 +452,7 @@ func RemoveVote(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	ratingID, err := strconv.Atoi(vars["id"])
+	ratingID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || ratingID <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
@@ -516,8 +511,7 @@ func UploadReviewPhoto(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	ratingID, err := strconv.Atoi(vars["id"])
+	ratingID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || ratingID <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
@@ -653,8 +647,7 @@ func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	photoID, err := strconv.Atoi(vars["id"])
+	photoID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || photoID <= 0 {
 		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
 		return

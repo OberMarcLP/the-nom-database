@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
@@ -176,8 +176,7 @@ func AdminListRatings(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/ratings/{id} [delete]
 func AdminDeleteRating(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	ratingID, err := strconv.Atoi(vars["id"])
+	ratingID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || ratingID <= 0 {
 		http.Error(w, "Invalid rating ID", http.StatusBadRequest)
 		return
@@ -400,9 +399,8 @@ func AdminListPhotos(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/photos/{type}/{id} [delete]
 func AdminDeletePhoto(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	photoType := vars["type"]
-	photoID, err := strconv.Atoi(vars["id"])
+	photoType := chi.URLParam(r, "type")
+	photoID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || photoID <= 0 {
 		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
 		return
@@ -476,8 +474,7 @@ func AdminDeletePhoto(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/restaurants/{id} [put]
 func AdminUpdateRestaurant(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	restaurantID, err := strconv.Atoi(vars["id"])
+	restaurantID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
@@ -545,8 +542,7 @@ func AdminUpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/restaurants/{id} [delete]
 func AdminDeleteRestaurant(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	restaurantID, err := strconv.Atoi(vars["id"])
+	restaurantID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return

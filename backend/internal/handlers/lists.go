@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/models"
 )
@@ -69,8 +69,7 @@ func GetList(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	listID, err := strconv.Atoi(vars["id"])
+	listID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
@@ -224,8 +223,7 @@ func UpdateList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	listID, err := strconv.Atoi(vars["id"])
+	listID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
@@ -288,8 +286,7 @@ func DeleteList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	listID, err := strconv.Atoi(vars["id"])
+	listID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
@@ -330,8 +327,7 @@ func AddRestaurantToList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	listID, err := strconv.Atoi(vars["id"])
+	listID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
@@ -390,14 +386,13 @@ func RemoveRestaurantFromList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	listID, err := strconv.Atoi(vars["id"])
+	listID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || listID <= 0 {
 		http.Error(w, "Invalid list ID", http.StatusBadRequest)
 		return
 	}
 
-	restaurantID, err := strconv.Atoi(vars["restaurantId"])
+	restaurantID, err := strconv.Atoi(chi.URLParam(r, "restaurantId"))
 	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
@@ -439,8 +434,7 @@ func GetRestaurantLists(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	restaurantID, err := strconv.Atoi(vars["restaurantId"])
+	restaurantID, err := strconv.Atoi(chi.URLParam(r, "restaurantId"))
 	if err != nil || restaurantID <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return

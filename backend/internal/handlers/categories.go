@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
@@ -66,8 +66,7 @@ func GetCategory(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid category ID", http.StatusBadRequest)
 		return
@@ -146,8 +145,7 @@ func UpdateCategory(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid category ID", http.StatusBadRequest)
 		return
@@ -193,8 +191,7 @@ func DeleteCategory(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid category ID", http.StatusBadRequest)
 		return

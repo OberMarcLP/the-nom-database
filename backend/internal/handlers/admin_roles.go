@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
@@ -102,8 +102,7 @@ func AdminListRoles(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/roles/{id} [get]
 func AdminGetRole(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	roleID, err := strconv.Atoi(vars["id"])
+	roleID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
@@ -261,8 +260,7 @@ func AdminCreateRole(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/roles/{id} [put]
 func AdminUpdateRole(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	roleID, err := strconv.Atoi(vars["id"])
+	roleID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
@@ -352,8 +350,7 @@ func AdminUpdateRole(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/roles/{id} [delete]
 func AdminDeleteRole(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	roleID, err := strconv.Atoi(vars["id"])
+	roleID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
@@ -408,8 +405,7 @@ func AdminDeleteRole(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/roles/{id}/permissions [post]
 func AdminAssignPermission(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	roleID, err := strconv.Atoi(vars["id"])
+	roleID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
@@ -461,14 +457,13 @@ func AdminAssignPermission(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /admin/roles/{id}/permissions/{permissionId} [delete]
 func AdminRemovePermission(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	roleID, err := strconv.Atoi(vars["id"])
+	roleID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || roleID <= 0 {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
 		return
 	}
 
-	permissionID, err := strconv.Atoi(vars["permissionId"])
+	permissionID, err := strconv.Atoi(chi.URLParam(r, "permissionId"))
 	if err != nil || permissionID <= 0 {
 		http.Error(w, "Invalid permission ID", http.StatusBadRequest)
 		return

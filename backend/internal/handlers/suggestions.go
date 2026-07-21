@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
@@ -153,8 +153,7 @@ func GetSuggestions(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /suggestions/{id} [get]
 func GetSuggestion(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
@@ -344,8 +343,7 @@ func CreateSuggestion(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /suggestions/{id}/status [patch]
 func UpdateSuggestionStatus(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
@@ -407,8 +405,7 @@ func UpdateSuggestionStatus(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /suggestions/{id}/convert [post]
 func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
@@ -542,8 +539,7 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /suggestions/{id}/approve [post]
 func ApproveSuggestion(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
@@ -646,8 +642,7 @@ func ApproveSuggestion(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /suggestions/{id}/reject [post]
 func RejectSuggestion(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return
@@ -691,8 +686,7 @@ func DeleteSuggestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid suggestion ID", http.StatusBadRequest)
 		return

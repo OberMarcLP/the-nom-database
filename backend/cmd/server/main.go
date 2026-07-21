@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/nomdb/backend/internal/config"
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/handlers"
@@ -126,294 +126,260 @@ func main() {
 	// Initialize auth middleware
 	middleware.InitAuthMiddleware(jwtSvc)
 
-	// Create router
-	r := mux.NewRouter()
-
-	// Create uploads directory and serve static files
+	// Create uploads directory
 	uploadsDir := "./uploads"
 	if err := os.MkdirAll(uploadsDir+"/menu_photos", 0755); err != nil {
 		logger.Warn("Failed to create uploads directory: %v", err)
 	} else {
 		logger.Debug("📁 Uploads directory ready: %s", uploadsDir)
 	}
-	r.PathPrefix("/api/uploads/").Handler(
-		http.StripPrefix("/api/uploads/", http.FileServer(http.Dir(uploadsDir))))
 
-	// API routes
-	api := r.PathPrefix("/api").Subrouter()
+	// Shared middleware chains for route groups
+	optionalAuth := []func(http.Handler) http.Handler{
+		middleware.OptionalAuthMiddleware,
+		middleware.WithUserRoles,
+	}
 
-	// Public auth routes (no authentication required)
-	api.HandleFunc("/auth/register", handlers.Register).Methods("POST")
-	api.HandleFunc("/auth/login", handlers.Login).Methods("POST")
-	api.HandleFunc("/auth/refresh", handlers.RefreshToken).Methods("POST")
-	api.HandleFunc("/auth/logout", handlers.Logout).Methods("POST")
-	api.HandleFunc("/auth/oidc/login", handlers.OIDCLogin).Methods("GET")
-	api.HandleFunc("/auth/oidc/callback", handlers.OIDCCallback).Methods("GET")
-	api.HandleFunc("/auth/oidc/exchange", handlers.ExchangeOIDCCode).Methods("POST")
-
-	// Protected auth routes (authentication required)
-	authRoutes := api.PathPrefix("/auth").Subrouter()
-	authRoutes.Use(middleware.AuthMiddleware)
-	authRoutes.Use(middleware.WithUserRoles) // Load roles and permissions
-	authRoutes.HandleFunc("/me", handlers.GetMe).Methods("GET")
-	authRoutes.HandleFunc("/change-password", handlers.ChangePassword).Methods("POST")
-
-	// Categories - Public GET routes
-	api.Handle("/categories", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetCategories)))).Methods("GET")
-	api.Handle("/categories/{id}", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetCategory)))).Methods("GET")
-
-	// Categories - Protected POST/PUT/DELETE routes
-	api.Handle("/categories",
-		middleware.AuthMiddleware(
-			middleware.WithUserRoles(
-				middleware.RequireAnyPermission("categories.create", "categories.update", "categories.delete")(
-					http.HandlerFunc(handlers.CreateCategory))))).Methods("POST")
-	api.Handle("/categories/{id}",
-		middleware.AuthMiddleware(
-			middleware.WithUserRoles(
-				middleware.RequireAnyPermission("categories.create", "categories.update", "categories.delete")(
-					http.HandlerFunc(handlers.UpdateCategory))))).Methods("PUT")
-	api.Handle("/categories/{id}",
-		middleware.AuthMiddleware(
-			middleware.WithUserRoles(
-				middleware.RequireAnyPermission("categories.create", "categories.update", "categories.delete")(
-					http.HandlerFunc(handlers.DeleteCategory))))).Methods("DELETE")
-
-	// Food Types - Public GET routes
-	api.Handle("/food-types", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetFoodTypes)))).Methods("GET")
-	api.Handle("/food-types/{id}", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetFoodType)))).Methods("GET")
-
-	// Food Types - Protected POST/PUT/DELETE routes
-	api.Handle("/food-types",
-		middleware.AuthMiddleware(
-			middleware.WithUserRoles(
-				middleware.RequireAnyPermission("food_types.create", "food_types.update", "food_types.delete")(
-					http.HandlerFunc(handlers.CreateFoodType))))).Methods("POST")
-	api.Handle("/food-types/{id}",
-		middleware.AuthMiddleware(
-			middleware.WithUserRoles(
-				middleware.RequireAnyPermission("food_types.create", "food_types.update", "food_types.delete")(
-					http.HandlerFunc(handlers.UpdateFoodType))))).Methods("PUT")
-	api.Handle("/food-types/{id}",
-		middleware.AuthMiddleware(
-			middleware.WithUserRoles(
-				middleware.RequireAnyPermission("food_types.create", "food_types.update", "food_types.delete")(
-					http.HandlerFunc(handlers.DeleteFoodType))))).Methods("DELETE")
-
-	// Restaurants - Public GET routes
-	restaurantsGet := api.PathPrefix("/restaurants").Subrouter()
-	restaurantsGet.Use(middleware.OptionalAuthMiddleware)
-	restaurantsGet.Use(middleware.WithUserRoles)
-	restaurantsGet.HandleFunc("", handlers.GetRestaurants).Methods("GET")
-	restaurantsGet.HandleFunc("/paginated", handlers.GetRestaurantsPaginated).Methods("GET")
-	restaurantsGet.HandleFunc("/{id:[0-9]+}", handlers.GetRestaurant).Methods("GET")
-
-	// Restaurants - Protected POST route
-	restaurantsPost := api.PathPrefix("/restaurants").Subrouter()
-	restaurantsPost.Use(middleware.AuthMiddleware)
-	restaurantsPost.Use(middleware.WithUserRoles)
-	restaurantsPost.Use(middleware.RequirePermission("restaurants.create"))
-	restaurantsPost.HandleFunc("", handlers.CreateRestaurant).Methods("POST")
-
-	// Restaurants - Protected PUT/DELETE routes
-	restaurantsPutDelete := api.PathPrefix("/restaurants").Subrouter()
-	restaurantsPutDelete.Use(middleware.AuthMiddleware)
-	restaurantsPutDelete.Use(middleware.WithUserRoles)
-	restaurantsPutDelete.HandleFunc("/{id:[0-9]+}", handlers.UpdateRestaurant).Methods("PUT")
-	restaurantsPutDelete.HandleFunc("/{id:[0-9]+}", handlers.DeleteRestaurant).Methods("DELETE")
-
-	// Global Search (public)
-	api.Handle("/search", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GlobalSearch)))).Methods("GET")
-
-	// Ratings (read public, write requires auth)
-	api.Handle("/restaurants/{restaurantId}/ratings", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetRatings)))).Methods("GET")
-
-	ratingsProtected := api.PathPrefix("/ratings").Subrouter()
-	ratingsProtected.Use(middleware.AuthMiddleware)
-	ratingsProtected.Use(middleware.WithUserRoles)
-	ratingsProtected.Use(middleware.RequirePermission("ratings.create"))
-	ratingsProtected.HandleFunc("", handlers.CreateRating).Methods("POST")
-
-	// Update and Delete ratings (ownership checked in handler)
-	ratingsModify := api.PathPrefix("/ratings").Subrouter()
-	ratingsModify.Use(middleware.AuthMiddleware)
-	ratingsModify.Use(middleware.WithUserRoles)
-	ratingsModify.HandleFunc("/{id}", handlers.UpdateRating).Methods("PUT")
-	ratingsModify.HandleFunc("/{id}", handlers.DeleteRating).Methods("DELETE")
-
-	// Vote on reviews (authenticated users only)
-	ratingsVote := api.PathPrefix("/ratings").Subrouter()
-	ratingsVote.Use(middleware.AuthMiddleware)
-	ratingsVote.Use(middleware.WithUserRoles)
-	ratingsVote.HandleFunc("/{id}/vote", handlers.VoteOnReview).Methods("POST")
-	ratingsVote.HandleFunc("/{id}/vote", handlers.RemoveVote).Methods("DELETE")
-
-	// Review photos upload (separate route to avoid conflicts)
-	ratingsPhotos := api.PathPrefix("").Subrouter()
-	ratingsPhotos.Use(middleware.AuthMiddleware)
-	ratingsPhotos.Use(middleware.WithUserRoles)
-	ratingsPhotos.HandleFunc("/ratings/{id}/photos", handlers.UploadReviewPhoto).Methods("POST")
-
-	// Review photos (authenticated users only)
-	reviewPhotos := api.PathPrefix("/review-photos").Subrouter()
-	reviewPhotos.Use(middleware.AuthMiddleware)
-	reviewPhotos.Use(middleware.WithUserRoles)
-	reviewPhotos.HandleFunc("/{id}", handlers.DeleteReviewPhoto).Methods("DELETE")
-
-	// Google Maps (proxied through backend - public with rate limiting)
-	api.Handle("/places/search", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.SearchPlaces)))).Methods("GET")
-	api.Handle("/places/{placeId}", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetPlaceDetails)))).Methods("GET")
-	api.Handle("/geocode/cities", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GeocodeCities)))).Methods("GET")
-
-	// Restaurant Suggestions (requires auth)
-	suggestionsProtected := api.PathPrefix("/suggestions").Subrouter()
-	suggestionsProtected.Use(middleware.AuthMiddleware)
-	suggestionsProtected.Use(middleware.WithUserRoles)
-	suggestionsProtected.Use(middleware.RequirePermission("suggestions.read"))
-	suggestionsProtected.HandleFunc("", handlers.GetSuggestions).Methods("GET")
-	suggestionsProtected.HandleFunc("/{id}", handlers.GetSuggestion).Methods("GET")
-
-	// Create suggestions
-	suggestionsCreate := api.PathPrefix("/suggestions").Subrouter()
-	suggestionsCreate.Use(middleware.AuthMiddleware)
-	suggestionsCreate.Use(middleware.WithUserRoles)
-	suggestionsCreate.Use(middleware.RequirePermission("suggestions.create"))
-	suggestionsCreate.HandleFunc("", handlers.CreateSuggestion).Methods("POST")
-
-	// Approve/Convert/Reject suggestions (moderator/admin only)
-	suggestionsModerate := api.PathPrefix("/suggestions").Subrouter()
-	suggestionsModerate.Use(middleware.AuthMiddleware)
-	suggestionsModerate.Use(middleware.WithUserRoles)
-	suggestionsModerate.Use(middleware.RequireAnyPermission("suggestions.approve", "suggestions.convert", "suggestions.reject"))
-	suggestionsModerate.HandleFunc("/{id}/approve", handlers.ApproveSuggestion).Methods("POST")
-	suggestionsModerate.HandleFunc("/{id}/reject", handlers.RejectSuggestion).Methods("POST")
-	suggestionsModerate.HandleFunc("/{id}/status", handlers.UpdateSuggestionStatus).Methods("PATCH")
-	suggestionsModerate.HandleFunc("/{id}/convert", handlers.ConvertSuggestion).Methods("POST")
-	suggestionsModerate.HandleFunc("/{id}", handlers.DeleteSuggestion).Methods("DELETE")
-
-	// Menu Photos (read public, write requires auth)
-	api.Handle("/restaurants/{restaurantId}/photos", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetMenuPhotos)))).Methods("GET")
-
-	photosProtected := api.PathPrefix("").Subrouter()
-	photosProtected.Use(middleware.AuthMiddleware)
-	photosProtected.Use(middleware.WithUserRoles)
-	photosProtected.Use(middleware.RequirePermission("photos.upload"))
-	photosProtected.HandleFunc("/restaurants/{restaurantId}/photos", handlers.UploadMenuPhoto).Methods("POST")
-
-	// Update/Delete photos (ownership checked in handler)
-	photosModify := api.PathPrefix("/photos").Subrouter()
-	photosModify.Use(middleware.AuthMiddleware)
-	photosModify.Use(middleware.WithUserRoles)
-	photosModify.HandleFunc("/{id}", handlers.UpdatePhotoCaption).Methods("PATCH")
-	photosModify.HandleFunc("/{id}", handlers.DeleteMenuPhoto).Methods("DELETE")
-
-	// Restaurant Lists (authenticated users only)
-	listsProtected := api.PathPrefix("/lists").Subrouter()
-	listsProtected.Use(middleware.AuthMiddleware)
-	listsProtected.Use(middleware.WithUserRoles)
-	listsProtected.HandleFunc("", handlers.GetUserLists).Methods("GET")
-	listsProtected.HandleFunc("", handlers.CreateList).Methods("POST")
-	listsProtected.HandleFunc("/{id}", handlers.GetList).Methods("GET")
-	listsProtected.HandleFunc("/{id}", handlers.UpdateList).Methods("PUT")
-	listsProtected.HandleFunc("/{id}", handlers.DeleteList).Methods("DELETE")
-	listsProtected.HandleFunc("/{id}/restaurants", handlers.AddRestaurantToList).Methods("POST")
-	listsProtected.HandleFunc("/{id}/restaurants/{restaurantId}", handlers.RemoveRestaurantFromList).Methods("DELETE")
-
-	// Get lists for a specific restaurant
-	api.Handle("/restaurants/{restaurantId}/lists", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetRestaurantLists)))).Methods("GET")
-
-	// User Profile
-	api.Handle("/users/{id}", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetUserProfile)))).Methods("GET")
-	api.Handle("/users/{id}/reviews", middleware.OptionalAuthMiddleware(middleware.WithUserRoles(http.HandlerFunc(handlers.GetUserReviews)))).Methods("GET")
-
-	// Update profile (authenticated)
-	userProtected := api.PathPrefix("/user").Subrouter()
-	userProtected.Use(middleware.AuthMiddleware)
-	userProtected.Use(middleware.WithUserRoles)
-	userProtected.HandleFunc("/profile", handlers.UpdateUserProfile).Methods("PUT")
-	userProtected.HandleFunc("/avatar", handlers.UploadAvatar).Methods("POST")
-
-	// Admin Routes (requires admin permissions)
-	adminRoutes := api.PathPrefix("/admin").Subrouter()
-	adminRoutes.Use(middleware.AuthMiddleware)
-	adminRoutes.Use(middleware.WithUserRoles)
-	adminRoutes.Use(middleware.RequireRole("admin"))
-
-	// User Management
-	adminRoutes.HandleFunc("/users", handlers.AdminListUsers).Methods("GET")
-	adminRoutes.HandleFunc("/users", handlers.AdminCreateUser).Methods("POST")
-	adminRoutes.HandleFunc("/users/{id}", handlers.AdminGetUser).Methods("GET")
-	adminRoutes.HandleFunc("/users/{id}", handlers.AdminUpdateUser).Methods("PUT")
-	adminRoutes.HandleFunc("/users/{id}", handlers.AdminDeleteUser).Methods("DELETE")
-	adminRoutes.HandleFunc("/users/{id}/roles", handlers.AdminAssignRole).Methods("POST")
-	adminRoutes.HandleFunc("/users/{id}/roles/{roleId}", handlers.AdminRemoveRole).Methods("DELETE")
-	adminRoutes.HandleFunc("/users/{id}/reset-password", handlers.AdminResetPassword).Methods("POST")
-
-	// Role Management
-	adminRoutes.HandleFunc("/roles", handlers.AdminListRoles).Methods("GET")
-	adminRoutes.HandleFunc("/roles", handlers.AdminCreateRole).Methods("POST")
-	adminRoutes.HandleFunc("/roles/{id}", handlers.AdminGetRole).Methods("GET")
-	adminRoutes.HandleFunc("/roles/{id}", handlers.AdminUpdateRole).Methods("PUT")
-	adminRoutes.HandleFunc("/roles/{id}", handlers.AdminDeleteRole).Methods("DELETE")
-	adminRoutes.HandleFunc("/roles/{id}/permissions", handlers.AdminAssignPermission).Methods("POST")
-	adminRoutes.HandleFunc("/roles/{id}/permissions/{permissionId}", handlers.AdminRemovePermission).Methods("DELETE")
-
-	// Permission Management
-	adminRoutes.HandleFunc("/permissions", handlers.AdminListPermissions).Methods("GET")
-
-	// System Statistics and Analytics
-	adminRoutes.HandleFunc("/stats", handlers.AdminGetStatistics).Methods("GET")
-	adminRoutes.HandleFunc("/analytics/user-growth", handlers.AdminGetUserGrowth).Methods("GET")
-	adminRoutes.HandleFunc("/analytics/active-users", handlers.AdminGetActiveUsers).Methods("GET")
-	adminRoutes.HandleFunc("/analytics/popular-restaurants", handlers.AdminGetPopularRestaurants).Methods("GET")
-
-	// System Settings
-	adminRoutes.HandleFunc("/settings", handlers.AdminGetSettings).Methods("GET")
-
-	// Audit Logs
-	adminRoutes.HandleFunc("/audit-logs", handlers.AdminGetAuditLogs).Methods("GET")
-
-	// Content Moderation
-	adminRoutes.HandleFunc("/ratings", handlers.AdminListRatings).Methods("GET")
-	adminRoutes.HandleFunc("/ratings/{id}", handlers.AdminDeleteRating).Methods("DELETE")
-	adminRoutes.HandleFunc("/photos", handlers.AdminListPhotos).Methods("GET")
-	adminRoutes.HandleFunc("/photos/{type}/{id}", handlers.AdminDeletePhoto).Methods("DELETE")
-
-	// Restaurant Moderation
-	adminRoutes.HandleFunc("/restaurants/{id}", handlers.AdminUpdateRestaurant).Methods("PUT")
-	adminRoutes.HandleFunc("/restaurants/{id}", handlers.AdminDeleteRestaurant).Methods("DELETE")
-
-	// Health check (support both GET and HEAD for Docker healthcheck)
-	api.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	healthHandler := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		if r.Method == "GET" {
 			_, _ = w.Write([]byte("OK"))
 		}
-	}).Methods("GET", "HEAD")
+	}
 
-	// Metrics endpoint
-	api.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		stats := middleware.GetMetrics().GetStats()
-		json.NewEncoder(w).Encode(stats)
-	}).Methods("GET")
+	// Create router
+	r := chi.NewRouter()
 
-	// Serve the swagger.yaml file first
-	api.HandleFunc("/swagger.yaml", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/x-yaml")
-		http.ServeFile(w, r, "./docs/swagger.yaml")
-	}).Methods("GET")
+	r.Route("/api", func(api chi.Router) {
+		// Static uploads (kept inside /api to match the mux PathPrefix route)
+		api.Handle("/uploads/*", http.StripPrefix("/api/uploads/", http.FileServer(http.Dir(uploadsDir))))
 
-	// Redirect /docs to /docs/ for Swagger UI
-	api.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/api/docs/", http.StatusMovedPermanently)
-	}).Methods("GET")
+		// Auth routes: public endpoints plus a protected group
+		api.Route("/auth", func(auth chi.Router) {
+			auth.Post("/register", handlers.Register)
+			auth.Post("/login", handlers.Login)
+			auth.Post("/refresh", handlers.RefreshToken)
+			auth.Post("/logout", handlers.Logout)
+			auth.Get("/oidc/login", handlers.OIDCLogin)
+			auth.Get("/oidc/callback", handlers.OIDCCallback)
+			auth.Post("/oidc/exchange", handlers.ExchangeOIDCCode)
 
-	// Swagger UI - serve at /api/docs/ (must be after swagger.yaml)
-	api.PathPrefix("/docs/").Handler(httpSwagger.Handler(
-		httpSwagger.URL("/api/swagger.yaml"),
-	))
+			auth.Group(func(protected chi.Router) {
+				protected.Use(middleware.AuthMiddleware)
+				protected.Use(middleware.WithUserRoles) // Load roles and permissions
+				protected.Get("/me", handlers.GetMe)
+				protected.Post("/change-password", handlers.ChangePassword)
+			})
+		})
+
+		// Categories - public reads, permission-guarded writes
+		api.With(optionalAuth...).Get("/categories", handlers.GetCategories)
+		api.With(optionalAuth...).Get("/categories/{id}", handlers.GetCategory)
+		categoriesWrite := api.With(
+			middleware.AuthMiddleware,
+			middleware.WithUserRoles,
+			middleware.RequireAnyPermission("categories.create", "categories.update", "categories.delete"),
+		)
+		categoriesWrite.Post("/categories", handlers.CreateCategory)
+		categoriesWrite.Put("/categories/{id}", handlers.UpdateCategory)
+		categoriesWrite.Delete("/categories/{id}", handlers.DeleteCategory)
+
+		// Food Types - public reads, permission-guarded writes
+		api.With(optionalAuth...).Get("/food-types", handlers.GetFoodTypes)
+		api.With(optionalAuth...).Get("/food-types/{id}", handlers.GetFoodType)
+		foodTypesWrite := api.With(
+			middleware.AuthMiddleware,
+			middleware.WithUserRoles,
+			middleware.RequireAnyPermission("food_types.create", "food_types.update", "food_types.delete"),
+		)
+		foodTypesWrite.Post("/food-types", handlers.CreateFoodType)
+		foodTypesWrite.Put("/food-types/{id}", handlers.UpdateFoodType)
+		foodTypesWrite.Delete("/food-types/{id}", handlers.DeleteFoodType)
+
+		// Restaurants: public reads (incl. nested public reads), authenticated writes.
+		// The {id:[0-9]+} patterns keep the mux semantics: non-numeric or negative
+		// IDs never reach the handlers and yield a router 404.
+		api.Route("/restaurants", func(restaurants chi.Router) {
+			restaurants.Group(func(public chi.Router) {
+				public.Use(middleware.OptionalAuthMiddleware)
+				public.Use(middleware.WithUserRoles)
+				public.Get("/", handlers.GetRestaurants)
+				public.Get("/paginated", handlers.GetRestaurantsPaginated)
+				public.Get("/{id:[0-9]+}", handlers.GetRestaurant)
+				public.Get("/{restaurantId}/ratings", handlers.GetRatings)
+				public.Get("/{restaurantId}/photos", handlers.GetMenuPhotos)
+				public.Get("/{restaurantId}/lists", handlers.GetRestaurantLists)
+			})
+
+			restaurants.Group(func(protected chi.Router) {
+				protected.Use(middleware.AuthMiddleware)
+				protected.Use(middleware.WithUserRoles)
+				protected.With(middleware.RequirePermission("restaurants.create")).Post("/", handlers.CreateRestaurant)
+				protected.Put("/{id:[0-9]+}", handlers.UpdateRestaurant)
+				protected.Delete("/{id:[0-9]+}", handlers.DeleteRestaurant)
+				protected.With(middleware.RequirePermission("photos.upload")).Post("/{restaurantId}/photos", handlers.UploadMenuPhoto)
+			})
+		})
+
+		// Global Search (public)
+		api.With(optionalAuth...).Get("/search", handlers.GlobalSearch)
+
+		// Ratings (reads are nested under /restaurants above; writes require auth)
+		api.Route("/ratings", func(ratings chi.Router) {
+			ratings.Use(middleware.AuthMiddleware)
+			ratings.Use(middleware.WithUserRoles)
+			ratings.With(middleware.RequirePermission("ratings.create")).Post("/", handlers.CreateRating)
+			// Update/Delete and votes: ownership checked in the handlers
+			ratings.Put("/{id}", handlers.UpdateRating)
+			ratings.Delete("/{id}", handlers.DeleteRating)
+			ratings.Post("/{id}/vote", handlers.VoteOnReview)
+			ratings.Delete("/{id}/vote", handlers.RemoveVote)
+			ratings.Post("/{id}/photos", handlers.UploadReviewPhoto)
+		})
+
+		// Review photos (authenticated users only)
+		api.Route("/review-photos", func(reviewPhotos chi.Router) {
+			reviewPhotos.Use(middleware.AuthMiddleware)
+			reviewPhotos.Use(middleware.WithUserRoles)
+			reviewPhotos.Delete("/{id}", handlers.DeleteReviewPhoto)
+		})
+
+		// Google Maps (proxied through backend - public with rate limiting)
+		api.With(optionalAuth...).Get("/places/search", handlers.SearchPlaces)
+		api.With(optionalAuth...).Get("/places/{placeId}", handlers.GetPlaceDetails)
+		api.With(optionalAuth...).Get("/geocode/cities", handlers.GeocodeCities)
+
+		// Restaurant Suggestions (requires auth; permissions per action)
+		api.Route("/suggestions", func(suggestions chi.Router) {
+			suggestions.Use(middleware.AuthMiddleware)
+			suggestions.Use(middleware.WithUserRoles)
+
+			suggestionsRead := suggestions.With(middleware.RequirePermission("suggestions.read"))
+			suggestionsRead.Get("/", handlers.GetSuggestions)
+			suggestionsRead.Get("/{id}", handlers.GetSuggestion)
+
+			suggestions.With(middleware.RequirePermission("suggestions.create")).Post("/", handlers.CreateSuggestion)
+
+			moderate := suggestions.With(middleware.RequireAnyPermission("suggestions.approve", "suggestions.convert", "suggestions.reject"))
+			moderate.Post("/{id}/approve", handlers.ApproveSuggestion)
+			moderate.Post("/{id}/reject", handlers.RejectSuggestion)
+			moderate.Patch("/{id}/status", handlers.UpdateSuggestionStatus)
+			moderate.Post("/{id}/convert", handlers.ConvertSuggestion)
+			moderate.Delete("/{id}", handlers.DeleteSuggestion)
+		})
+
+		// Update/Delete menu photos (ownership checked in handler)
+		api.Route("/photos", func(photos chi.Router) {
+			photos.Use(middleware.AuthMiddleware)
+			photos.Use(middleware.WithUserRoles)
+			photos.Patch("/{id}", handlers.UpdatePhotoCaption)
+			photos.Delete("/{id}", handlers.DeleteMenuPhoto)
+		})
+
+		// Restaurant Lists (authenticated users only)
+		api.Route("/lists", func(lists chi.Router) {
+			lists.Use(middleware.AuthMiddleware)
+			lists.Use(middleware.WithUserRoles)
+			lists.Get("/", handlers.GetUserLists)
+			lists.Post("/", handlers.CreateList)
+			lists.Get("/{id}", handlers.GetList)
+			lists.Put("/{id}", handlers.UpdateList)
+			lists.Delete("/{id}", handlers.DeleteList)
+			lists.Post("/{id}/restaurants", handlers.AddRestaurantToList)
+			lists.Delete("/{id}/restaurants/{restaurantId}", handlers.RemoveRestaurantFromList)
+		})
+
+		// User Profile (public reads)
+		api.With(optionalAuth...).Get("/users/{id}", handlers.GetUserProfile)
+		api.With(optionalAuth...).Get("/users/{id}/reviews", handlers.GetUserReviews)
+
+		// Update own profile (authenticated)
+		api.Route("/user", func(user chi.Router) {
+			user.Use(middleware.AuthMiddleware)
+			user.Use(middleware.WithUserRoles)
+			user.Put("/profile", handlers.UpdateUserProfile)
+			user.Post("/avatar", handlers.UploadAvatar)
+		})
+
+		// Admin Routes (requires admin role)
+		api.Route("/admin", func(admin chi.Router) {
+			admin.Use(middleware.AuthMiddleware)
+			admin.Use(middleware.WithUserRoles)
+			admin.Use(middleware.RequireRole("admin"))
+
+			// User Management
+			admin.Get("/users", handlers.AdminListUsers)
+			admin.Post("/users", handlers.AdminCreateUser)
+			admin.Get("/users/{id}", handlers.AdminGetUser)
+			admin.Put("/users/{id}", handlers.AdminUpdateUser)
+			admin.Delete("/users/{id}", handlers.AdminDeleteUser)
+			admin.Post("/users/{id}/roles", handlers.AdminAssignRole)
+			admin.Delete("/users/{id}/roles/{roleId}", handlers.AdminRemoveRole)
+			admin.Post("/users/{id}/reset-password", handlers.AdminResetPassword)
+
+			// Role Management
+			admin.Get("/roles", handlers.AdminListRoles)
+			admin.Post("/roles", handlers.AdminCreateRole)
+			admin.Get("/roles/{id}", handlers.AdminGetRole)
+			admin.Put("/roles/{id}", handlers.AdminUpdateRole)
+			admin.Delete("/roles/{id}", handlers.AdminDeleteRole)
+			admin.Post("/roles/{id}/permissions", handlers.AdminAssignPermission)
+			admin.Delete("/roles/{id}/permissions/{permissionId}", handlers.AdminRemovePermission)
+
+			// Permission Management
+			admin.Get("/permissions", handlers.AdminListPermissions)
+
+			// System Statistics and Analytics
+			admin.Get("/stats", handlers.AdminGetStatistics)
+			admin.Get("/analytics/user-growth", handlers.AdminGetUserGrowth)
+			admin.Get("/analytics/active-users", handlers.AdminGetActiveUsers)
+			admin.Get("/analytics/popular-restaurants", handlers.AdminGetPopularRestaurants)
+
+			// System Settings
+			admin.Get("/settings", handlers.AdminGetSettings)
+
+			// Audit Logs
+			admin.Get("/audit-logs", handlers.AdminGetAuditLogs)
+
+			// Content Moderation
+			admin.Get("/ratings", handlers.AdminListRatings)
+			admin.Delete("/ratings/{id}", handlers.AdminDeleteRating)
+			admin.Get("/photos", handlers.AdminListPhotos)
+			admin.Delete("/photos/{type}/{id}", handlers.AdminDeletePhoto)
+
+			// Restaurant Moderation
+			admin.Put("/restaurants/{id}", handlers.AdminUpdateRestaurant)
+			admin.Delete("/restaurants/{id}", handlers.AdminDeleteRestaurant)
+		})
+
+		// Health check (support both GET and HEAD for Docker healthcheck)
+		api.Get("/health", healthHandler)
+		api.Head("/health", healthHandler)
+
+		// Metrics endpoint
+		api.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			stats := middleware.GetMetrics().GetStats()
+			json.NewEncoder(w).Encode(stats)
+		})
+
+		// Serve the swagger.yaml file first
+		api.Get("/swagger.yaml", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/x-yaml")
+			http.ServeFile(w, r, "./docs/swagger.yaml")
+		})
+
+		// Redirect /docs to /docs/ for Swagger UI
+		api.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/api/docs/", http.StatusMovedPermanently)
+		})
+
+		// Swagger UI - serve at /api/docs/ (must be after swagger.yaml)
+		api.Handle("/docs/*", httpSwagger.Handler(
+			httpSwagger.URL("/api/swagger.yaml"),
+		))
+	})
 
 	// Initialize rate limiter
 	// Allow 100 requests per minute per IP, with burst of 20

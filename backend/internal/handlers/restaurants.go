@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/nomdb/backend/internal/database"
@@ -678,8 +678,7 @@ func attachRestaurantListFoodTypes(ctx context.Context, restaurants []models.Res
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /restaurants/{id} [get]
 func GetRestaurant(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
@@ -919,8 +918,7 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /restaurants/{id} [put]
 func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return
@@ -1016,8 +1014,7 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid restaurant ID", http.StatusBadRequest)
 		return

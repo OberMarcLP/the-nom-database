@@ -7,16 +7,20 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/nomdb/backend/internal/models"
 )
 
-// newRequestWithVars builds a test request and attaches gorilla/mux path
-// variables so handlers can read them via mux.Vars.
+// newRequestWithVars builds a test request and injects a chi route context so
+// handlers can read the path parameters via chi.URLParam.
 func newRequestWithVars(method, target string, body io.Reader, vars map[string]string) *http.Request {
 	r := httptest.NewRequest(method, target, body)
 	if vars != nil {
-		r = mux.SetURLVars(r, vars)
+		rctx := chi.NewRouteContext()
+		for key, value := range vars {
+			rctx.URLParams.Add(key, value)
+		}
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 	}
 	return r
 }
