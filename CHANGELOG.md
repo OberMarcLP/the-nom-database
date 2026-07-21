@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-21
+
+### ⚠ Breaking / upgrade notes
+
+- **PostgreSQL 16 → 18**: the 16 data directory is incompatible with 18, and the
+  compose files now mount the volume at `/var/lib/postgresql` (version-aware
+  layout of the 18 images). Existing deployments must migrate manually:
+  1. `docker compose exec -T db pg_dumpall -U <user> > backup.sql`
+  2. `docker compose down && docker volume rm <project>_postgres_data`
+  3. pull/update, `docker compose up -d db`, then
+     `docker compose exec -T db psql -U <user> -d postgres < backup.sql`
+     ("role/database already exists" errors are expected and harmless)
+- **Auth overhaul**: refresh tokens moved to rotating httpOnly cookies and the
+  access token now lives in memory only (never in localStorage). Existing
+  sessions are logged out once; leftover localStorage tokens are purged
+  automatically on first load.
+- **Dev tooling**: the `typescript` devDependency aliases the 6.x API bridge
+  (`@typescript/typescript6`) while builds run on native TypeScript 7 via
+  `@typescript/native`. Do not run `npm install -D typescript@latest` — it
+  would break the eslint integration. Collapse to a single package once
+  typescript-eslint supports the TS7 API.
+
+### Added
+
+- Price range feature end to end: $–$$$$ selector in the restaurant form,
+  muted indicator on cards and detail view, working max-price filter
+  (migration `000009_restaurant_price_range`)
+- Accessible dialog system: shared Modal with focus trap, ARIA dialog
+  semantics, Escape handling and focus restore; ConfirmDialog replaces every
+  native `confirm()`, toasts replace every `alert()` (38 call sites)
+- Backend test foundation: `internal/auth` at 95.3% coverage (Argon2id
+  roundtrips, JWT expiry/tampering/`alg=none` rejection) plus 170+ handler
+  guard tests
+- SBOM and provenance attestations attached to the published Docker images
+
+### Changed
+
+- "White Table" design system (light "Mittagsmenü" / dark "Abendkarte")
+  replaces the brutalist neon theme across the entire UI
+- Router migrated from gorilla/mux to chi v5 — behavior-neutral (12 API
+  baselines byte-identical); wrong-method requests now return 405 instead
+  of 404
+- Toolchain refresh: native TypeScript 7 (typechecking ~2.9× faster),
+  React 19, Vite 8, Tailwind 4, Go 1.26.5
+- React Query used consistently outside the admin area: mutations invalidate
+  caches instead of manual reloads; cached data renders without spinner
+  flicker
+- `GetRestaurants` decomposed from a 422-line function into focused
+  query-builder helpers; API error responses no longer leak internal details
+
+### Fixed
+
+- `?sort=name` and `?price_range=` returned 500 (ambiguous ORDER BY; missing
+  column)
+- Validation hardening: proper email parsing, non-positive path IDs rejected
+  at 52 call sites, duplicate-key detection via pg error codes
+- Suggestion-to-restaurant conversion is atomic; search results no longer
+  clobbered by stale responses (AbortController); object-URL leak in photo
+  previews plugged
+- CI pipeline repaired: invalid trivy action tag and outdated Go patch level
+  with known stdlib CVEs
+
 ## [1.3.0] - 2026-02-01
 
 ### Changed
