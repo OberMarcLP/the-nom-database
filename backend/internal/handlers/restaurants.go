@@ -181,12 +181,16 @@ func setFoodTypesForRestaurant(ctx context.Context, restaurantID int, foodTypeID
 
 // GetRestaurants godoc
 // @Summary List all restaurants
-// @Description Get a list of all restaurants with optional filtering by category, food types, and location
+// @Description Get a list of all restaurants (including pending suggestions) with optional filtering, sorting and location search
 // @Tags Restaurants
 // @Accept json
 // @Produce json
+// @Param q query string false "Search in restaurant name and address"
 // @Param category_id query int false "Filter by category ID"
 // @Param food_type_ids query string false "Filter by food type IDs (comma-separated)"
+// @Param price_range query int false "Maximum price range 1-4; restaurants without a price range always match"
+// @Param min_rating query number false "Minimum average rating 1-5"
+// @Param sort query string false "Sort order: name, rating or date (default: date)"
 // @Param lat query number false "Latitude for distance filtering"
 // @Param lng query number false "Longitude for distance filtering"
 // @Param radius query number false "Radius in kilometers for distance filtering"
@@ -494,30 +498,18 @@ func buildSuggestionBranch(f restaurantListFilters, dist distanceFilter, argStar
 	return query, args
 }
 
-// restaurantListOrderBy maps the sort parameter onto the ORDER BY expression.
-// combined targets the column aliases of the UNION subquery; otherwise the
-// restaurants table columns are referenced directly.
-func restaurantListOrderBy(sortBy string, combined bool) string {
-	if combined {
-		switch sortBy {
-		case "name":
-			return "name ASC"
-		case "rating":
-			return "avg_food DESC, avg_service DESC, avg_ambiance DESC"
-		case "date":
-			return "created_at DESC"
-		}
-		return "created_at DESC"
-	}
+// restaurantListOrderBy maps the sort parameter onto the ORDER BY expression,
+// targeting the column aliases of the UNION subquery.
+func restaurantListOrderBy(sortBy string) string {
 	switch sortBy {
 	case "name":
-		return "r.name ASC"
+		return "name ASC"
 	case "rating":
 		return "avg_food DESC, avg_service DESC, avg_ambiance DESC"
 	case "date":
-		return "r.created_at DESC"
+		return "created_at DESC"
 	}
-	return "r.created_at DESC"
+	return "created_at DESC"
 }
 
 // buildRestaurantListQuery assembles the complete SQL statement and positional
@@ -532,28 +524,18 @@ func buildRestaurantListQuery(f restaurantListFilters) (string, []interface{}, d
 		distanceOrder = "distance ASC,"
 	}
 
-	// Always include suggestions in the restaurant list
-	includeSuggestions := true
+	// Suggestions are always part of the restaurant list.
+	suggestionQuery, suggestionArgs := buildSuggestionBranch(f, dist, len(args)+1)
+	args = append(args, suggestionArgs...)
 
-	var finalQuery string
-	if includeSuggestions {
-		suggestionQuery, suggestionArgs := buildSuggestionBranch(f, dist, len(args)+1)
-		args = append(args, suggestionArgs...)
-
-		finalQuery = fmt.Sprintf(`
+	finalQuery := fmt.Sprintf(`
 			SELECT * FROM (
 				%s
 				UNION ALL
 				%s
 			) combined
 			ORDER BY %s %s
-		`, restaurantQuery, suggestionQuery, distanceOrder, restaurantListOrderBy(f.sortBy, true))
-	} else {
-		finalQuery = fmt.Sprintf(`
-			%s
-			ORDER BY %s %s
-		`, restaurantQuery, distanceOrder, restaurantListOrderBy(f.sortBy, false))
-	}
+		`, restaurantQuery, suggestionQuery, distanceOrder, restaurantListOrderBy(f.sortBy))
 
 	return finalQuery, args, dist
 }
@@ -888,7 +870,8 @@ func CreateRestaurant(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		// Check if it's a unique constraint violation
-		if pgErr, ok := err.(*pgconn.PgError); ok {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" { // unique_violation
 				logger.Warn("Duplicate restaurant creation attempt: %s", req.Name)
 				if strings.Contains(pgErr.ConstraintName, "google_place_id") {

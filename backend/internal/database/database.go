@@ -107,7 +107,13 @@ func Connect() error {
 	return nil
 }
 
+// GetPool returns the shared connection pool. It panics with a clear message
+// when the pool has not been initialized, instead of causing an opaque nil
+// dereference at the first query.
 func GetPool() *pgxpool.Pool {
+	if pool == nil {
+		panic("database pool not initialized - call database.Connect first")
+	}
 	return pool
 }
 
