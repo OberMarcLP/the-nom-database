@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-07-22
+
+### Added
+
+- Restaurant update/delete now also honor the RBAC permissions
+  `restaurants.update` / `restaurants.delete`: roles carrying them can manage
+  any restaurant, in addition to the creator and users-table admins
+
+### Fixed
+
+- Added the missing `sessions.last_used_at` column (migration `000010`);
+  every token refresh warned with `SQLSTATE 42703` since the v2.0.0 auth
+  overhaul shipped code for a column no migration created
+
 ## [2.1.0] - 2026-07-22
 
 ### Added
