@@ -23,7 +23,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Production stage - minimal nginx image (pinned)
-FROM nginx:1.30-alpine
+FROM nginx:1.31-alpine
 
 # Remove default nginx configuration
 RUN rm -rf /usr/share/nginx/html/*
