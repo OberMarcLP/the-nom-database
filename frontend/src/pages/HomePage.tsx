@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Loader2, CheckCircle, XCircle, Tag, Utensils, MapPin, Phone, Globe } from 'lucide-react';
-import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters, isSafeHttpUrl } from '../services/api';
+import { Restaurant, CreateRestaurantData, CreateSuggestionData, RestaurantFilters, isSafeHttpUrl, uploadReviewPhoto } from '../services/api';
 import { useRestaurants, useRestaurant, useUpdateRestaurant, useDeleteRestaurant, useCreateSuggestion, useConvertSuggestion, useDeleteSuggestion } from '../hooks/useApi';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { RestaurantForm } from '../components/RestaurantForm';
@@ -152,6 +152,7 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
     ambianceRating: number;
     comment: string;
     description: string;
+    photos?: { file: File; caption: string }[];
   }) => {
     if (!reviewingSuggestion?.suggestion_id) return;
     convertSuggestionMutation.mutate(
@@ -167,7 +168,16 @@ export function HomePage({ filters, isAuthenticated = false }: HomePageProps) {
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: async (result) => {
+          if (data.photos && data.photos.length > 0) {
+            try {
+              for (const photo of data.photos) {
+                await uploadReviewPhoto(result.rating_id, photo.file, photo.caption);
+              }
+            } catch {
+              setAlertMessage('Restaurant was created, but uploading the photos failed.');
+            }
+          }
           setReviewingSuggestion(null);
         },
         onError: (error: any) => {

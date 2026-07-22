@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { keepPreviousData } from '@tanstack/react-query';
 import { Plus, Loader2, XCircle, Clock, ListChecks, Trash2 } from 'lucide-react';
-import { CreateSuggestionData } from '../services/api';
+import { CreateSuggestionData, uploadReviewPhoto } from '../services/api';
 import {
   useConvertSuggestion,
   useCreateSuggestion,
@@ -48,10 +48,11 @@ export function SuggestionsPage() {
     ambianceRating: number;
     comment: string;
     description: string;
+    photos?: { file: File; caption: string }[];
   }) => {
     if (!reviewingId) return;
     try {
-      await convertSuggestionMutation.mutateAsync({
+      const result = await convertSuggestionMutation.mutateAsync({
         id: reviewingId,
         data: {
           description: data.description || undefined,
@@ -62,9 +63,19 @@ export function SuggestionsPage() {
           comment: data.comment || undefined,
         },
       });
+      let message = 'Suggestion converted to restaurant successfully!';
+      if (data.photos && data.photos.length > 0) {
+        try {
+          for (const photo of data.photos) {
+            await uploadReviewPhoto(result.rating_id, photo.file, photo.caption);
+          }
+        } catch {
+          message = 'Converted, but uploading the photos failed';
+        }
+      }
       setReviewingId(null);
       setReviewingName('');
-      setAlertMessage('Suggestion converted to restaurant successfully!');
+      setAlertMessage(message);
     } catch {
       setAlertMessage('Failed to convert suggestion');
     }

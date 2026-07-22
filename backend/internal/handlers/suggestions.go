@@ -496,11 +496,13 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Create initial rating from the conversion
-	if _, err := tx.Exec(ctx,
+	// Create initial rating from the conversion; the id is returned so the
+	// client can attach review photos to it
+	var ratingID int
+	if err := tx.QueryRow(ctx,
 		`INSERT INTO ratings (restaurant_id, food_rating, service_rating, ambiance_rating, comment, user_id)
-		VALUES ($1, $2, $3, $4, $5, $6)`,
-		restaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, userID); err != nil {
+		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+		restaurantID, req.FoodRating, req.ServiceRating, req.AmbianceRating, req.Comment, userID).Scan(&ratingID); err != nil {
 		logger.Error("Failed to create initial rating: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -523,6 +525,7 @@ func ConvertSuggestion(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"restaurant_id": restaurantID,
+		"rating_id":     ratingID,
 		"message":       "Suggestion converted to restaurant successfully",
 	})
 }

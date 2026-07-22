@@ -401,7 +401,7 @@ export const useUpdateSuggestionStatus = (
 
 export const useConvertSuggestion = (
   options?: UseMutationOptions<
-    { restaurant_id: number; message: string },
+    { restaurant_id: number; rating_id: number; message: string },
     Error,
     {
       id: number;

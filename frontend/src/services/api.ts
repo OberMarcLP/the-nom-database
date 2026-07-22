@@ -425,7 +425,7 @@ export const convertSuggestion = (id: number, data: {
   ambiance_rating: number;
   comment?: string;
 }) =>
-  fetchApi<{ restaurant_id: number; message: string }>(`/suggestions/${id}/convert`, {
+  fetchApi<{ restaurant_id: number; rating_id: number; message: string }>(`/suggestions/${id}/convert`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
