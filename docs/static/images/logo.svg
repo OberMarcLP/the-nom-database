@@ -1,0 +1,17 @@
+<svg width="560" height="120" viewBox="0 0 560 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Nom Database logo">
+  <!-- mark tile -->
+  <rect x="4" y="4" width="112" height="112" rx="16" fill="#1d1915" stroke="#3a332b" stroke-width="2"/>
+  <!-- database cylinder -->
+  <path d="M32 40c0-8 12-13 28-13s28 5 28 13v40c0 8-12 13-28 13s-28-5-28-13V40z" fill="#14110e" stroke="#c25460" stroke-width="4"/>
+  <ellipse cx="60" cy="40" rx="28" ry="13" fill="#14110e" stroke="#c25460" stroke-width="4"/>
+  <path d="M32 60c0 7.2 12.5 13 28 13s28-5.8 28-13" stroke="#c25460" stroke-width="4" fill="none"/>
+  <!-- bite taken out of the top right -->
+  <circle cx="92" cy="33" r="16" fill="#1d1915"/>
+  <circle cx="82" cy="22" r="7" fill="#1d1915"/>
+  <!-- crumbs -->
+  <circle cx="103" cy="29" r="3" fill="#c25460"/>
+  <circle cx="96" cy="17" r="2.5" fill="#c25460"/>
+  <!-- wordmark -->
+  <text x="140" y="58" font-family="'IBM Plex Mono','SFMono-Regular',Consolas,'Liberation Mono',monospace" font-size="34" font-weight="700" fill="#9b9282">the nom</text>
+  <text x="140" y="96" font-family="'IBM Plex Mono','SFMono-Regular',Consolas,'Liberation Mono',monospace" font-size="34" font-weight="700" fill="#a83a48">database_</text>
+</svg>

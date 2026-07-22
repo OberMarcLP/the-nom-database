@@ -1,0 +1,10 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Nom Database mark">
+  <rect x="4" y="4" width="112" height="112" rx="16" fill="#1d1915" stroke="#3a332b" stroke-width="2"/>
+  <path d="M32 40c0-8 12-13 28-13s28 5 28 13v40c0 8-12 13-28 13s-28-5-28-13V40z" fill="#14110e" stroke="#c25460" stroke-width="4"/>
+  <ellipse cx="60" cy="40" rx="28" ry="13" fill="#14110e" stroke="#c25460" stroke-width="4"/>
+  <path d="M32 60c0 7.2 12.5 13 28 13s28-5.8 28-13" stroke="#c25460" stroke-width="4" fill="none"/>
+  <circle cx="92" cy="33" r="16" fill="#1d1915"/>
+  <circle cx="82" cy="22" r="7" fill="#1d1915"/>
+  <circle cx="103" cy="29" r="3" fill="#c25460"/>
+  <circle cx="96" cy="17" r="2.5" fill="#c25460"/>
+</svg>

@@ -142,9 +142,12 @@ export function AppNav({
         <div className="flex flex-col gap-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
-              <span className="text-xl font-bold text-gradient">
-                The Nom Database
-              </span>
+              <NavLink to="/" className="flex items-center gap-2.5">
+                <img src="/logo-mark.svg" alt="" className="w-8 h-8" />
+                <span className="text-xl font-bold text-gradient">
+                  The Nom Database
+                </span>
+              </NavLink>
               <div className="hidden lg:flex gap-2">
                 <NavLink
                   to="/"
