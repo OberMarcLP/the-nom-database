@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -216,9 +217,10 @@ func UploadMenuPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate unique filename (always use .jpg extension after processing)
+	// Generate unique filename (always use .jpg extension after processing).
+	// The thumbnail shares the photo UUID so its key stays derivable for cleanup.
 	filename := uuid.New().String() + ".jpg"
-	thumbnailFilename := uuid.New().String() + "_thumb.jpg"
+	thumbnailFilename := strings.TrimSuffix(filename, ".jpg") + "_thumb.jpg"
 
 	ctx, cancel := RequestContext(r)
 	defer cancel()
@@ -448,20 +450,8 @@ func DeleteMenuPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete file from storage (non-fatal if fails)
-	s3Service := services.GetS3Service()
-	if s3Service != nil {
-		// Delete from S3
-		if delErr := s3Service.DeleteFile(ctx, fmt.Sprintf("menu_photos/%s", filename)); delErr != nil {
-			logger.Warn("Failed to delete file from S3: %v", delErr)
-		}
-	} else {
-		// Delete from local disk
-		filePath := filepath.Join(uploadsDir, filename)
-		if delErr := os.Remove(filePath); delErr != nil {
-			logger.Warn("Failed to delete file from disk: %v", delErr)
-		}
-	}
+	// Delete photo + thumbnail from storage (non-fatal if it fails)
+	deleteStoredPhotos(ctx, menuPhotoKeys(filename))
 
 	w.WriteHeader(http.StatusNoContent)
 }

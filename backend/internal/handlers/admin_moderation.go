@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -445,11 +443,11 @@ func AdminDeletePhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete file from filesystem
-	uploadsDir := "./uploads"
-	photoPath := filepath.Join(uploadsDir, filename)
-	if err := os.Remove(photoPath); err != nil {
-		logger.Warn("Failed to delete photo file %s: %v", photoPath, err)
+	// Remove the object from storage (S3 or local fallback, non-fatal)
+	if photoType == "menu" {
+		deleteStoredPhotos(ctx, menuPhotoKeys(filename))
+	} else {
+		deleteStoredPhotos(ctx, []string{reviewPhotoKey(filename)})
 	}
 
 	CreateAuditLog(ctx, adminUser.ID, "delete_photo", table, photoID, map[string]string{
@@ -552,12 +550,18 @@ func AdminDeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	adminUser := r.Context().Value(models.UserContextKey).(*models.User)
 
+	// Collect photo keys before the CASCADE wipes the photo rows
+	photoKeys := collectRestaurantPhotoKeys(ctx, restaurantID)
+
 	_, err = database.GetPool().Exec(ctx, "DELETE FROM restaurants WHERE id = $1", restaurantID)
 	if err != nil {
 		logger.Error("Failed to delete restaurant: %v", err)
 		http.Error(w, "Failed to delete restaurant", http.StatusInternalServerError)
 		return
 	}
+
+	// Remove the photo objects from storage (non-fatal if it fails)
+	deleteStoredPhotos(ctx, photoKeys)
 
 	CreateAuditLog(ctx, adminUser.ID, "delete_restaurant", "restaurants", restaurantID, nil, r)
 

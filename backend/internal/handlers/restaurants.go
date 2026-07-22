@@ -1042,6 +1042,9 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Collect photo keys before the CASCADE wipes the photo rows
+	photoKeys := collectRestaurantPhotoKeys(ctx, id)
+
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM restaurants WHERE id = $1", id)
 	if err != nil {
@@ -1054,6 +1057,9 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Restaurant not found", http.StatusNotFound)
 		return
 	}
+
+	// Remove the photo objects from storage (non-fatal if it fails)
+	deleteStoredPhotos(ctx, photoKeys)
 
 	w.WriteHeader(http.StatusNoContent)
 }

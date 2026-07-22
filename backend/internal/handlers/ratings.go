@@ -331,6 +331,9 @@ func DeleteRating(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Collect photo keys before the CASCADE wipes the review_photos rows
+	photoKeys := collectRatingPhotoKeys(ctx, id)
+
 	result, err := database.GetPool().Exec(ctx,
 		"DELETE FROM ratings WHERE id = $1", id)
 	if err != nil {
@@ -343,6 +346,9 @@ func DeleteRating(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Rating not found", http.StatusNotFound)
 		return
 	}
+
+	// Remove the photo objects from storage (non-fatal if it fails)
+	deleteStoredPhotos(ctx, photoKeys)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -662,11 +668,11 @@ func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
 
 	// Verify the photo belongs to a rating owned by this user
 	var ownerID int
-	var photoURL string
+	var filename string
 	err = database.GetPool().QueryRow(ctx,
-		`SELECT r.user_id, rp.photo_url FROM review_photos rp
+		`SELECT r.user_id, rp.filename FROM review_photos rp
 		JOIN ratings r ON rp.rating_id = r.id
-		WHERE rp.id = $1`, photoID).Scan(&ownerID, &photoURL)
+		WHERE rp.id = $1`, photoID).Scan(&ownerID, &filename)
 	if err != nil {
 		http.Error(w, "Photo not found", http.StatusNotFound)
 		return
@@ -690,8 +696,8 @@ func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Delete from S3 if needed (optional cleanup)
-	// services.DeleteFromS3(photoURL)
+	// Remove the object from storage (non-fatal if it fails)
+	deleteStoredPhotos(ctx, []string{reviewPhotoKey(filename)})
 
 	w.WriteHeader(http.StatusNoContent)
 }
