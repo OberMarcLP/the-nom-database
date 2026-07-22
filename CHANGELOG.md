@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-07-22
+
+### Added
+
+- Review photo captions can now be edited: new `PATCH /api/review-photos/{id}`
+  endpoint (owner-only), used by the combined photo gallery
+- Public runtime config endpoint `GET /api/config`: the browser fetches the
+  Google Maps key at runtime, so published images no longer need a build-time
+  `VITE_GOOGLE_MAPS_API_KEY`; optional `GOOGLE_MAPS_MAP_ID` env variable
+
+### Changed
+
+- Restaurant map migrated from the deprecated `google.maps.Marker` to
+  `AdvancedMarkerElement` (marker library + map ID, default `DEMO_MAP_ID`)
+- OIDC handlers no longer emit leftover debug logs; claims are logged at
+  debug level only, without email or name
+
+### Fixed
+
+- Editing or deleting a review photo in the gallery no longer hits the menu
+  photo endpoints (404); review photos use their own routes
+
 ## [2.2.0] - 2026-07-22
 
 ### Added
