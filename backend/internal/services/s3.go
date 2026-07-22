@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -18,6 +19,7 @@ type S3Service struct {
 	client     *s3.Client
 	bucketName string
 	region     string
+	endpoint   string
 }
 
 var s3Service *S3Service
@@ -30,6 +32,7 @@ func InitS3() error {
 	awsSecretKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	awsRegion := os.Getenv("AWS_REGION")
 	bucketName := os.Getenv("S3_BUCKET_NAME")
+	s3Endpoint := os.Getenv("S3_ENDPOINT")
 
 	if awsAccessKey == "" || awsSecretKey == "" || awsRegion == "" || bucketName == "" {
 		logger.Warn("⚠️  AWS S3 not configured - using local storage for photos")
@@ -52,12 +55,24 @@ func InitS3() error {
 	}
 
 	s3Service = &S3Service{
-		client:     s3.NewFromConfig(cfg),
+		client: s3.NewFromConfig(cfg, func(o *s3.Options) {
+			if s3Endpoint != "" {
+				// S3-compatible storage (MinIO, R2, Hetzner, ...): path-style
+				// addressing avoids per-bucket DNS on custom endpoints
+				o.BaseEndpoint = aws.String(s3Endpoint)
+				o.UsePathStyle = true
+			}
+		}),
 		bucketName: bucketName,
 		region:     awsRegion,
+		endpoint:   strings.TrimRight(s3Endpoint, "/"),
 	}
 
-	logger.Info("✅ AWS S3 service initialized (bucket: %s, region: %s)", bucketName, awsRegion)
+	if s3Endpoint != "" {
+		logger.Info("✅ S3 service initialized (endpoint: %s, bucket: %s, region: %s)", s3Endpoint, bucketName, awsRegion)
+	} else {
+		logger.Info("✅ AWS S3 service initialized (bucket: %s, region: %s)", bucketName, awsRegion)
+	}
 	return nil
 }
 
@@ -83,9 +98,18 @@ func (s *S3Service) UploadFile(ctx context.Context, key string, body io.Reader, 
 	}
 
 	// Return the S3 URL
-	url := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s.bucketName, s.region, key)
+	url := s.objectURL(key)
 	logger.Info("✅ File uploaded to S3: %s", key)
 	return url, nil
+}
+
+// objectURL builds the object URL: path-style on a custom endpoint,
+// otherwise the standard AWS virtual-hosted-style URL
+func (s *S3Service) objectURL(key string) string {
+	if s.endpoint != "" {
+		return fmt.Sprintf("%s/%s/%s", s.endpoint, s.bucketName, key)
+	}
+	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s.bucketName, s.region, key)
 }
 
 // DeleteFile deletes a file from S3

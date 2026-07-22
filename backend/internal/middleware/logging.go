@@ -50,8 +50,9 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip logging for health check requests from Docker
-		if r.URL.Path == "/api/health" && r.Header.Get("User-Agent") == "Wget" {
+		// Skip logging and metrics for health check requests (Docker
+		// healthchecks, uptime monitors, load balancers) regardless of client
+		if r.URL.Path == "/api/health" {
 			next.ServeHTTP(w, r)
 			return
 		}

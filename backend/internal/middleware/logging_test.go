@@ -113,32 +113,43 @@ func TestLoggingMiddleware(t *testing.T) {
 }
 
 func TestLoggingMiddleware_HealthCheckFiltering(t *testing.T) {
-	// Create a simple counter to track if handler was called
-	handlerCalled := false
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handlerCalled = true
-		w.WriteHeader(http.StatusOK)
-	})
-
-	// Wrap with LoggingMiddleware
-	handler := LoggingMiddleware(testHandler)
-
-	// Create health check request with Wget user agent
-	req := httptest.NewRequest("GET", "/api/health", nil)
-	req.Header.Set("User-Agent", "Wget")
-	rec := httptest.NewRecorder()
-
-	// Execute request
-	handler.ServeHTTP(rec, req)
-
-	// Verify handler was still called (filtering only affects logging, not execution)
-	if !handlerCalled {
-		t.Error("Expected handler to be called even for health checks")
+	// Health checks are skipped for every client, not just Docker's wget
+	tests := []struct {
+		name      string
+		userAgent string
+	}{
+		{"DockerWget", "Wget"},
+		{"NoUserAgent", ""},
+		{"UptimeMonitor", "Uptime-Kuma/1.23"},
 	}
 
-	// Verify response
-	if rec.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", rec.Code)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handlerCalled := false
+			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				handlerCalled = true
+				w.WriteHeader(http.StatusOK)
+			})
+
+			handler := LoggingMiddleware(testHandler)
+
+			req := httptest.NewRequest("GET", "/api/health", nil)
+			if tt.userAgent != "" {
+				req.Header.Set("User-Agent", tt.userAgent)
+			}
+			rec := httptest.NewRecorder()
+
+			handler.ServeHTTP(rec, req)
+
+			// Verify handler was still called (filtering only affects logging, not execution)
+			if !handlerCalled {
+				t.Error("Expected handler to be called even for health checks")
+			}
+
+			if rec.Code != http.StatusOK {
+				t.Errorf("Expected status 200, got %d", rec.Code)
+			}
+		})
 	}
 }
 

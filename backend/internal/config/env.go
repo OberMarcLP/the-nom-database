@@ -17,18 +17,19 @@ type Config struct {
 	GoogleMapsAPIKey string
 
 	// Authentication
-	AuthMode        string
-	JWTSecretKey    string
-	OIDCIssuerURL   string
-	OIDCClientID    string
+	AuthMode         string
+	JWTSecretKey     string
+	OIDCIssuerURL    string
+	OIDCClientID     string
 	OIDCClientSecret string
-	OIDCRedirectURL string
+	OIDCRedirectURL  string
 
 	// AWS S3
 	AWSAccessKeyID     string
 	AWSSecretAccessKey string
 	AWSRegion          string
 	S3BucketName       string
+	S3Endpoint         string
 
 	// Server
 	Port           string
@@ -39,20 +40,21 @@ type Config struct {
 // Load loads and validates environment variables
 func Load() (*Config, error) {
 	cfg := &Config{
-		DatabaseURL:      os.Getenv("DATABASE_URL"),
-		GoogleMapsAPIKey: os.Getenv("GOOGLE_MAPS_API_KEY"),
-		AuthMode:         getEnvOrDefault("AUTH_MODE", "local"),
-		JWTSecretKey:     os.Getenv("JWT_SECRET_KEY"),
-		OIDCIssuerURL:    os.Getenv("OIDC_ISSUER_URL"),
-		OIDCClientID:     os.Getenv("OIDC_CLIENT_ID"),
-		OIDCClientSecret: os.Getenv("OIDC_CLIENT_SECRET"),
-		OIDCRedirectURL:  os.Getenv("OIDC_REDIRECT_URL"),
-		AWSAccessKeyID:       os.Getenv("AWS_ACCESS_KEY_ID"),
-		AWSSecretAccessKey:   os.Getenv("AWS_SECRET_ACCESS_KEY"),
-		AWSRegion:            os.Getenv("AWS_REGION"),
-		S3BucketName:         os.Getenv("S3_BUCKET_NAME"),
-		Port:                 getEnvOrDefault("PORT", "8080"),
-		Debug:                os.Getenv("DEBUG") == "true",
+		DatabaseURL:        os.Getenv("DATABASE_URL"),
+		GoogleMapsAPIKey:   os.Getenv("GOOGLE_MAPS_API_KEY"),
+		AuthMode:           getEnvOrDefault("AUTH_MODE", "local"),
+		JWTSecretKey:       os.Getenv("JWT_SECRET_KEY"),
+		OIDCIssuerURL:      os.Getenv("OIDC_ISSUER_URL"),
+		OIDCClientID:       os.Getenv("OIDC_CLIENT_ID"),
+		OIDCClientSecret:   os.Getenv("OIDC_CLIENT_SECRET"),
+		OIDCRedirectURL:    os.Getenv("OIDC_REDIRECT_URL"),
+		AWSAccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
+		AWSSecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		AWSRegion:          os.Getenv("AWS_REGION"),
+		S3BucketName:       os.Getenv("S3_BUCKET_NAME"),
+		S3Endpoint:         os.Getenv("S3_ENDPOINT"),
+		Port:               getEnvOrDefault("PORT", "8080"),
+		Debug:              os.Getenv("DEBUG") == "true",
 	}
 
 	// Parse allowed origins
