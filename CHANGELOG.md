@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-07-23
+
+### Added
+
+- Project logo (warm burgundy palette matching the v2 theme): used as the
+  app favicon, in the navigation bar, in the README and available to the
+  docs site
+- `CONTRIBUTING.md` documenting dev setup, conventions and the tag-driven
+  release process
+
+### Changed
+
+- README rebuilt: logo, release badge, current architecture (chi,
+  PostgreSQL 18), full environment reference incl. the new S3/Maps
+  variables, updated GHCR tag documentation
+- CHANGELOG compare links now point at the real repository
+
 ## [2.5.1] - 2026-07-22
 
 ### Fixed
@@ -316,6 +333,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/your-username/the-nom-database/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/your-username/the-nom-database/releases/tag/v1.0.0
-[0.1.0]: https://github.com/your-username/the-nom-database/releases/tag/v0.1.0
+[Unreleased]: https://github.com/OberMarcLP/the-nom-database/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/OberMarcLP/the-nom-database/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/OberMarcLP/the-nom-database/compare/v2.4.0...v2.5.0
+[2.4.0]: https://github.com/OberMarcLP/the-nom-database/compare/v2.3.0...v2.4.0
+[2.3.0]: https://github.com/OberMarcLP/the-nom-database/compare/v2.2.0...v2.3.0
+[2.2.0]: https://github.com/OberMarcLP/the-nom-database/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/OberMarcLP/the-nom-database/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/OberMarcLP/the-nom-database/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/OberMarcLP/the-nom-database/releases/tag/v1.0.0
+[0.1.0]: https://github.com/OberMarcLP/the-nom-database/releases/tag/v0.1.0
