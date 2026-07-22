@@ -477,6 +477,31 @@ export const updatePhotoCaption = (id: number, caption: string) =>
     body: JSON.stringify({ caption }),
   });
 
+export const updateReviewPhotoCaption = (id: number, caption: string) =>
+  fetchApi<void>(`/review-photos/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ caption }),
+  });
+
+// Runtime configuration served by the backend so published Docker images
+// don't need browser keys baked in at build time
+export interface RuntimeConfig {
+  google_maps_api_key: string;
+  google_maps_map_id: string;
+}
+
+let runtimeConfigPromise: Promise<RuntimeConfig> | null = null;
+
+export const getRuntimeConfig = (): Promise<RuntimeConfig> => {
+  if (!runtimeConfigPromise) {
+    runtimeConfigPromise = fetchApi<RuntimeConfig>('/config').catch(() => {
+      runtimeConfigPromise = null;
+      return { google_maps_api_key: '', google_maps_map_id: '' };
+    });
+  }
+  return runtimeConfigPromise;
+};
+
 export const deleteMenuPhoto = (id: number) =>
   fetchApi<void>(`/photos/${id}`, { method: 'DELETE' });
 

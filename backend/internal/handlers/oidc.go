@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -191,9 +190,7 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Log all claims for debugging
-	logger.Info("OIDC Claims: email=%s, sub=%s, name=%s, picture=%s, preferred_username=%s, email_verified=%v",
-		claims.Email, claims.Sub, claims.Name, claims.Picture, claims.PreferredUsername, claims.EmailVerified)
+	logger.Debug("OIDC claims received (sub: %s, email_verified: %v)", claims.Sub, claims.EmailVerified)
 
 	// Validate required claims
 	if claims.Email == "" || claims.Sub == "" {
@@ -202,14 +199,12 @@ func OIDCCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find or create user
-	logger.Debug("DEBUG: About to call findOrCreateOIDCUser with email=%s, sub=%s", claims.Email, claims.Sub)
 	user, err := findOrCreateOIDCUser(ctx, &claims)
 	if err != nil {
 		logger.Error("Failed to find/create user: %v", err)
 		http.Error(w, "Failed to process user", http.StatusInternalServerError)
 		return
 	}
-	logger.Debug("DEBUG: findOrCreateOIDCUser returned successfully, userID=%d", user.ID)
 
 	// Update last login
 	_, err = database.GetPool().Exec(ctx, "UPDATE users SET last_login_at = $1 WHERE id = $2", time.Now(), user.ID)
@@ -265,11 +260,8 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 }) (*models.User, error) {
 	provider := "oidc"
 
-	logger.Debug("DEBUG: findOrCreateOIDCUser ENTERED - email=%s, sub=%s", claims.Email, claims.Sub)
-
 	// Try to find existing user by provider ID
 	var user models.User
-	logger.Debug("DEBUG: About to query for existing user with provider=%s, sub=%s", provider, claims.Sub)
 	err := database.GetPool().QueryRow(ctx,
 		`SELECT id, email, username, password_hash, provider, provider_id, full_name, avatar_url,
 		is_active, is_admin, email_verified, password_must_change, last_login_at, created_at, updated_at
@@ -278,8 +270,6 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 		&user.ID, &user.Email, &user.Username, &user.PasswordHash, &user.Provider, &user.ProviderID,
 		&user.FullName, &user.AvatarURL, &user.IsActive, &user.IsAdmin,
 		&user.EmailVerified, &user.PasswordMustChange, &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt)
-
-	logger.Debug("DEBUG: Query completed, err=%v, err==nil=%v, errors.Is(err, sql.ErrNoRows)=%v", err, err == nil, errors.Is(err, sql.ErrNoRows))
 
 	if err == nil {
 		// User exists, update info if changed
@@ -297,11 +287,8 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 
 	// Check if it's a "no rows" error (pgx returns pgx.ErrNoRows, not sql.ErrNoRows)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		logger.Debug("DEBUG: Returning error because it's not ErrNoRows: %v", err)
 		return nil, err
 	}
-
-	logger.Debug("DEBUG: No existing user found (ErrNoRows), proceeding to create new user")
 
 	// User doesn't exist, create new one
 	// Generate username from email or preferred_username
@@ -319,7 +306,6 @@ func findOrCreateOIDCUser(ctx context.Context, claims *struct {
 	}
 
 	var userID int
-	logger.Error("DEBUG findOrCreateOIDCUser: email=%s, username=%s, provider=%s, sub=%s", claims.Email, username, provider, claims.Sub)
 
 	// Try to insert with username, if it fails due to duplicate, add a random suffix
 	err = database.GetPool().QueryRow(ctx,

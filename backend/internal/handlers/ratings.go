@@ -695,3 +695,69 @@ func DeleteReviewPhoto(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// UpdateReviewPhotoCaption godoc
+// @Summary Update a review photo caption
+// @Description Update the caption of a photo attached to one of the caller's reviews
+// @Tags Ratings
+// @Accept json
+// @Produce json
+// @Param id path int true "Photo ID"
+// @Success 204 "Caption updated"
+// @Failure 400 {object} map[string]string "Invalid photo ID or request body"
+// @Failure 403 {object} map[string]string "Not the review owner"
+// @Failure 404 {object} map[string]string "Photo not found"
+// @Router /review-photos/{id} [patch]
+func UpdateReviewPhotoCaption(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := RequestContext(r)
+	defer cancel()
+
+	photoID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || photoID <= 0 {
+		http.Error(w, "Invalid photo ID", http.StatusBadRequest)
+		return
+	}
+
+	user, ok := GetUserFromContext(r)
+	if !ok || user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		Caption string `json:"caption"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if len(req.Caption) > 255 {
+		http.Error(w, "Caption must be 255 characters or less", http.StatusBadRequest)
+		return
+	}
+
+	// Verify the photo belongs to a rating owned by this user
+	var ownerID int
+	err = database.GetPool().QueryRow(ctx,
+		`SELECT r.user_id FROM review_photos rp
+		JOIN ratings r ON rp.rating_id = r.id
+		WHERE rp.id = $1`, photoID).Scan(&ownerID)
+	if err != nil {
+		http.Error(w, "Photo not found", http.StatusNotFound)
+		return
+	}
+	if ownerID != user.ID {
+		http.Error(w, "You can only edit photos from your own reviews", http.StatusForbidden)
+		return
+	}
+
+	if _, err := database.GetPool().Exec(ctx,
+		"UPDATE review_photos SET caption = $1, updated_at = NOW() WHERE id = $2",
+		req.Caption, photoID); err != nil {
+		logger.Error("request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

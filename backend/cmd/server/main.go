@@ -241,8 +241,12 @@ func main() {
 		api.Route("/review-photos", func(reviewPhotos chi.Router) {
 			reviewPhotos.Use(middleware.AuthMiddleware)
 			reviewPhotos.Use(middleware.WithUserRoles)
+			reviewPhotos.Patch("/{id}", handlers.UpdateReviewPhotoCaption)
 			reviewPhotos.Delete("/{id}", handlers.DeleteReviewPhoto)
 		})
+
+		// Public runtime config for the browser (Maps JS key, map ID)
+		api.Get("/config", handlers.GetPublicConfig)
 
 		// Google Maps (proxied through backend - public with rate limiting)
 		api.With(optionalAuth...).Get("/places/search", handlers.SearchPlaces)

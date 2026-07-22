@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapPin, Tag, Utensils, Edit, Trash2, Plus, Loader2, Phone, Globe, Camera, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { Restaurant, voteOnReview, removeVote, uploadReviewPhoto, isSafeHttpUrl } from '../services/api';
+import { Restaurant, voteOnReview, removeVote, uploadReviewPhoto, updateReviewPhotoCaption, deleteReviewPhoto, isSafeHttpUrl } from '../services/api';
 import { useRatings, useCreateRating, useMenuPhotos, useUpdatePhotoCaption, useDeleteMenuPhoto } from '../hooks/useApi';
 import { StarRating } from '../components/StarRating';
 import { RestaurantMap } from '../components/RestaurantMap';
@@ -116,12 +116,34 @@ export function RestaurantDetail({ restaurant, onEdit, onDelete, highlightedRati
   };
 
 
+  // Review photos live in review_photos and have their own endpoints;
+  // menu photos keep using the /photos mutations
   const handleCaptionUpdate = async (id: number, caption: string) => {
-    updateCaptionMutation.mutate({ id, caption, restaurantId: restaurant.id });
+    const photo = allPhotos.find(p => p.id === id);
+    if (photo?.source === 'review') {
+      try {
+        await updateReviewPhotoCaption(id, caption);
+        refetchRatings();
+      } catch (error) {
+        showError(`Failed to update caption: ${error}`);
+      }
+    } else {
+      updateCaptionMutation.mutate({ id, caption, restaurantId: restaurant.id });
+    }
   };
 
   const handlePhotoDelete = async (id: number) => {
-    deletePhotoMutation.mutate({ id, restaurantId: restaurant.id });
+    const photo = allPhotos.find(p => p.id === id);
+    if (photo?.source === 'review') {
+      try {
+        await deleteReviewPhoto(id);
+        refetchRatings();
+      } catch (error) {
+        showError(`Failed to delete photo: ${error}`);
+      }
+    } else {
+      deletePhotoMutation.mutate({ id, restaurantId: restaurant.id });
+    }
   };
 
   // Sort ratings based on selected option
