@@ -28,9 +28,11 @@ jobs:
           - context: ./backend
             dockerfile: ./backend/Dockerfile
             image: backend
+            description: "The Nom Database backend API (Go + PostgreSQL)"
           - context: ./frontend
             dockerfile: ./frontend/Dockerfile
             image: frontend
+            description: "The Nom Database frontend (React SPA served by nginx)"
 
     steps:
       - name: Checkout repository
@@ -49,8 +51,15 @@ jobs:
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v6
+        env:
+          # GHCR shows the description from the image index annotations
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.image }}
+          labels: |
+            org.opencontainers.image.description=${{ matrix.description }}
+          annotations: |
+            org.opencontainers.image.description=${{ matrix.description }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -66,6 +75,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
