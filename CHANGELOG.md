@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-07-22
+
+### Added
+
+- First-review photo uploads: the "Test & Review" convert modal now has the
+  same photo section as the regular review form; the convert endpoint
+  returns the new `rating_id` so photos attach to the initial rating
+
 ## [2.4.0] - 2026-07-22
 
 ### Added
