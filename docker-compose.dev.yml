@@ -59,7 +59,6 @@ services:
       args:
         # Same-origin: the frontend nginx proxies /api to the backend
         VITE_API_URL: ""
-        VITE_GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
     container_name: nomdb-frontend
     ports:
       - "3000:80"

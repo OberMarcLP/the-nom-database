@@ -13,11 +13,10 @@ COPY . .
 
 # Build arguments
 ARG VITE_API_URL
-ARG VITE_GOOGLE_MAPS_API_KEY
 
 # Set environment variables for build
+# (the Google Maps key is served at runtime via /api/config, not baked in)
 ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 ENV NODE_ENV=production
 
 # Build the app with optimizations

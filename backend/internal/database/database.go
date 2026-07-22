@@ -78,8 +78,9 @@ func Connect() error {
 	// Optimize connection pool settings for performance (DB_MAX_CONNS optional, default 25)
 	maxConns := 25
 	if v := os.Getenv("DB_MAX_CONNS"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil && n > 0 {
-			maxConns = n
+		// bitSize 32 guarantees the value fits int32 (CodeQL: incorrect-integer-conversion)
+		if n, err := strconv.ParseInt(v, 10, 32); err == nil && n > 0 {
+			maxConns = int(n)
 		}
 	}
 	config.MaxConns = int32(maxConns)                 // Maximum number of connections
