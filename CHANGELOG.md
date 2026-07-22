@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-07-22
+
+### Fixed
+
+- Deleting a restaurant, rating or photo now also removes the photo objects
+  from S3 (or the local uploads fallback): menu photos incl. thumbnails,
+  review photos, and the admin moderation photo delete (which previously
+  only removed local files)
+- Menu photo thumbnails share the photo's UUID so their storage key stays
+  derivable; previously they got an unstored throwaway UUID and were
+  orphaned already on upload
+
 ## [2.5.0] - 2026-07-22
 
 ### Added
