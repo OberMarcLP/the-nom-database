@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-07-22
+
+### Added
+
+- Optional `GOOGLE_MAPS_BROWSER_KEY`: `/api/config` serves this
+  referrer-restricted key to the browser and falls back to
+  `GOOGLE_MAPS_API_KEY`. Keeps the server key unrestricted for the Places
+  proxy - referrer-restricted keys get REQUEST_DENIED on server-side calls.
+
 ## [2.3.0] - 2026-07-22
 
 ### Added
