@@ -15,6 +15,7 @@ import (
 	"github.com/nomdb/backend/internal/database"
 	"github.com/nomdb/backend/internal/logger"
 	"github.com/nomdb/backend/internal/models"
+	"github.com/nomdb/backend/internal/services"
 )
 
 func getFoodTypesForRestaurant(ctx context.Context, restaurantID int) ([]models.FoodType, error) {
@@ -938,7 +939,7 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := RequestContext(r)
 	defer cancel()
 
-	// Only the creator or an admin may modify a restaurant
+	// The creator, admins, and roles with restaurants.update may modify a restaurant
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Authentication required", http.StatusUnauthorized)
@@ -950,7 +951,9 @@ func UpdateRestaurant(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Restaurant not found", http.StatusNotFound)
 		return
 	}
-	if !user.IsAdmin && (createdBy == nil || *createdBy != user.ID) {
+	if !user.IsAdmin &&
+		!services.HasPermission(user.Permissions, "restaurants.update") &&
+		(createdBy == nil || *createdBy != user.ID) {
 		http.Error(w, "You can only edit restaurants you created", http.StatusForbidden)
 		return
 	}
@@ -1020,7 +1023,7 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Only the creator or an admin may delete a restaurant
+	// The creator, admins, and roles with restaurants.delete may delete a restaurant
 	user, ok := GetUserFromContext(r)
 	if !ok || user == nil {
 		http.Error(w, "Authentication required", http.StatusUnauthorized)
@@ -1032,7 +1035,9 @@ func DeleteRestaurant(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Restaurant not found", http.StatusNotFound)
 		return
 	}
-	if !user.IsAdmin && (createdBy == nil || *createdBy != user.ID) {
+	if !user.IsAdmin &&
+		!services.HasPermission(user.Permissions, "restaurants.delete") &&
+		(createdBy == nil || *createdBy != user.ID) {
 		http.Error(w, "You can only delete restaurants you created", http.StatusForbidden)
 		return
 	}
