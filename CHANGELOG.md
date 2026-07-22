@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-22
+
+### Added
+
+- Custom S3-compatible endpoint support via `S3_ENDPOINT` (MinIO, Cloudflare
+  R2, Hetzner, ...): the client uses path-style addressing and object URLs
+  are built as `<endpoint>/<bucket>/<key>`
+
+### Fixed
+
+- `/api/health` requests no longer flood the request log and metrics: the
+  skip now applies to every client, not only Docker's wget healthcheck
+
 ## [2.0.0] - 2026-07-21
 
 ### ⚠ Breaking / upgrade notes
